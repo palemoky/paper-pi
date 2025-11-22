@@ -5,6 +5,7 @@ pydantic-settings
 borax
 Pillow
 RPi.GPIO
+gpiozero
 spidev
 pytest
 pytest-asyncio
