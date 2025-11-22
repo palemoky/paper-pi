@@ -16,6 +16,8 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # push main 或 PR 时运行测试，但排除 tag 推送（tag 会触发完整流程）
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/'))
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
