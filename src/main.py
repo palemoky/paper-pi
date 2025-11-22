@@ -9,33 +9,18 @@ try:
     from .config import Config
     from .layout import DashboardLayout
     from .data_manager import DataManager
-    from .lib.mock_epd import MockEPD
+    from .drivers.factory import get_driver
 except ImportError:
     # 如果相对导入失败，添加父目录到路径并使用绝对导入
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from src.config import Config
     from src.layout import DashboardLayout
     from src.data_manager import DataManager
-    from src.lib.mock_epd import MockEPD
-
-# Fix import path for drivers
-lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib")
-if lib_path not in sys.path:
-    sys.path.insert(0, lib_path)
+    from src.drivers.factory import get_driver
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-logger.info(f"Adding lib path: {lib_path}")
-
-# EPD Driver Import
-try:
-    from epd7in5_V2 import EPD
-    logger.info("EPD driver loaded successfully!")
-except ImportError as e:
-    logger.warning(f"EPD driver not found ({e}), using mock.")
-    EPD = MockEPD
 
 
 def is_in_quiet_hours():
@@ -65,14 +50,17 @@ def is_in_quiet_hours():
 
 async def main():
     logger.info("Starting Dashboard...")
-    epd = EPD()
+    
+    # 使用工厂获取驱动
+    epd = get_driver()
+    
     layout = DashboardLayout()
 
     # 使用 DataManager 上下文管理器 (管理 HTTP Client)
     async with DataManager() as dm:
         try:
             epd.init()
-            epd.Clear()
+            epd.clear()
 
             while True:
                 now = pendulum.now()
@@ -98,7 +86,8 @@ async def main():
                     logger.info("Saved screenshot.bmp")
 
                 # 3. 显示 (硬件IO)
-                epd.display(epd.getbuffer(img))
+                # 适配器模式下，display 直接接受 PIL Image
+                epd.display(img)
 
                 # 4. 等待下一次刷新
                 await asyncio.sleep(Config.REFRESH_INTERVAL)
