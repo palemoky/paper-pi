@@ -4,13 +4,13 @@ import logging
 import httpx
 from pathlib import Path
 from . import providers
-from .config import Config
+from .config import Config, BASE_DIR
 
 logger = logging.getLogger(__name__)
 
 class DataManager:
     def __init__(self):
-        self.cache_file = Path(Config.BASE_DIR) / "data_cache.json"
+        self.cache_file = Path(BASE_DIR) / "data_cache.json"
         self.client = None
 
     async def __aenter__(self):
