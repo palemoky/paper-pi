@@ -51,7 +51,6 @@ class RaspberryPi:
     def __init__(self):
         import spidev
         import gpiozero
-        import RPi.GPIO as GPIO
 
         self.SPI = spidev.SpiDev()
         self.GPIO_RST_PIN = gpiozero.LED(self.RST_PIN)
@@ -59,11 +58,9 @@ class RaspberryPi:
         # self.GPIO_CS_PIN     = gpiozero.LED(self.CS_PIN)
         self.GPIO_PWR_PIN = gpiozero.LED(self.PWR_PIN)
         
-        # BUSY 引脚直接使用 RPi.GPIO，避免 gpiozero 的边缘检测
-        # 在 Docker 中，gpiozero 的任何 Input 类都会尝试设置边缘检测导致失败
-        self.GPIO = GPIO
-        self.GPIO.setmode(self.GPIO.BCM)
-        self.GPIO.setup(self.BUSY_PIN, self.GPIO.IN)
+        # BUSY 引脚延迟初始化，避免在 __init__ 时就失败
+        self.GPIO = None
+        self._busy_pin_initialized = False
 
     def digital_write(self, pin, value):
         if pin == self.RST_PIN:
@@ -89,7 +86,33 @@ class RaspberryPi:
 
     def digital_read(self, pin):
         if pin == self.BUSY_PIN:
-            return self.GPIO.input(self.BUSY_PIN)
+            # 延迟初始化 BUSY 引脚
+            if not self._busy_pin_initialized:
+                try:
+                    import RPi.GPIO as GPIO
+                    self.GPIO = GPIO
+                    # 尝试设置 GPIO（可能在 Docker 中失败）
+                    try:
+                        self.GPIO.setmode(self.GPIO.BCM)
+                    except:
+                        pass  # 可能已经被其他地方设置过
+                    self.GPIO.setup(self.BUSY_PIN, self.GPIO.IN)
+                    self._busy_pin_initialized = True
+                except Exception as e:
+                    logger.warning(f"Failed to initialize BUSY pin GPIO: {e}")
+                    logger.warning("Using simulated BUSY pin (always ready)")
+                    self._busy_pin_initialized = True  # 标记为已尝试，避免重复
+                    return 0  # 返回 0 表示不忙（ready）
+            
+            # 读取 BUSY 引脚状态
+            if self.GPIO:
+                try:
+                    return self.GPIO.input(self.BUSY_PIN)
+                except:
+                    return 0  # 失败时返回 ready 状态
+            else:
+                return 0  # GPIO 未初始化，返回 ready 状态
+                
         elif pin == self.RST_PIN:
             return self.RST_PIN.value
         elif pin == self.DC_PIN:
@@ -163,8 +186,12 @@ class RaspberryPi:
             self.GPIO_DC_PIN.close()
             # self.GPIO_CS_PIN.close()
             self.GPIO_PWR_PIN.close()
-            # 清理 RPi.GPIO 对 BUSY 引脚的设置
-            self.GPIO.cleanup(self.BUSY_PIN)
+            # 清理 RPi.GPIO 对 BUSY 引脚的设置（如果已初始化）
+            if self.GPIO and self._busy_pin_initialized:
+                try:
+                    self.GPIO.cleanup(self.BUSY_PIN)
+                except:
+                    pass
 
 
 class JetsonNano:
