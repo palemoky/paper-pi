@@ -48,8 +48,10 @@ COPY --from=builder /install /usr/local
 # 创建非 root 用户
 RUN useradd -m appuser
 
-# 复制源代码 (明确复制 src 目录，确保不会被忽略)
-COPY src/ src/
+# 复制源代码
+COPY src src/
+# 确保 __init__.py 存在 (解决 ModuleNotFoundError) 并列出文件用于调试
+RUN touch src/__init__.py && ls -la src/
 COPY requirements.txt .
 COPY .env.example .
 
