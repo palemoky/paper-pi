@@ -19,8 +19,41 @@ except ImportError:
     from src.drivers.factory import get_driver
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 logger = logging.getLogger(__name__)
+
+# --- DEBUG START ---
+print("-" * 50)
+print(f"DEBUG: Python {sys.version}")
+print(f"DEBUG: GPIOZERO_PIN_FACTORY = {os.environ.get('GPIOZERO_PIN_FACTORY')}")
+
+try:
+    import RPi.GPIO as GPIO
+    print(f"DEBUG: RPi.GPIO imported successfully. Version: {GPIO.VERSION}")
+    print(f"DEBUG: RPi.GPIO info: {GPIO.RPI_INFO}")
+except Exception as e:
+    print(f"DEBUG: CRITICAL - Failed to import RPi.GPIO: {e}")
+    import traceback
+    traceback.print_exc()
+
+try:
+    import gpiozero
+    print(f"DEBUG: gpiozero imported. Version: {gpiozero.__version__}")
+    # 尝试强制加载 factory
+    from gpiozero.pins.rpigpio import RPiGPIOFactory
+    print("DEBUG: RPiGPIOFactory loaded class successfully")
+except Exception as e:
+    print(f"DEBUG: CRITICAL - Failed to inspect gpiozero: {e}")
+    import traceback
+    traceback.print_exc()
+print("-" * 50)
+# --- DEBUG END ---
 
 
 def is_in_quiet_hours():
