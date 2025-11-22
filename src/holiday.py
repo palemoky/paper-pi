@@ -6,7 +6,7 @@ class HolidayManager:
     def __init__(self):
         pass
 
-    def get_holiday(self):
+    def get_holiday(self) -> dict[str, str] | None:
         """
         检查今天是否是特殊节日
         Returns:

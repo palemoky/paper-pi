@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 获取项目根目录
@@ -34,16 +33,16 @@ class Settings(BaseSettings):
     FONT_PATH: str = str(BASE_DIR / "resources" / "Font.ttc")
 
     # 列表内容
-    LIST_GOALS: List[str] = [
+    LIST_GOALS: list[str] = [
         "1. English Practice (Daily)",
         "2. Daily Gym Workout Routine",
     ]
-    LIST_MUST: List[str] = [
+    LIST_MUST: list[str] = [
         "Finish Python Code",
         "Email the Manager",
         "Buy Milk and Bread"
     ]
-    LIST_OPTIONAL: List[str] = [
+    LIST_OPTIONAL: list[str] = [
         "Read 'The Great Gatsby'",
         "Clean the Living Room",
         "Sleep Early"
