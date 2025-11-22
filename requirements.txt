@@ -9,4 +9,4 @@ gpiozero
 spidev
 pytest
 pytest-asyncio
-rpi-lgpio
+gpiod
