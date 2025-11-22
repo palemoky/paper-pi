@@ -238,14 +238,15 @@ class Renderer:
         # 绘制图标 (如果有)
         if icon_type:
             icon_y = center_y - 50
-            if icon_type == "birthday":
-                self.draw_icon_cake(draw, center_x, icon_y, size=80)
-            elif icon_type == "heart":
-                self.draw_icon_heart(draw, center_x, icon_y, size=80)
-            elif icon_type == "lantern":
-                self.draw_icon_lantern(draw, center_x, icon_y, size=80)
-            else:
-                self.draw_icon_star(draw, center_x, icon_y, size=80)
+            match icon_type:
+                case "birthday":
+                    self.draw_icon_cake(draw, center_x, icon_y, size=80)
+                case "heart":
+                    self.draw_icon_heart(draw, center_x, icon_y, size=80)
+                case "lantern":
+                    self.draw_icon_lantern(draw, center_x, icon_y, size=80)
+                case _:
+                    self.draw_icon_star(draw, center_x, icon_y, size=80)
         
         # 绘制标题
         self.draw_centered_text(draw, center_x, center_y + 30, title, self.font_l)

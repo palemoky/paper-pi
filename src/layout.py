@@ -113,96 +113,98 @@ class DashboardLayout:
         r = self.renderer
         item_type = item_data["type"]
 
-        if item_type == "weather":
-            data = item_data["data"]
-            # 第一行：城市 温度
-            r.draw_centered_text(
-                draw,
-                center_x,
-                top_y,
-                f"{Config.CITY_NAME} {data['temp']}°",
-                font=r.font_m,
-                align_y_center=False,
-            )
+        match item_type:
+            case "weather":
+                data = item_data["data"]
+                # 第一行：城市 温度
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    top_y,
+                    f"{Config.CITY_NAME} {data['temp']}°",
+                    font=r.font_m,
+                    align_y_center=False,
+                )
 
-            # 第二行：图标 + 描述
-            icon_y = top_y + 55
-            w_main = data["icon"]  # OpenWeatherMap main status
+                # 第二行：图标 + 描述
+                icon_y = top_y + 55
+                w_main = data["icon"]  # OpenWeatherMap main status
 
-            # 根据天气状态选择图标
-            icon_x = center_x + self.WEATHER_ICON_OFFSET_X
-            icon_size = self.WEATHER_ICON_SIZE
-            
-            if "Clear" in w_main or "Sun" in w_main:
-                r.draw_icon_sun(draw, icon_x, icon_y, size=icon_size)
-            elif "Rain" in w_main or "Drizzle" in w_main:
-                r.draw_icon_rain(draw, icon_x, icon_y, size=icon_size)
-            elif "Snow" in w_main:
-                r.draw_icon_snow(draw, icon_x, icon_y, size=icon_size)
-            elif "Thunder" in w_main:
-                r.draw_icon_thunder(draw, icon_x, icon_y, size=icon_size)
-            else:
-                # 默认 clouds
-                r.draw_icon_cloud(draw, icon_x, icon_y, size=icon_size)
+                # 根据天气状态选择图标
+                icon_x = center_x + self.WEATHER_ICON_OFFSET_X
+                icon_size = self.WEATHER_ICON_SIZE
+                
+                match w_main:
+                    case _ if "Clear" in w_main or "Sun" in w_main:
+                        r.draw_icon_sun(draw, icon_x, icon_y, size=icon_size)
+                    case _ if "Rain" in w_main or "Drizzle" in w_main:
+                        r.draw_icon_rain(draw, icon_x, icon_y, size=icon_size)
+                    case _ if "Snow" in w_main:
+                        r.draw_icon_snow(draw, icon_x, icon_y, size=icon_size)
+                    case _ if "Thunder" in w_main:
+                        r.draw_icon_thunder(draw, icon_x, icon_y, size=icon_size)
+                    case _:
+                        # 默认 clouds
+                        r.draw_icon_cloud(draw, icon_x, icon_y, size=icon_size)
 
-            desc = data["desc"]
-            if desc == "Clouds":
-                desc = "Cloudy"
-            if desc == "Thunderstorm":
-                desc = "Storm"
+                desc = data["desc"]
+                if desc == "Clouds":
+                    desc = "Cloudy"
+                if desc == "Thunderstorm":
+                    desc = "Storm"
 
-            draw.text((center_x, icon_y - 12), desc, font=r.font_s, fill=0)
+                draw.text((center_x, icon_y - 12), desc, font=r.font_s, fill=0)
 
-        elif item_type == "date":
-            data = item_data["data"]
-            r.draw_centered_text(
-                draw,
-                center_x,
-                top_y + 5,
-                data.strftime("%a, %d"),
-                font=r.font_date_big,
-                align_y_center=False,
-            )
-            r.draw_centered_text(
-                draw,
-                center_x,
-                top_y + 50,
-                data.strftime("%b %Y"),
-                font=r.font_date_small,
-                align_y_center=False,
-            )
+            case "date":
+                data = item_data["data"]
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    top_y + 5,
+                    data.strftime("%a, %d"),
+                    font=r.font_date_big,
+                    align_y_center=False,
+                )
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    top_y + 50,
+                    data.strftime("%b %Y"),
+                    font=r.font_date_small,
+                    align_y_center=False,
+                )
 
-        elif item_type == "time":
-            data = item_data["data"]
-            r.draw_centered_text(
-                draw, center_x, top_y, "Updated", font=r.font_s, align_y_center=False
-            )
-            r.draw_centered_text(
-                draw,
-                center_x,
-                top_y + 35,
-                data.strftime("%H:%M"),
-                font=r.font_time,
-                align_y_center=False,
-            )
+            case "time":
+                data = item_data["data"]
+                r.draw_centered_text(
+                    draw, center_x, top_y, "Updated", font=r.font_s, align_y_center=False
+                )
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    top_y + 35,
+                    data.strftime("%H:%M"),
+                    font=r.font_time,
+                    align_y_center=False,
+                )
 
-        elif item_type == "custom":
-            r.draw_centered_text(
-                draw,
-                center_x,
-                top_y,
-                item_data["label"],
-                font=r.font_s,
-                align_y_center=False,
-            )
-            r.draw_centered_text(
-                draw,
-                center_x,
-                top_y + 35,
-                item_data["value"],
-                font=r.font_time,
-                align_y_center=False,
-            )
+            case "custom":
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    top_y,
+                    item_data["label"],
+                    font=r.font_s,
+                    align_y_center=False,
+                )
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    top_y + 35,
+                    item_data["value"],
+                    font=r.font_time,
+                    align_y_center=False,
+                )
 
     def _draw_lists(self, draw):
         """
