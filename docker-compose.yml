@@ -11,6 +11,5 @@ services:
       - TZ=${TIMEZONE:-Asia/Shanghai}
     volumes:
       - ./.env:/app/.env:ro  # 只读挂载 .env
-      - ./data_cache.json:/app/data_cache.json # 持久化缓存
-      - ./screenshot.bmp:/app/screenshot.bmp # 查看截图
+      - ./data:/app/data     # 挂载数据目录 (存放 cache.json 和 screenshot.bmp)
     restart: unless-stopped

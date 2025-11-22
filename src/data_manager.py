@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class DataManager:
     def __init__(self):
-        self.cache_file = Path(BASE_DIR) / "data_cache.json"
+        self.cache_file = Config.DATA_DIR / "data_cache.json"
         self.client = None
 
     async def __aenter__(self):

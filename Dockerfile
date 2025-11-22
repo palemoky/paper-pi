@@ -67,5 +67,9 @@ COPY --from=downloader /tmp/e-Paper/RaspberryPi_JetsonNano/python/pic/Font.ttc r
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
+# 创建数据目录并声明卷
+RUN mkdir -p /app/data && chown -R root:root /app/data
+VOLUME /app/data
+
 # 启动命令
 CMD ["python", "src/main.py"]

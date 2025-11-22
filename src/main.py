@@ -85,7 +85,7 @@ async def main():
                 img = layout.create_image(epd.width, epd.height, data)
 
                 if Config.IS_SCREENSHOT_MODE:
-                    img.save("screenshot.bmp")
+                    img.save(Config.DATA_DIR / "screenshot.bmp")
                     logger.info("Saved screenshot.bmp")
 
                 # 3. 显示 (硬件IO)

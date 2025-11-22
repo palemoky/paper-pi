@@ -31,6 +31,12 @@ class Settings(BaseSettings):
 
     # 路径配置
     FONT_PATH: str = str(BASE_DIR / "resources" / "Font.ttc")
+    DATA_DIR: Path = BASE_DIR / "data"
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # 确保数据目录存在
+        self.DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     # 列表内容
     LIST_GOALS: list[str] = [
