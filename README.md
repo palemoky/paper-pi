@@ -1,9 +1,9 @@
 # E-Ink Dashboard
 
-[![Docker Hub](https://img.shields.io/docker/v/palemoky/eink-dashboard?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/palemoky/eink-dashboard)
-[![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/eink-dashboard/latest)](https://hub.docker.com/r/palemoky/eink-dashboard)
-[![GitHub](https://img.shields.io/github/license/palemoky/eink-dashboard)](https://github.com/palemoky/eink-dashboard)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/palemoky/eink-dashboard/docker-build.yml?branch=main)](https://github.com/palemoky/eink-dashboard/actions)
+[![Docker Hub](https://img.shields.io/docker/v/palemoky/eInk-Panel?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/palemoky/eInk-Panel)
+[![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/eInk-Panel/latest)](https://hub.docker.com/r/palemoky/eInk-Panel)
+[![GitHub](https://img.shields.io/github/license/palemoky/eInk-Panel)](https://github.com/palemoky/eInk-Panel)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/palemoky/eInk-Panel/docker-build.yml?branch=main)](https://github.com/palemoky/eInk-Panel/actions)
 
 A personalized, asynchronous dashboard for Waveshare E-Ink displays, built with Python 3.13 and Docker.
 
@@ -15,14 +15,14 @@ The easiest way to run is using Docker - it handles all dependencies and driver 
 
 ```bash
 # Pull the latest image
-docker pull palemoky/eink-dashboard:latest
+docker pull palemoky/eInk-Panel:latest
 
 # Or use GitHub Container Registry
-docker pull ghcr.io/palemoky/eink-dashboard:latest
+docker pull ghcr.io/palemoky/eInk-Panel:latest
 
 # Run with docker-compose (recommended)
-git clone https://github.com/palemoky/eink-dashboard.git
-cd eink-dashboard
+git clone https://github.com/palemoky/eInk-Panel.git
+cd eInk-Panel
 cp .env.example .env
 # Edit .env with your API keys
 docker-compose up -d
@@ -113,6 +113,6 @@ MIT License - Copyright (c) 2025 Palemoky
 
 ## 🔗 Links
 
-- [GitHub Repository](https://github.com/palemoky/eink-dashboard)
-- [Docker Hub](https://hub.docker.com/r/palemoky/eink-dashboard)
-- [GitHub Packages](https://github.com/palemoky/eink-dashboard/pkgs/container/eink-dashboard)
+- [GitHub Repository](https://github.com/palemoky/eInk-Panel)
+- [Docker Hub](https://hub.docker.com/r/palemoky/eInk-Panel)
+- [GitHub Packages](https://github.com/palemoky/eInk-Panel/pkgs/container/eInk-Panel)
