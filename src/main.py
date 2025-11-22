@@ -59,8 +59,11 @@ async def main():
     # 使用 DataManager 上下文管理器 (管理 HTTP Client)
     async with DataManager() as dm:
         try:
+            # 首次启动执行一次完整清屏
+            logger.info("Performing initial clear...")
             epd.init()
             epd.clear()
+            epd.sleep()
 
             while True:
                 now = pendulum.now()
@@ -78,7 +81,7 @@ async def main():
                 # 1. 并发获取数据
                 data = await dm.fetch_all_data()
 
-                # 2. 生成图片 (CPU密集型，如果在树莓派上太慢可以考虑 run_in_executor)
+                # 2. 生成图片 (CPU密集型)
                 img = layout.create_image(epd.width, epd.height, data)
 
                 if Config.IS_SCREENSHOT_MODE:
@@ -86,8 +89,12 @@ async def main():
                     logger.info("Saved screenshot.bmp")
 
                 # 3. 显示 (硬件IO)
-                # 适配器模式下，display 直接接受 PIL Image
+                # 关键优化：遵循 Init -> Display -> Sleep 流程保护屏幕
+                logger.info("Updating display...")
+                epd.init()
                 epd.display(img)
+                epd.sleep()
+                logger.info("Display updated and put to sleep.")
 
                 # 4. 等待下一次刷新
                 await asyncio.sleep(Config.REFRESH_INTERVAL)

@@ -1,0 +1,41 @@
+import pytest
+import pendulum
+from src.holiday import HolidayManager
+from src.config import Config
+
+def test_holiday_birthday(monkeypatch):
+    # Mock Config
+    monkeypatch.setattr(Config, "BIRTHDAY", "11-22")
+    monkeypatch.setattr(Config, "USER_NAME", "TestUser")
+    
+    # Mock time to birthday
+    now = pendulum.datetime(2025, 11, 22)
+    monkeypatch.setattr(pendulum, "now", lambda: now)
+    
+    hm = HolidayManager()
+    holiday = hm.get_holiday()
+    
+    assert holiday is not None
+    assert holiday["name"] == "Birthday"
+    assert holiday["message"] == "To TestUser"
+
+def test_holiday_lunar_new_year(monkeypatch):
+    # 2025年1月29日是春节 (农历正月初一)
+    now = pendulum.datetime(2025, 1, 29)
+    monkeypatch.setattr(pendulum, "now", lambda: now)
+    
+    hm = HolidayManager()
+    holiday = hm.get_holiday()
+    
+    assert holiday is not None
+    assert holiday["name"] == "Spring Festival"
+
+def test_no_holiday(monkeypatch):
+    # 普通的一天
+    now = pendulum.datetime(2025, 6, 1)
+    monkeypatch.setattr(pendulum, "now", lambda: now)
+    
+    hm = HolidayManager()
+    holiday = hm.get_holiday()
+    
+    assert holiday is None
