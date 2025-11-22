@@ -51,14 +51,19 @@ class RaspberryPi:
     def __init__(self):
         import spidev
         import gpiozero
+        import RPi.GPIO as GPIO
 
         self.SPI = spidev.SpiDev()
         self.GPIO_RST_PIN = gpiozero.LED(self.RST_PIN)
         self.GPIO_DC_PIN = gpiozero.LED(self.DC_PIN)
         # self.GPIO_CS_PIN     = gpiozero.LED(self.CS_PIN)
         self.GPIO_PWR_PIN = gpiozero.LED(self.PWR_PIN)
-        # 使用 InputDevice 而非 Button，避免在 Docker 中设置边缘检测失败
-        self.GPIO_BUSY_PIN = gpiozero.InputDevice(self.BUSY_PIN, pull_up=None)
+        
+        # BUSY 引脚直接使用 RPi.GPIO，避免 gpiozero 的边缘检测
+        # 在 Docker 中，gpiozero 的任何 Input 类都会尝试设置边缘检测导致失败
+        self.GPIO = GPIO
+        self.GPIO.setmode(self.GPIO.BCM)
+        self.GPIO.setup(self.BUSY_PIN, self.GPIO.IN)
 
     def digital_write(self, pin, value):
         if pin == self.RST_PIN:
@@ -84,7 +89,7 @@ class RaspberryPi:
 
     def digital_read(self, pin):
         if pin == self.BUSY_PIN:
-            return self.GPIO_BUSY_PIN.value
+            return self.GPIO.input(self.BUSY_PIN)
         elif pin == self.RST_PIN:
             return self.RST_PIN.value
         elif pin == self.DC_PIN:
@@ -158,7 +163,8 @@ class RaspberryPi:
             self.GPIO_DC_PIN.close()
             # self.GPIO_CS_PIN.close()
             self.GPIO_PWR_PIN.close()
-            self.GPIO_BUSY_PIN.close()
+            # 清理 RPi.GPIO 对 BUSY 引脚的设置
+            self.GPIO.cleanup(self.BUSY_PIN)
 
 
 class JetsonNano:
