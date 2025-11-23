@@ -18,15 +18,36 @@ except ImportError:
     from src.data_manager import DataManager
     from src.drivers.factory import get_driver
 
-# 配置日志
+# 配置日志（支持环境变量控制日志级别）
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(
-    level=logging.INFO,
+    level=LOG_LEVEL,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)
+
+# 全局变量用于信号处理
+_driver = None
+
+def signal_handler(signum, frame):
+    """处理 SIGTERM/SIGINT 信号，确保优雅关闭"""
+    logger.info(f"\n🛑 Received signal {signum}, shutting down gracefully...")
+    if _driver:
+        try:
+            logger.info("Putting display to sleep...")
+            _driver.sleep()
+            logger.info("✅ Display sleep successful")
+        except Exception as e:
+            logger.error(f"Error during shutdown: {e}")
+    sys.exit(0)
+
+# 注册信号处理器
+import signal
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
 
 
 def is_in_quiet_hours():
@@ -55,10 +76,23 @@ def is_in_quiet_hours():
 
 
 async def main():
-    logger.info("Starting Dashboard...")
+    """主函数"""
+    global _driver
     
-    # 使用工厂获取驱动
-    epd = get_driver()
+    # 验证必需的环境变量
+    try:
+        Config.validate_required()
+    except ValueError as e:
+        logger.error(str(e))
+        return
+    
+    logger.info("Starting E-Ink Panel Dashboard...")
+    logger.info(f"Refresh interval: {Config.REFRESH_INTERVAL}s")
+    logger.info(f"Quiet hours: {Config.QUIET_START_HOUR}:00 - {Config.QUIET_END_HOUR}:00")
+    
+    # 初始化驱动
+    _driver = get_driver()
+    epd = _driver  # 保持局部变量以兼容现有代码
     
     layout = DashboardLayout()
 

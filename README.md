@@ -37,11 +37,13 @@ docker-compose up -d
 
 *   **Information at a Glance**:
     *   Real-time Weather (OpenWeatherMap)
-    *   GitHub Contributions Graph & Stats
+    *   GitHub Contributions - **Flexible Stats** (Daily/Monthly/Yearly)
     *   Bitcoin Price & 24h Change
     *   VPS Data Usage
+    *   **Douban Stats** (Books/Movies/Music read this year)
     *   Weekly Progress Ring
     *   Custom To-Do Lists
+*   **Year-End Summary**: On December 31st, automatically displays a full-screen summary of your annual GitHub contributions (total, daily average, max day)
 *   **Holiday Greetings**: Automatically displays full-screen greeting cards on:
     *   Birthdays & Anniversaries (Configurable)
     *   Lunar New Year (Spring Festival)
@@ -55,6 +57,7 @@ docker-compose up -d
     *   **Plugin-based Drivers**: Supports multiple Waveshare EPD models via dynamic loading.
     *   **Auto-Update Drivers**: Docker build automatically pulls the latest drivers from the official Waveshare repository.
     *   **Robust**: Automatic retries for network requests and data caching.
+    *   **Graceful Shutdown**: Properly handles SIGTERM/SIGINT to ensure display sleep.
 
 ## 🖥️ Hardware Support
 
@@ -68,15 +71,20 @@ docker-compose up -d
 | :--- | :--- | :--- |
 | `EPD_MODEL` | Driver model name (e.g., `epd7in5_V2`, `epd2in13_V3`) | `epd7in5_V2` |
 | `MOCK_EPD` | Set to `true` to run without hardware (generates images only) | `false` |
+| `LOG_LEVEL` | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
 | `USER_NAME` | Your name for greetings | `Palemoky` |
 | `BIRTHDAY` | Your birthday (MM-DD) | - |
 | `ANNIVERSARY`| Your anniversary (MM-DD) | - |
 | `REFRESH_INTERVAL` | Refresh interval in seconds | `600` |
 | `QUIET_START_HOUR` | Start of quiet hours (24h) | `1` |
 | `QUIET_END_HOUR` | End of quiet hours (24h) | `6` |
-| `OPENWEATHER_API_KEY` | OpenWeatherMap API key | - |
-| `GITHUB_USERNAME` | GitHub username for contributions | - |
-| `GITHUB_TOKEN` | GitHub personal access token | - |
+| `OPENWEATHER_API_KEY` | OpenWeatherMap API key (required) | - |
+| `CITY_NAME` | City name for weather | `Beijing` |
+| `GITHUB_USERNAME` | GitHub username for contributions (required) | - |
+| `GITHUB_TOKEN` | GitHub personal access token (required) | - |
+| `GITHUB_STATS_MODE` | GitHub stats mode: `day`, `month`, or `year` | `day` |
+| `DOUBAN_ID` | Douban user ID (optional, for book/movie stats) | - |
+| `VPS_API_KEY` | VPS API key (optional) | - |
 
 ## 🛠️ Local Development
 
@@ -105,6 +113,32 @@ docker-compose up -d
 *   `src/layout.py`: UI layout and drawing logic.
 *   `src/renderer.py`: Low-level drawing primitives.
 *   `src/data_manager.py`: Async data fetching and caching.
+
+## 🔧 Troubleshooting
+
+### Missing Environment Variables
+If you see errors about missing configuration, ensure all required variables are set in `.env`:
+```bash
+cp .env.example .env
+# Edit .env and add your API keys
+```
+
+### Display Not Updating
+- Check SPI is enabled: `sudo raspi-config` → Interface Options → SPI → Yes
+- Verify device permissions: `ls -l /dev/spi* /dev/gpiomem`
+- Check logs: `docker-compose logs -f eink-panel`
+
+### GPIO Errors in Docker
+Ensure `docker-compose.yml` has:
+```yaml
+privileged: true
+devices:
+  - /dev/spidev0.0:/dev/spidev0.0
+  - /dev/gpiomem:/dev/gpiomem
+  - /dev/mem:/dev/mem
+volumes:
+  - /sys:/sys
+```
 
 ## 📝 License
 

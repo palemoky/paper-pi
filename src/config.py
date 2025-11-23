@@ -40,6 +40,32 @@ class Settings(BaseSettings):
         # 确保数据目录存在
         self.DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+    def validate_required(self):
+        """验证必需的环境变量"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        required = {
+            'OPENWEATHER_API_KEY': 'OpenWeatherMap API key (get from https://openweathermap.org/api)',
+            'GITHUB_USERNAME': 'GitHub username',
+            'GITHUB_TOKEN': 'GitHub personal access token (get from https://github.com/settings/tokens)'
+        }
+        
+        missing = []
+        for key, desc in required.items():
+            value = getattr(self, key, "")
+            if not value or value == "":
+                missing.append(f"  • {key}: {desc}")
+        
+        if missing:
+            logger.error("❌ Missing required environment variables:")
+            for item in missing:
+                logger.error(item)
+            logger.error("\nPlease set these variables in your .env file or environment.")
+            raise ValueError("Configuration incomplete. See error messages above.")
+        
+        logger.info("✅ All required environment variables are set")
+
     # 列表内容
     LIST_GOALS: list[str] = [
         "1. English Practice (Daily)",

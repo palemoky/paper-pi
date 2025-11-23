@@ -28,6 +28,13 @@ jobs:
         run: |
           PYTHONPATH=. pytest tests/
 
+      - name: Code quality checks
+        run: |
+          pip install black isort ruff
+          black --check src/ tests/
+          isort --check src/ tests/
+          ruff check src/ tests/
+
       - name: Notify via Xiaomi Box
         if: failure()
         env:
