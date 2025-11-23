@@ -19,23 +19,44 @@ class HolidayManager:
         today_str = now.format("MM-DD")
         lunar = LunarDate.from_solar_date(now.year, now.month, now.day)
 
-        # 1. 优先匹配公历日期 (包括配置的生日/纪念日)
-        # Python 的 match-case 支持使用 dotted name (如 Config.BIRTHDAY) 作为匹配模式
+        # 收集所有匹配的节日
+        matched_holidays = []
+
+        # 1. 检查公历节日
+        if Config.BIRTHDAY and today_str == Config.BIRTHDAY:
+            matched_holidays.append("birthday")
+
+        if Config.ANNIVERSARY and today_str == Config.ANNIVERSARY:
+            matched_holidays.append("anniversary")
+
+        # 2. 特殊情况：生日和纪念日在同一天
+        if "birthday" in matched_holidays and "anniversary" in matched_holidays:
+            return {
+                "name": "Birthday & Anniversary",
+                "title": "Double Celebration!",
+                "message": f"Happy Birthday & Anniversary, {Config.USER_NAME}!",
+                "icon": "heart",
+            }
+
+        # 3. 单独的生日或纪念日
+        if "birthday" in matched_holidays:
+            return {
+                "name": "Birthday",
+                "title": "Happy Birthday!",
+                "message": f"To {Config.USER_NAME}",
+                "icon": "birthday",
+            }
+
+        if "anniversary" in matched_holidays:
+            return {
+                "name": "Anniversary",
+                "title": "Happy Anniversary!",
+                "message": "Love & Peace",
+                "icon": "heart",
+            }
+
+        # 4. 其他公历节日
         match today_str:
-            case Config.BIRTHDAY:
-                return {
-                    "name": "Birthday",
-                    "title": "Happy Birthday!",
-                    "message": f"To {Config.USER_NAME}",
-                    "icon": "birthday",
-                }
-            case Config.ANNIVERSARY:
-                return {
-                    "name": "Anniversary",
-                    "title": "Happy Anniversary!",
-                    "message": "Love & Peace",
-                    "icon": "heart",
-                }
             case "01-01":
                 return {
                     "name": "New Year",
@@ -51,7 +72,7 @@ class HolidayManager:
                     "icon": "star",
                 }
 
-        # 2. 匹配农历日期
+        # 5. 匹配农历日期
         match (lunar.month, lunar.day):
             case (1, 1):
                 return {
@@ -68,7 +89,7 @@ class HolidayManager:
                     "icon": "lantern",
                 }
 
-        # 3. 特殊逻辑：除夕 (需要计算明天是否是正月初一)
+        # 6. 特殊逻辑：除夕 (需要计算明天是否是正月初一)
         tomorrow = now.add(days=1)
         tomorrow_lunar = LunarDate.from_solar_date(tomorrow.year, tomorrow.month, tomorrow.day)
         if tomorrow_lunar.month == 1 and tomorrow_lunar.day == 1:
