@@ -96,7 +96,7 @@ class DashboardLayout:
                 "type": "custom",
                 "label": "Palemoky",
                 "value": "Stay Focused",
-            },  # 示例自定义
+            },
             {"type": "time", "data": now},
         ]
 
@@ -142,21 +142,22 @@ class DashboardLayout:
                 w_main = data["icon"]  # OpenWeatherMap main status
 
                 # 根据天气状态选择图标
-                icon_x = center_x + self.WEATHER_ICON_OFFSET_X
-                icon_size = self.WEATHER_ICON_SIZE
+                # 图标在左(-35)，文字在右(+5)
+                icon_x = center_x - 35
+                icon_size = 30
 
                 match w_main:
                     case _ if "Clear" in w_main or "Sun" in w_main:
-                        r.draw_icon_sun(draw, icon_x, icon_y, size=icon_size)
+                        r.draw_icon_sun(draw, icon_x, icon_y - 15, size=icon_size)
                     case _ if "Rain" in w_main or "Drizzle" in w_main:
-                        r.draw_icon_rain(draw, icon_x, icon_y, size=icon_size)
+                        r.draw_icon_rain(draw, icon_x, icon_y - 15, size=icon_size)
                     case _ if "Snow" in w_main:
-                        r.draw_icon_snow(draw, icon_x, icon_y, size=icon_size)
+                        r.draw_icon_snow(draw, icon_x, icon_y - 15, size=icon_size)
                     case _ if "Thunder" in w_main:
-                        r.draw_icon_thunder(draw, icon_x, icon_y, size=icon_size)
+                        r.draw_icon_thunder(draw, icon_x, icon_y - 15, size=icon_size)
                     case _:
                         # 默认 clouds
-                        r.draw_icon_cloud(draw, icon_x, icon_y, size=icon_size)
+                        r.draw_icon_cloud(draw, icon_x, icon_y - 15, size=icon_size)
 
                 desc = data["desc"]
                 if desc == "Clouds":
@@ -164,7 +165,15 @@ class DashboardLayout:
                 if desc == "Thunderstorm":
                     desc = "Storm"
 
-                draw.text((center_x, icon_y - 12), desc, font=r.font_s, fill=0)
+                # 使用 r.draw_text 并居中对齐
+                r.draw_text(
+                    draw,
+                    center_x + 5,
+                    icon_y,
+                    desc,
+                    font=r.font_s,
+                    align_y_center=True,
+                )
 
             case "date":
                 data = item_data["data"]
@@ -308,7 +317,7 @@ class DashboardLayout:
 
         # 构建 BTC 字符串
         btc_val = f"${btc_data['usd']:,}"
-        btc_label = f"₿TC ({btc_data['usd_24h_change']:+.1f}%)"  # :+ 会在正数前加 + 号
+        btc_label = f"BTC ({btc_data['usd_24h_change']:+.1f}%)"  # :+ 会在正数前加 + 号
 
         # 构建 GitHub 标签
         mode = Config.GITHUB_STATS_MODE.lower()
@@ -319,17 +328,17 @@ class DashboardLayout:
         else:
             commit_label = "Commits (Day)"
 
-        # 定义底部组件（移除豆瓣）
+        # 定义底部组件 (恢复旧版布局：Weekly(Ring), Commits(Text), BTC(Text), VPS(Ring))
         footer_items = [
-            {"type": "number", "value": commits, "label": commit_label},
-            {"type": "number", "value": f"{vps_data}%", "label": "VPS Usage"},
-            {"type": "text_small", "value": btc_val, "label": btc_label},
-            {"type": "number", "value": f"{week_prog}%", "label": "Week Progress"},
+            {"label": "Weekly", "value": week_prog, "type": "ring"},
+            {"label": commit_label, "value": str(commits), "type": "text"},
+            {"label": btc_label, "value": btc_val, "type": "text"},
+            {"label": "VPS Data", "value": vps_data, "type": "ring"},
         ]
 
         # 计算动态布局参数
-        content_width = width - 20
-        start_x = 10
+        content_width = width - 40
+        start_x = 20
         slot_width = content_width / len(footer_items)
 
         # 循环绘制组件
@@ -343,21 +352,32 @@ class DashboardLayout:
                 self.FOOTER_LABEL_Y,
                 item["label"],
                 font=r.font_s,
-                align_y_center=True,
+                align_y_center=False,
             )
 
             # 根据类型绘制值
-            if item["type"] == "text_small":
+            if item["type"] == "ring":
+                radius = 32
+                # 画圆环
+                r.draw_progress_ring(
+                    draw,
+                    center_x,
+                    self.FOOTER_CENTER_Y,
+                    radius,
+                    item["value"],
+                    thickness=6,
+                )
+                # 画圆环中间百分比 (小字体)
                 r.draw_centered_text(
                     draw,
                     center_x,
                     self.FOOTER_CENTER_Y,
-                    str(item["value"]),
-                    font=r.font_m,  # 使用中号字体
+                    f"{item['value']}%",
+                    font=r.font_xs,
                     align_y_center=True,
                 )
             else:
-                # 画大数字
+                # 画大数字 (text 类型)
                 r.draw_centered_text(
                     draw,
                     center_x,
