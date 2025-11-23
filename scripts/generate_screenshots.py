@@ -11,6 +11,7 @@ sys.path.insert(0, str(project_root))
 
 from src.config import Config  # noqa: E402
 from src.layout import DashboardLayout  # noqa: E402
+from src.wallpaper import WallpaperManager  # noqa: E402
 
 
 def generate_screenshot(scenario_name: str, mock_data: dict, mock_date: str = None):
@@ -205,7 +206,80 @@ def main():
         print(f"![{item['description']}]({rel_path})\n")
 
     print(f"\n✨ Generated {len(generated)} screenshots!")
-    print(f"📁 Location: {project_root / 'data/screenshots'}")
+    print(f"📁 Location: {project_root / 'screenshots'}")
+
+    # 生成壁纸
+    print("\n" + "=" * 50)
+    print("\n🎨 Generating Wallpapers\n")
+    print("=" * 50)
+
+    wallpaper_manager = WallpaperManager()
+    wallpaper_list = wallpaper_manager.get_wallpaper_list()
+
+    wallpaper_generated = []
+    for wallpaper_name in wallpaper_list:
+        try:
+            print(f"🖼️  Generating wallpaper: {wallpaper_name}")
+            image = wallpaper_manager.create_wallpaper(800, 480, wallpaper_name)
+            output_dir = project_root / "screenshots"  # output_dir is already defined above
+            output_path = output_dir / f"wallpaper_{wallpaper_name}.png"
+            image.save(output_path)
+            wallpaper_generated.append(
+                {"name": wallpaper_name, "path": output_path, "type": "wallpaper"}
+            )
+            print(f"✅ Saved to: {output_path}\n")
+        except Exception as e:
+            print(f"❌ Failed: {e}\n")
+
+    # 生成壁纸 README 片段
+    print("=" * 50)
+    print("\n📝 Wallpaper README.md snippet:\n")
+    print("## 🎨 Wallpapers\n")
+
+    # 按主题分组
+    themes = {
+        "Space": [
+            "solar_system",
+            "starship",
+            "earth_rise",
+            "saturn_rings",
+            "galaxy",
+            "moon_landing",
+            "mars_landscape",
+            "nebula",
+        ],
+        "Nature": [
+            "snow_mountain",
+            "cherry_blossom",
+            "sunset_beach",
+            "forest_path",
+            "northern_lights",
+        ],
+        "Warm": ["family_home", "couple_love", "coffee_time", "reading_room", "rainy_window"],
+        "Animals & Plants": [
+            "cat_nap",
+            "dog_play",
+            "bird_tree",
+            "butterfly_garden",
+            "whale_ocean",
+            "panda_bamboo",
+            "flower_meadow",
+            "cactus_desert",
+        ],
+    }
+
+    for theme, names in themes.items():
+        print(f"### {theme} Theme\n")
+        for name in names:
+            item = next((w for w in wallpaper_generated if w["name"] == name), None)
+            if item:
+                rel_path = item["path"].relative_to(project_root)
+                display_name = name.replace("_", " ").title()
+                print(f"#### {display_name}")
+                print(f"![{display_name}]({rel_path})\n")
+
+    print(f"\n✨ Generated {len(wallpaper_generated)} wallpapers!")
+    print(f"📁 Total files: {len(generated) + len(wallpaper_generated)}")
 
 
 if __name__ == "__main__":
