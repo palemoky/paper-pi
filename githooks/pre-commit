@@ -5,51 +5,51 @@
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT" || exit 1
 
-echo "🔍 Checking staged Python files..."
+printf "🔍 Checking staged Python files...\n"
 
 # 查找已暂存的 Python 文件
 staged_py_files=$(git diff --cached --name-only --diff-filter=ACMR | grep "\.py$")
 
 # 如果没有 Python 文件被暂存，直接退出
 if [ -z "$staged_py_files" ]; then
-    echo "✅ No Python files to check"
+    printf "✅ No Python files to check\n"
     exit 0
 fi
 
-echo "📝 Found Python files to format:"
-echo "$staged_py_files"
+printf "📝 Found Python files to format:\n"
+printf "%s\n" "$staged_py_files"
 
 # 运行 black 格式化
-echo ""
-echo "🎨 Running black..."
+printf "\n"
+printf "🎨 Running black...\n"
 if ! black --check $staged_py_files 2>&1; then
-    echo "⚠️  Code needs formatting. Auto-formatting..."
+    printf "⚠️  Code needs formatting. Auto-formatting...\n"
     black $staged_py_files
     # 重新暂存格式化后的文件
     echo "$staged_py_files" | xargs git add
-    echo "✅ Files formatted with black"
+    printf "✅ Files formatted with black\n"
 fi
 
 # 运行 isort 整理导入
-echo ""
-echo "📦 Running isort..."
+printf "\n"
+printf "📦 Running isort...\n"
 if ! isort --check $staged_py_files 2>&1; then
-    echo "⚠️  Imports need sorting. Auto-sorting..."
+    printf "⚠️  Imports need sorting. Auto-sorting...\n"
     isort $staged_py_files
     # 重新暂存排序后的文件
     echo "$staged_py_files" | xargs git add
-    echo "✅ Imports sorted with isort"
+    printf "✅ Imports sorted with isort\n"
 fi
 
 # 运行 ruff 检查代码质量
-echo ""
-echo "🔎 Running ruff..."
+printf "\n"
+printf "🔎 Running ruff...\n"
 if ! ruff check $staged_py_files; then
-    echo "❌ Ruff found issues. Please fix them before committing."
-    echo "💡 Tip: Run 'ruff check --fix' to auto-fix some issues"
+    printf "❌ Ruff found issues. Please fix them before committing.\n"
+    printf "💡 Tip: Run 'ruff check --fix' to auto-fix some issues\n"
     exit 1
 fi
 
-echo ""
-echo "✅ All checks passed! Ready to commit."
+printf "\n"
+printf "✅ All checks passed! Ready to commit.\n"
 exit 0

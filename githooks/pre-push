@@ -9,21 +9,22 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 Running pre-push checks...${NC}"
+printf "${BLUE}🚀 Running pre-push checks...${NC}\n"
 
 # 获取 Git 仓库的根目录
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT" || exit 1
 
-echo "${BLUE}🚀 Pre-push: Checking Python changes...${NC}"
+printf "${BLUE}🚀 Pre-push: Checking Python changes...${NC}\n"
 
 # Git 在 pre-push 钩子中通过标准输入提供要推送的引用信息
 while read local_ref local_sha remote_ref remote_sha; do
     # 跳过 tag 推送
     if [[ "$remote_ref" =~ ^refs/tags/ ]]; then
-        echo "${YELLOW}⏭️  Skipping tests for tag push: $remote_ref${NC}"
+        printf "${YELLOW}⏭️  Skipping tests for tag push: $remote_ref${NC}\n"
         continue
     fi
 
@@ -41,36 +42,36 @@ while read local_ref local_sha remote_ref remote_sha; do
         commit_range="$remote_sha..$local_sha"
     fi
 
-    echo "${CYAN}📝 Checking commits: $commit_range${NC}"
+    printf "${CYAN}📝 Checking commits: $commit_range${NC}\n"
 
     # 获取该范围内所有被修改的文件
     changed_files=$(git diff-tree --no-commit-id --name-only -r "$commit_range")
 
     # 检查是否有 Python 文件被修改
     if echo "$changed_files" | grep -q "\.py$"; then
-        echo "${YELLOW}🐍 Detected Python file changes. Running tests...${NC}"
-        echo ""
+        printf "${YELLOW}🐍 Detected Python file changes. Running tests...${NC}\n"
+        printf "\n"
 
         # 运行 pytest（并发）
-        echo "${BLUE}🧪 Running pytest with parallel execution...${NC}"
+        printf "${BLUE}🧪 Running pytest with parallel execution...${NC}\n"
         if ! PYTHONPATH=. pytest -n auto tests/; then
-            echo ""
-            echo "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            echo "${RED}❌ ERROR: Python tests failed.${NC}"
-            echo "${RED}Push aborted. Please fix the tests before pushing.${NC}"
-            echo "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            printf "\n"
+            printf "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+            printf "${RED}❌ ERROR: Python tests failed.${NC}\n"
+            printf "${RED}Push aborted. Please fix the tests before pushing.${NC}\n"
+            printf "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
             exit 1
         fi
 
-        echo ""
-        echo "${GREEN}✅ All Python tests passed!${NC}"
+        printf "\n"
+        printf "${GREEN}✅ All Python tests passed!${NC}\n"
     else
-        echo "${CYAN}ℹ️  No Python files changed, skipping tests.${NC}"
+        printf "${CYAN}ℹ️  No Python files changed, skipping tests.${NC}\n"
     fi
 done
 
-echo ""
-echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo "${GREEN}✅ All checks passed. Proceeding with push.${NC}"
-echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+printf "\n"
+printf "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+printf "${GREEN}✅ All checks passed. Proceeding with push.${NC}\n"
+printf "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 exit 0
