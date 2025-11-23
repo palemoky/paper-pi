@@ -124,23 +124,38 @@ async def main():
                 # 1. 并发获取数据
                 data = await dm.fetch_all_data()
 
-                # 2. 生成图片 (CPU密集型)
-                img = layout.create_image(epd.width, epd.height, data)
+                # 2. 生成图像
+                image = layout.create_image(epd.width, epd.height, data)
 
                 if Config.IS_SCREENSHOT_MODE:
-                    img.save(Config.DATA_DIR / "screenshot.bmp")
+                    image.save(Config.DATA_DIR / "screenshot.bmp")
                     logger.info("Saved screenshot.bmp")
 
-                # 3. 显示 (硬件IO)
+                # 3. 显示到屏幕
                 # 关键优化：遵循 Init -> Display -> Sleep 流程保护屏幕
                 logger.info("Updating display...")
                 epd.init()
-                epd.display(img)
+                epd.display(image)
                 epd.sleep()
                 logger.info("Display updated and put to sleep.")
 
-                # 4. 等待下一次刷新
-                await asyncio.sleep(Config.REFRESH_INTERVAL)
+                # 4. 检查是否是节日
+                from .holiday import HolidayManager
+
+                holiday_manager = HolidayManager()
+                holiday = holiday_manager.get_holiday()
+
+                if holiday:
+                    # 如果是节日，显示祝福后等到第二天再刷新
+                    logger.info(f"🎉 Today is {holiday['name']}! Displaying greeting all day.")
+                    # 计算到明天凌晨的秒数
+                    tomorrow = now.add(days=1).start_of("day")
+                    sleep_until_tomorrow = (tomorrow - now).total_seconds()
+                    logger.info(f"Sleeping until tomorrow ({sleep_until_tomorrow:.0f}s)")
+                    await asyncio.sleep(sleep_until_tomorrow)
+                else:
+                    # 正常刷新间隔
+                    await asyncio.sleep(Config.REFRESH_INTERVAL)
 
         except KeyboardInterrupt:
             logger.info("Exiting...")
