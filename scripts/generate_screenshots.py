@@ -14,7 +14,9 @@ from src.layout import DashboardLayout  # noqa: E402
 from src.wallpaper import WallpaperManager  # noqa: E402
 
 
-def generate_screenshot(scenario_name: str, mock_data: dict, mock_date: str = None):
+def generate_screenshot(
+    scenario_name: str, mock_data: dict, mock_date: str = None, category: str = "dashboard"
+):
     """
     生成特定场景的截图
 
@@ -22,6 +24,7 @@ def generate_screenshot(scenario_name: str, mock_data: dict, mock_date: str = No
         scenario_name: 场景名称，用于文件名
         mock_data: 模拟数据
         mock_date: 模拟日期 (格式: "YYYY-MM-DD")，用于测试节日
+        category: 截图分类目录名
     """
     print(f"📸 Generating screenshot: {scenario_name}")
 
@@ -38,9 +41,9 @@ def generate_screenshot(scenario_name: str, mock_data: dict, mock_date: str = No
     else:
         image = layout.create_image(800, 480, mock_data)
 
-    # 保存截图
-    output_dir = project_root / "screenshots"
-    output_dir.mkdir(exist_ok=True)
+    # 保存截图到分类目录
+    output_dir = Config.DATA_DIR / "screenshots" / category
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{scenario_name}.png"
     image.save(output_path)
 
@@ -187,9 +190,26 @@ def main():
     for scenario in scenarios:
         if scenario["date"] or scenario["name"] == "normal_day":
             try:
-                path = generate_screenshot(scenario["name"], scenario["data"], scenario["date"])
+                # 确定分类
+                if "festival" in scenario.get("description", "").lower() or scenario.get("date"):
+                    category = "holidays"
+                elif "btc" in scenario["name"]:
+                    category = "market"
+                elif "github" in scenario["name"] or "activity" in scenario["name"]:
+                    category = "stats"
+                else:
+                    category = "dashboard"
+
+                path = generate_screenshot(
+                    scenario["name"], scenario["data"], scenario["date"], category
+                )
                 generated.append(
-                    {"name": scenario["name"], "path": path, "description": scenario["description"]}
+                    {
+                        "name": scenario["name"],
+                        "path": path,
+                        "description": scenario["description"],
+                        "category": category,
+                    }
                 )
                 print()
             except Exception as e:
@@ -200,13 +220,23 @@ def main():
     print("\n📝 README.md snippet:\n")
     print("## 📸 Screenshots\n")
 
+    # 按分类分组
+    categories = {}
     for item in generated:
-        rel_path = item["path"].relative_to(project_root)
-        print(f"### {item['description']}")
-        print(f"![{item['description']}]({rel_path})\n")
+        cat = item.get("category", "dashboard")
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(item)
+
+    for category, items in categories.items():
+        print(f"### {category.title()}\n")
+        for item in items:
+            rel_path = item["path"].relative_to(project_root)
+            print(f"#### {item['description']}")
+            print(f"![{item['description']}]({rel_path})\n")
 
     print(f"\n✨ Generated {len(generated)} screenshots!")
-    print(f"📁 Location: {project_root / 'screenshots'}")
+    print(f"📁 Location: {Config.DATA_DIR / 'screenshots'}")
 
     # 生成壁纸
     print("\n" + "=" * 50)
@@ -216,29 +246,9 @@ def main():
     wallpaper_manager = WallpaperManager()
     wallpaper_list = wallpaper_manager.get_wallpaper_list()
 
-    wallpaper_generated = []
-    for wallpaper_name in wallpaper_list:
-        try:
-            print(f"🖼️  Generating wallpaper: {wallpaper_name}")
-            image = wallpaper_manager.create_wallpaper(800, 480, wallpaper_name)
-            output_dir = project_root / "screenshots"  # output_dir is already defined above
-            output_path = output_dir / f"wallpaper_{wallpaper_name}.png"
-            image.save(output_path)
-            wallpaper_generated.append(
-                {"name": wallpaper_name, "path": output_path, "type": "wallpaper"}
-            )
-            print(f"✅ Saved to: {output_path}\n")
-        except Exception as e:
-            print(f"❌ Failed: {e}\n")
-
-    # 生成壁纸 README 片段
-    print("=" * 50)
-    print("\n📝 Wallpaper README.md snippet:\n")
-    print("## 🎨 Wallpapers\n")
-
-    # 按主题分组
-    themes = {
-        "Space": [
+    # 壁纸主题分类
+    wallpaper_themes = {
+        "space": [
             "solar_system",
             "starship",
             "earth_rise",
@@ -248,15 +258,15 @@ def main():
             "mars_landscape",
             "nebula",
         ],
-        "Nature": [
+        "nature": [
             "snow_mountain",
             "cherry_blossom",
             "sunset_beach",
             "forest_path",
             "northern_lights",
         ],
-        "Warm": ["family_home", "couple_love", "coffee_time", "reading_room", "rainy_window"],
-        "Animals & Plants": [
+        "warm": ["family_home", "couple_love", "coffee_time", "reading_room", "rainy_window"],
+        "animals": [
             "cat_nap",
             "dog_play",
             "bird_tree",
@@ -268,18 +278,67 @@ def main():
         ],
     }
 
-    for theme, names in themes.items():
-        print(f"### {theme} Theme\n")
-        for name in names:
-            item = next((w for w in wallpaper_generated if w["name"] == name), None)
-            if item:
+    wallpaper_generated = []
+    for wallpaper_name in wallpaper_list:
+        try:
+            # 确定主题分类
+            theme = "misc"
+            for theme_name, names in wallpaper_themes.items():
+                if wallpaper_name in names:
+                    theme = theme_name
+                    break
+
+            print(f"🖼️  Generating wallpaper: {wallpaper_name} ({theme})")
+            image = wallpaper_manager.create_wallpaper(800, 480, wallpaper_name)
+
+            # 保存到主题子目录
+            output_dir = Config.DATA_DIR / "screenshots" / "wallpapers" / theme
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_path = output_dir / f"{wallpaper_name}.png"
+            image.save(output_path)
+
+            wallpaper_generated.append(
+                {"name": wallpaper_name, "path": output_path, "theme": theme}
+            )
+            print(f"✅ Saved to: {output_path}\n")
+        except Exception as e:
+            print(f"❌ Failed: {e}\n")
+
+    # 生成壁纸 README 片段
+    print("=" * 50)
+    print("\n📝 Wallpaper README.md snippet:\n")
+    print("## 🎨 Wallpapers\n")
+
+    # 按主题分组显示
+    theme_display_names = {
+        "space": "Space Theme",
+        "nature": "Nature Theme",
+        "warm": "Warm Theme",
+        "animals": "Animals & Plants Theme",
+    }
+
+    for theme, display_name in theme_display_names.items():
+        theme_items = [w for w in wallpaper_generated if w.get("theme") == theme]
+        if theme_items:
+            print(f"### {display_name}\n")
+            for item in theme_items:
                 rel_path = item["path"].relative_to(project_root)
-                display_name = name.replace("_", " ").title()
-                print(f"#### {display_name}")
-                print(f"![{display_name}]({rel_path})\n")
+                print(f"#### {item['name'].replace('_', ' ').title()}")
+                print(f"![{item['name'].replace('_', ' ').title()}]({rel_path})\n")
 
     print(f"\n✨ Generated {len(wallpaper_generated)} wallpapers!")
     print(f"📁 Total files: {len(generated) + len(wallpaper_generated)}")
+    print("📂 Directory structure:")
+    print(f"   {Config.DATA_DIR.name}/screenshots/")
+    print("   ├── dashboard/")
+    print("   ├── holidays/")
+    print("   ├── market/")
+    print("   ├── stats/")
+    print("   └── wallpapers/")
+    print("       ├── space/")
+    print("       ├── nature/")
+    print("       ├── warm/")
+    print("       └── animals/")
 
 
 if __name__ == "__main__":
