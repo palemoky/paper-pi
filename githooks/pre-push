@@ -1,22 +1,32 @@
-#!/bin/sh
-# Pre-push hook for Python tests
+#!/bin/bash
+# Pre-push hook for Python projects
+# Runs pytest on staged Python files before pushing
 
-# 定义颜色常量
+set -e
+
+# ANSI color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-CYAN='\033[0;36m'
 NC='\033[0m' # No Color
+
+echo -e "${BLUE}🚀 Running pre-push checks...${NC}"
 
 # 获取 Git 仓库的根目录
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT" || exit 1
 
-echo "${CYAN}🚀 Pre-push: Checking Python changes...${NC}"
+echo "${BLUE}🚀 Pre-push: Checking Python changes...${NC}"
 
 # Git 在 pre-push 钩子中通过标准输入提供要推送的引用信息
 while read local_ref local_sha remote_ref remote_sha; do
+    # 跳过 tag 推送
+    if [[ "$remote_ref" =~ ^refs/tags/ ]]; then
+        echo "${YELLOW}⏭️  Skipping tests for tag push: $remote_ref${NC}"
+        continue
+    fi
+
     # 如果是删除分支操作，跳过
     if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
         continue
