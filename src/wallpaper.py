@@ -445,7 +445,7 @@ class WallpaperManager:
             (550, horizon_y - 100),
             (700, horizon_y - 70),
         ]
-        for i, (mx, my) in enumerate(mountains):
+        for _, (mx, my) in enumerate(mountains):
             draw.polygon([(mx - 80, horizon_y), (mx, my), (mx + 80, horizon_y)], fill=0)
 
         # 火星车
@@ -464,7 +464,6 @@ class WallpaperManager:
         """绘制星云壁纸"""
         r = self.renderer
         center_x = width // 2
-        center_y = height // 2
 
         # 标题
         r.draw_centered_text(draw, center_x, 30, "Nebula - Stellar Nursery", r.font_l)
