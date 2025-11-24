@@ -149,7 +149,11 @@ async def main():
                     # 截图模式：保存到文件
                     image.save("screenshot.png")
                     logger.info("Screenshot saved to screenshot.png")
-                    break
+                    # Continue to display on screen if driver is available
+                    if not _driver or getattr(_driver, "is_mock", False):
+                        # If mock driver and screenshot mode, we might want to exit?
+                        # But user reported loop, so let's just continue
+                        pass
 
                 # 3. 显示图像
                 epd.init()
