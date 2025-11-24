@@ -202,7 +202,7 @@ class QuoteProvider:
         Raises:
             Exception: If API request fails
         """
-        url = "https://api.quotable.io/random"
+        url = "http://api.quotable.io/random"
 
         with httpx.Client(timeout=5.0) as client:
             response = client.get(url)
