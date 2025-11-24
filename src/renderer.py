@@ -112,16 +112,24 @@ class Renderer:
                 # 加载图标
                 icon = Image.open(icon_path)
 
-                # 处理透明背景：先转换为 RGB（白色背景）
-                if icon.mode in ("RGBA", "LA", "P"):
+                # 处理透明背景：先转换为 RGBA（如果需要）
+                if icon.mode == "P":
+                    # Palette mode - convert to RGBA first to handle transparency properly
+                    icon = icon.convert("RGBA")
+                elif icon.mode == "LA":
+                    # Grayscale with alpha - convert to RGBA
+                    icon = icon.convert("RGBA")
+
+                # 然后转换为 RGB（白色背景）
+                if icon.mode == "RGBA":
                     # 创建白色背景
                     background = Image.new("RGB", icon.size, (255, 255, 255))
-                    # 如果有 alpha 通道，使用它来合成
-                    if icon.mode == "RGBA":
-                        background.paste(icon, mask=icon.split()[3])  # 使用 alpha 通道
-                    else:
-                        background.paste(icon)
+                    # 使用 alpha 通道合成
+                    background.paste(icon, mask=icon.split()[3])
                     icon = background
+                elif icon.mode != "RGB":
+                    # 其他模式直接转换为 RGB
+                    icon = icon.convert("RGB")
 
                 # 转换为黑白
                 icon = icon.convert("1")
