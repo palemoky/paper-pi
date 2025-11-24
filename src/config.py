@@ -30,10 +30,14 @@ class Settings(BaseSettings):
     # 时区配置 (使用 IANA 时区名称，如 'Asia/Shanghai', 'America/New_York', 'Europe/London')
     TIMEZONE: str = "Asia/Shanghai"
 
-    # 壁纸模式配置
-    WALLPAPER_MODE: bool = False  # 是否启用壁纸模式
-    WALLPAPER_NAME: str = ""  # 壁纸名称，留空则随机选择
-    # 可选: solar_system, starship, earth_rise, saturn_rings, galaxy, moon_landing, mars_landscape, nebula
+    # Display Configuration
+    DISPLAY_MODE: str = "dashboard"  # dashboard, quote, wallpaper
+
+    # Wallpaper Configuration (used when DISPLAY_MODE="wallpaper")
+    WALLPAPER_NAME: str = ""  # Leave empty for random
+
+    # Quote Configuration (used when DISPLAY_MODE="quote")
+    QUOTE_CACHE_HOURS: int = 1
 
     # 个性化配置
     USER_NAME: str = "Palemoky"
@@ -56,10 +60,6 @@ class Settings(BaseSettings):
     # 问候语配置
     GREETING_LABEL: str = "Palemoky"
     GREETING_TEXT: str = "Stay Focused"
-
-    # Quote display configuration
-    QUOTE_ENABLED: bool = True  # Enable quote display mode
-    QUOTE_CACHE_HOURS: int = 1  # Cache duration in hours (default: 1 hour)
 
     # GitHub 配置
     GITHUB_USERNAME: str = ""

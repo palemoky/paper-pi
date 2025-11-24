@@ -127,8 +127,11 @@ async def main():
 
                 logger.info(f"Refreshing at {current_time}")
 
-                # 检查是否启用壁纸模式
-                if Config.WALLPAPER_MODE:
+                # Mode switching logic
+                display_mode = Config.DISPLAY_MODE.lower()
+                logger.info(f"Current display mode: {display_mode}")
+
+                if display_mode == "wallpaper":
                     from .wallpaper import WallpaperManager
 
                     wallpaper_manager = WallpaperManager()
@@ -137,13 +140,37 @@ async def main():
                         epd.width, epd.height, wallpaper_name
                     )
                     logger.info(f"🎨 Wallpaper mode: {wallpaper_name or 'random'}")
-                else:
-                    # 正常模式：获取数据并生成图像
-                    # 1. 并发获取数据
+
+                elif display_mode == "quote":
+                    # Quote mode: fetch quote data only
+                    # We reuse DataManager but only need quote
+                    # For simplicity, we can fetch all data or just quote
+                    # Let's fetch all for now to keep it simple, or optimize later
                     data = await dm.fetch_all_data()
 
-                    # 2. 生成图像
+                    # Ensure we have a quote
+                    if not data.get("quote"):
+                        logger.warning(
+                            "Quote mode enabled but no quote found, falling back to dashboard"
+                        )
+                        image = layout.create_image(epd.width, epd.height, data)
+                    else:
+                        # Force quote display by passing only quote data to a specialized method
+                        # or by modifying data to ensure layout renders quote
+                        # Actually, layout.create_image handles quote if present AND enabled
+                        # We need to ensure layout knows we WANT quote mode
+                        # We will update layout.create_image to respect DISPLAY_MODE
+                        image = layout.create_image(epd.width, epd.height, data)
+                        logger.info("📜 Quote mode active")
+
+                else:
+                    # Default: Dashboard mode
+                    # 1. Fetch data
+                    data = await dm.fetch_all_data()
+
+                    # 2. Generate image
                     image = layout.create_image(epd.width, epd.height, data)
+                    logger.info("📊 Dashboard mode active")
 
                 if Config.IS_SCREENSHOT_MODE:
                     # 截图模式：保存到文件

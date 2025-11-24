@@ -81,7 +81,7 @@ class DashboardLayout:
             return image
 
         # Check for quote display mode
-        if Config.QUOTE_ENABLED and data.get("quote"):
+        if Config.DISPLAY_MODE == "quote" and data.get("quote"):
             self._draw_quote_screen(draw, width, height, data["quote"])
             return image
 
@@ -523,6 +523,29 @@ class DashboardLayout:
             quote: Quote dictionary with content, author, source, type
         """
         r = self.renderer
+
+        # Draw festive border
+        border_margin = 10
+        border_width = 4
+
+        # Outer rectangle
+        draw.rectangle(
+            (border_margin, border_margin, width - border_margin, height - border_margin),
+            outline=0,
+            width=border_width,
+        )
+
+        # Inner thin rectangle (double border effect)
+        inner_margin = border_margin + 6
+        draw.rectangle(
+            (inner_margin, inner_margin, width - inner_margin, height - inner_margin),
+            outline=0,
+            width=1,
+        )
+
+        # (Optional: Add more complex patterns if needed, but simple double border looks elegant)
+
+        # (Optional: Add more complex patterns if needed, but simple double border looks elegant)
 
         # Quote type indicator (top right corner)
         type_labels = {

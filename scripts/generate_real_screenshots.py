@@ -41,10 +41,6 @@ async def generate_real_screenshot(
     async with DataManager() as dm:
         data = await dm.fetch_all_data()
 
-    # Override quote if provided
-    if quote_data:
-        data["quote"] = quote_data
-
     # Mock date if specified
     if mock_date:
         import pendulum
@@ -52,8 +48,24 @@ async def generate_real_screenshot(
         mock_now = pendulum.parse(mock_date, tz=Config.TIMEZONE)
 
         with patch("src.holiday.pendulum.now", return_value=mock_now):
+            # Set display mode based on category or scenario
+            if category == "quotes":
+                Config.DISPLAY_MODE = "quote"
+                # For quotes, we need to ensure data has quote
+                if quote_data:
+                    data["quote"] = quote_data
+            elif category == "dashboard":
+                Config.DISPLAY_MODE = "dashboard"
+
             image = layout.create_image(800, 480, data)
     else:
+        if category == "quotes":
+            Config.DISPLAY_MODE = "quote"
+            if quote_data:
+                data["quote"] = quote_data
+        elif category == "dashboard":
+            Config.DISPLAY_MODE = "dashboard"
+
         image = layout.create_image(800, 480, data)
 
     # Save screenshot
@@ -85,100 +97,99 @@ async def main():
         }
     )
 
-    # 2. Quote display scenarios (if enabled)
-    if Config.QUOTE_ENABLED:
-        # Chinese poetry examples
-        scenarios.append(
-            {
-                "name": "quote_chinese_poetry",
-                "date": None,
-                "category": "quotes",
-                "quote": {
-                    "content": "春眠不觉晓，处处闻啼鸟。\n夜来风雨声，花落知多少。",
-                    "author": "孟浩然",
-                    "source": "春晓",
-                    "type": "poetry",
-                },
-                "description": "Chinese poetry display",
-            }
-        )
+    # 2. Quote display scenarios
+    # Chinese poetry examples
+    scenarios.append(
+        {
+            "name": "quote_chinese_poetry",
+            "date": None,
+            "category": "quotes",
+            "quote": {
+                "content": "春眠不觉晓，处处闻啼鸟。\n夜来风雨声，花落知多少。",
+                "author": "孟浩然",
+                "source": "春晓",
+                "type": "poetry",
+            },
+            "description": "Chinese poetry display",
+        }
+    )
 
-        scenarios.append(
-            {
-                "name": "quote_chinese_poetry_2",
-                "date": None,
-                "category": "quotes",
-                "quote": {
-                    "content": "床前明月光，疑是地上霜。\n举头望明月，低头思故乡。",
-                    "author": "李白",
-                    "source": "静夜思",
-                    "type": "poetry",
-                },
-                "description": "Chinese poetry display 2",
-            }
-        )
+    scenarios.append(
+        {
+            "name": "quote_chinese_poetry_2",
+            "date": None,
+            "category": "quotes",
+            "quote": {
+                "content": "床前明月光，疑是地上霜。\n举头望明月，低头思故乡。",
+                "author": "李白",
+                "source": "静夜思",
+                "type": "poetry",
+            },
+            "description": "Chinese poetry display 2",
+        }
+    )
 
-        # English quote examples
-        scenarios.append(
-            {
-                "name": "quote_english",
-                "date": None,
-                "category": "quotes",
-                "quote": {
-                    "content": "Stay hungry, stay foolish.",
-                    "author": "Steve Jobs",
-                    "source": "Stanford Commencement 2005",
-                    "type": "quote",
-                },
-                "description": "English quote display",
-            }
-        )
+    # English quote examples
+    scenarios.append(
+        {
+            "name": "quote_english",
+            "date": None,
+            "category": "quotes",
+            "quote": {
+                "content": "Stay hungry, stay foolish.",
+                "author": "Steve Jobs",
+                "source": "Stanford Commencement 2005",
+                "type": "quote",
+            },
+            "description": "English quote display",
+        }
+    )
 
-        scenarios.append(
-            {
-                "name": "quote_english_2",
-                "date": None,
-                "category": "quotes",
-                "quote": {
-                    "content": "The only way to do great work is to love what you do.",
-                    "author": "Steve Jobs",
-                    "source": "",
-                    "type": "quote",
-                },
-                "description": "English quote display 2",
-            }
-        )
+    scenarios.append(
+        {
+            "name": "quote_english_2",
+            "date": None,
+            "category": "quotes",
+            "quote": {
+                "content": "The only way to do great work is to love what you do.",
+                "author": "Steve Jobs",
+                "source": "",
+                "type": "quote",
+            },
+            "description": "English quote display 2",
+        }
+    )
 
-        # Movie line examples
-        scenarios.append(
-            {
-                "name": "quote_movie",
-                "date": None,
-                "category": "quotes",
-                "quote": {
-                    "content": "May the Force be with you.",
-                    "author": "Star Wars",
-                    "source": "Star Wars",
-                    "type": "movie",
-                },
-                "description": "Movie line display",
-            }
-        )
+    # Movie line examples
+    scenarios.append(
+        {
+            "name": "quote_movie",
+            "date": None,
+            "category": "quotes",
+            "quote": {
+                "content": "May the Force be with you.",
+                "author": "Star Wars",
+                "source": "Star Wars",
+                "type": "movie",
+            },
+            "description": "Movie line display",
+        }
+    )
 
-        scenarios.append(
-            {
-                "name": "quote_movie_2",
-                "date": None,
-                "category": "quotes",
-                "quote": {
-                    "content": "Life is like a box of chocolates. You never know what you're gonna get.",
-                    "author": "Forrest Gump",
-                    "source": "Forrest Gump",
-                    "type": "movie",
-                },
-                "description": "Movie line display 2",
-            }
-        )
+    scenarios.append(
+        {
+            "name": "quote_movie_2",
+            "date": None,
+            "category": "quotes",
+            "quote": {
+                "content": "Life is like a box of chocolates. You never know what you're gonna get.",
+                "author": "Forrest Gump",
+                "source": "Forrest Gump",
+                "type": "movie",
+            },
+            "description": "Movie line display 2",
+        }
+    )
 
     # 3. Holidays (2025)
     scenarios.append(
