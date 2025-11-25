@@ -2,12 +2,15 @@
 
 import logging
 
+import pytest
+
 from src.providers.quote import get_quote
 
 logging.basicConfig(level=logging.INFO)
 
 
-def test_quote_fetching():
+@pytest.mark.asyncio
+async def test_quote_fetching():
     """Test quote fetching from all sources."""
     print("\n" + "=" * 60)
     print("Testing Quote Provider")
@@ -15,7 +18,7 @@ def test_quote_fetching():
 
     # Test 1: Get a quote
     print("Test 1: Fetching quote...")
-    quote = get_quote()
+    quote = await get_quote()
     print("✅ Quote fetched successfully!")
     print(f"   Type: {quote['type']}")
     print(f"   Content: {quote['content'][:50]}...")
@@ -24,7 +27,7 @@ def test_quote_fetching():
 
     # Test 2: Check caching
     print("\nTest 2: Testing cache...")
-    quote2 = get_quote()
+    quote2 = await get_quote()
     if quote == quote2:
         print("✅ Cache working! Same quote returned.")
     else:
@@ -43,4 +46,6 @@ def test_quote_fetching():
 
 
 if __name__ == "__main__":
-    test_quote_fetching()
+    import asyncio
+
+    asyncio.run(test_quote_fetching())

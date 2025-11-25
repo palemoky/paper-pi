@@ -67,8 +67,11 @@ class QuoteProvider:
         self.cache_file = BASE_DIR / "data" / "quote_cache.json"
         self.cache_file.parent.mkdir(parents=True, exist_ok=True)
 
-    def get_quote(self) -> Quote:
+    async def get_quote(self, client: httpx.AsyncClient | None = None) -> Quote:
         """Get current quote (cached or fresh).
+
+        Args:
+            client: Optional Async HTTP client
 
         Returns:
             Quote dictionary with content, author, source, and type
@@ -80,7 +83,7 @@ class QuoteProvider:
 
         # Try to fetch new quote
         try:
-            quote = self._fetch_quote()
+            quote = await self._fetch_quote(client)
             self._save_cache(quote)
             return quote
         except Exception as e:
@@ -121,8 +124,11 @@ class QuoteProvider:
             logger.warning(f"Failed to read cache: {e}")
             return None
 
-    def _fetch_quote(self) -> Quote:
+    async def _fetch_quote(self, client: httpx.AsyncClient | None = None) -> Quote:
         """Fetch English quote from Quotable API.
+
+        Args:
+            client: Optional Async HTTP client
 
         Returns:
             Quote dictionary
@@ -132,10 +138,14 @@ class QuoteProvider:
         """
         url = "http://api.quotable.io/random"
 
-        with httpx.Client(timeout=5.0) as client:
-            response = client.get(url)
-            response.raise_for_status()
-            data = response.json()
+        if client:
+            response = await client.get(url, timeout=5.0)
+        else:
+            async with httpx.AsyncClient(timeout=5.0) as new_client:
+                response = await new_client.get(url)
+
+        response.raise_for_status()
+        data = response.json()
 
         return {
             "content": data["content"],
@@ -175,8 +185,11 @@ class QuoteProvider:
 _quote_provider = None
 
 
-def get_quote() -> Quote:
+async def get_quote(client: httpx.AsyncClient | None = None) -> Quote:
     """Get current quote (module-level function).
+
+    Args:
+        client: Optional Async HTTP client
 
     Returns:
         Quote dictionary
@@ -184,4 +197,4 @@ def get_quote() -> Quote:
     global _quote_provider
     if _quote_provider is None:
         _quote_provider = QuoteProvider()
-    return _quote_provider.get_quote()
+    return await _quote_provider.get_quote(client)

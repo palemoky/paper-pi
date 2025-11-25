@@ -67,8 +67,11 @@ class PoetryProvider:
         self.cache_file = BASE_DIR / "data" / "poetry_cache.json"
         self.cache_file.parent.mkdir(parents=True, exist_ok=True)
 
-    def get_poetry(self) -> Poetry:
+    async def get_poetry(self, client: httpx.AsyncClient | None = None) -> Poetry:
         """Get current poetry (cached or fresh).
+
+        Args:
+            client: Optional Async HTTP client
 
         Returns:
             Poetry dictionary with content, author, source, and type
@@ -80,7 +83,7 @@ class PoetryProvider:
 
         # Try to fetch new poetry
         try:
-            poetry = self._fetch_poetry()
+            poetry = await self._fetch_poetry(client)
             self._save_cache(poetry)
             return poetry
         except Exception as e:
@@ -121,8 +124,11 @@ class PoetryProvider:
             logger.warning(f"Failed to read cache: {e}")
             return None
 
-    def _fetch_poetry(self) -> Poetry:
+    async def _fetch_poetry(self, client: httpx.AsyncClient | None = None) -> Poetry:
         """Fetch Chinese poetry from 今日诗词 API.
+
+        Args:
+            client: Optional Async HTTP client
 
         Returns:
             Poetry dictionary
@@ -132,10 +138,14 @@ class PoetryProvider:
         """
         url = "https://v2.jinrishici.com/one.json"
 
-        with httpx.Client(timeout=5.0) as client:
-            response = client.get(url)
-            response.raise_for_status()
-            data = response.json()
+        if client:
+            response = await client.get(url, timeout=5.0)
+        else:
+            async with httpx.AsyncClient(timeout=5.0) as new_client:
+                response = await new_client.get(url)
+
+        response.raise_for_status()
+        data = response.json()
 
         if data["status"] != "success":
             raise ValueError(f"API returned error: {data}")
@@ -181,8 +191,11 @@ class PoetryProvider:
 _poetry_provider = None
 
 
-def get_poetry() -> Poetry:
+async def get_poetry(client: httpx.AsyncClient | None = None) -> Poetry:
     """Get current poetry (module-level function).
+
+    Args:
+        client: Optional Async HTTP client
 
     Returns:
         Poetry dictionary
@@ -190,4 +203,4 @@ def get_poetry() -> Poetry:
     global _poetry_provider
     if _poetry_provider is None:
         _poetry_provider = PoetryProvider()
-    return _poetry_provider.get_poetry()
+    return await _poetry_provider.get_poetry(client)
