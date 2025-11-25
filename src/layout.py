@@ -331,11 +331,18 @@ class DashboardLayout:
         # Draw content loop
         for i, text in enumerate(safe_goals):
             y = self.LIST_START_Y + i * self.LINE_H
-            r.draw_truncated_text(draw, self.COLS[0]["x"], y, text, r.font_s, self.COLS[0]["max_w"])
+            display_text = text if text == "..." else f"• {text}"
+            r.draw_truncated_text(
+                draw,
+                self.COLS[0]["x"],
+                y,
+                display_text,
+                r.font_s,
+                self.COLS[0]["max_w"],
+            )
 
         for i, text in enumerate(safe_must):
             y = self.LIST_START_Y + i * self.LINE_H
-            # If it's an ellipsis, don't add the bullet prefix
             display_text = text if text == "..." else f"• {text}"
             r.draw_truncated_text(
                 draw,
