@@ -53,14 +53,14 @@ class QuoteLayout:
         author_font_size = 32
         line_spacing = 20
 
-        # Draw opening quotation mark
+        # Draw opening quotation mark (no anchor for special Unicode chars)
+        opening_quote = "\u201c"  # Left double quotation mark
         self.renderer.draw_text(
             draw,
             margin_x - 10,
             margin_y - 20,
-            """,
+            opening_quote,
             self.renderer.font_xl,
-            anchor="lt",
         )
 
         # Wrap text to fit width
@@ -75,24 +75,37 @@ class QuoteLayout:
         # Draw quote content
         current_y = start_y
         for line in wrapped_lines:
+            # Calculate text width for centering
+            try:
+                bbox = draw.textbbox((0, 0), line, font=self.renderer.font_l)
+                text_width = bbox[2] - bbox[0]
+            except AttributeError:
+                text_width, _ = draw.textsize(line, font=self.renderer.font_l)
+
             self.renderer.draw_text(
                 draw,
-                width // 2,
+                (width - text_width) // 2,
                 current_y,
                 line,
                 self.renderer.font_l,
-                anchor="mt",  # Middle-top anchor
             )
             current_y += quote_font_size + line_spacing
 
-        # Draw closing quotation mark
+        # Draw closing quotation mark (no anchor for special Unicode chars)
+        # Position at right side
+        closing_quote = "\u201d"  # Right double quotation mark
+        try:
+            bbox = draw.textbbox((0, 0), closing_quote, font=self.renderer.font_xl)
+            quote_width = bbox[2] - bbox[0]
+        except AttributeError:
+            quote_width, _ = draw.textsize(closing_quote, font=self.renderer.font_xl)
+
         self.renderer.draw_text(
             draw,
-            width - margin_x + 10,
+            width - margin_x - quote_width + 10,
             current_y - line_spacing,
-            """,
+            closing_quote,
             self.renderer.font_xl,
-            anchor="rt",
         )
 
         # Draw author and source
@@ -102,13 +115,19 @@ class QuoteLayout:
         else:
             author_text = f"— {author}"
 
+        # Calculate text width for right alignment
+        try:
+            bbox = draw.textbbox((0, 0), author_text, font=self.renderer.font_value)
+            author_width = bbox[2] - bbox[0]
+        except AttributeError:
+            author_width, _ = draw.textsize(author_text, font=self.renderer.font_value)
+
         self.renderer.draw_text(
             draw,
-            width - margin_x,
+            width - margin_x - author_width,
             author_y,
             author_text,
             self.renderer.font_value,
-            anchor="rt",
         )
 
         # Draw decorative line above author

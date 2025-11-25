@@ -71,14 +71,20 @@ class PoetryLayout:
             for i, char in enumerate(line):
                 char_y = start_y + i * (content_font_size + char_spacing)
 
-                # Draw character
+                # Calculate character width for right alignment
+                try:
+                    bbox = draw.textbbox((0, 0), char, font=self.renderer.font_l)
+                    char_width = bbox[2] - bbox[0]
+                except AttributeError:
+                    char_width, _ = draw.textsize(char, font=self.renderer.font_l)
+
+                # Draw character (right-aligned)
                 self.renderer.draw_text(
                     draw,
-                    current_x,
+                    current_x - char_width,
                     char_y,
                     char,
                     self.renderer.font_l,
-                    anchor="rt",  # Right-top anchor
                 )
 
             # Move to next column (leftward)
@@ -109,7 +115,6 @@ class PoetryLayout:
                     char_y,
                     char,
                     self.renderer.font_value,
-                    anchor="lt",
                 )
 
         # Draw author
@@ -124,7 +129,6 @@ class PoetryLayout:
                     char_y,
                     char,
                     self.renderer.font_value,
-                    anchor="lt",
                 )
 
         # Draw decorative corner elements
