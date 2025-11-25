@@ -14,14 +14,19 @@ import pendulum
 
 # Try relative import first (for package mode)
 try:
-    from .config import Config, start_config_watcher, stop_config_watcher
+    from .config import Config, register_reload_callback, start_config_watcher, stop_config_watcher
     from .data_manager import DataManager
     from .drivers.factory import get_driver
     from .layout import DashboardLayout
 except ImportError:
     # If relative import fails, add parent directory to path
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from src.config import Config, start_config_watcher, stop_config_watcher
+    from src.config import (
+        Config,
+        register_reload_callback,
+        start_config_watcher,
+        stop_config_watcher,
+    )
     from src.data_manager import DataManager
     from src.drivers.factory import get_driver
     from src.layout import DashboardLayout
@@ -110,8 +115,6 @@ async def main():
         config_changed.set()
 
     # Register callback for config reload
-    from .config import register_reload_callback
-
     register_reload_callback(on_config_reload)
 
     # Start configuration file watcher for hot reload
