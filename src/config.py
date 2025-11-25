@@ -27,8 +27,9 @@ logger = logging.getLogger(__name__)
 class DisplayConfig(BaseModel):
     """Display mode and related settings."""
 
-    mode: Literal["dashboard", "quote", "wallpaper"] = Field(
-        default="dashboard", description="Display mode: dashboard, quote, or wallpaper"
+    mode: Literal["dashboard", "poetry", "quote", "wallpaper"] = Field(
+        default="dashboard",
+        description="Display mode: dashboard, poetry, quote, or wallpaper",
     )
     wallpaper_name: str = Field(default="", description="Wallpaper name (empty for random)")
     quote_cache_hours: int = Field(default=1, description="Quote cache duration in hours", ge=1)
@@ -406,7 +407,7 @@ class Settings(BaseModel):
         This method is called by the file watcher when .env changes.
         Triggers registered callbacks after successful reload.
         """
-        logger.info("🔄 Reloading configuration...")
+        logger.info("🔄 Reloading configuration from .env file...")
         try:
             new_settings = Settings()
 
@@ -420,15 +421,23 @@ class Settings(BaseModel):
             self.paths = new_settings.paths
 
             logger.info("✅ Configuration reloaded successfully")
+            logger.debug(f"   Display mode: {self.display.mode}")
+            logger.debug(f"   Refresh interval: {self.hardware.refresh_interval}s")
+            logger.debug(f"   Quote cache hours: {self.display.quote_cache_hours}h")
 
             # Trigger callbacks
-            for callback in _reload_callbacks:
-                try:
-                    callback()
-                except Exception as e:
-                    logger.error(f"Error in reload callback: {e}")
+            if _reload_callbacks:
+                logger.info(f"🔔 Triggering {len(_reload_callbacks)} reload callback(s)")
+                for callback in _reload_callbacks:
+                    try:
+                        callback()
+                        logger.debug(f"   ✓ Callback executed: {callback.__name__}")
+                    except Exception as e:
+                        logger.error(f"   ✗ Error in reload callback {callback.__name__}: {e}")
+            else:
+                logger.debug("No reload callbacks registered")
         except Exception as e:
-            logger.error(f"Failed to reload configuration: {e}")
+            logger.error(f"Failed to reload configuration: {e}", exc_info=True)
             raise
 
 
@@ -494,17 +503,23 @@ def start_config_watcher():
                 if event.src_path.endswith(".env"):
                     current_time = time.time()
 
+                    logger.debug(f"📝 File modification detected: {event.src_path}")
+
                     # Debounce: ignore if last reload was too recent
                     if current_time - _last_reload_time < RELOAD_DEBOUNCE_SECONDS:
-                        logger.debug("Ignoring rapid reload (debounce)")
+                        logger.debug(
+                            f"⏭️  Ignoring rapid reload (debounce: "
+                            f"{current_time - _last_reload_time:.1f}s < {RELOAD_DEBOUNCE_SECONDS}s)"
+                        )
                         return
 
-                    logger.info(f"📝 Detected change in {event.src_path}")
+                    logger.info(f"🔄 Detected change in {event.src_path}, reloading config...")
                     try:
                         Config.reload()
                         _last_reload_time = current_time
+                        logger.info("✅ Config reload completed successfully")
                     except Exception as e:
-                        logger.error(f"Failed to reload config: {e}")
+                        logger.error(f"❌ Failed to reload config: {e}", exc_info=True)
 
         observer = Observer()
         event_handler = ConfigFileHandler()

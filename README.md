@@ -83,7 +83,6 @@ docker-compose up -d
 | `GITHUB_USERNAME` | GitHub username for contributions (required) | - |
 | `GITHUB_TOKEN` | GitHub personal access token (required) | - |
 | `GITHUB_STATS_MODE` | GitHub stats mode: `day`, `month`, or `year` | `day` |
-| `DOUBAN_ID` | Douban user ID (optional, for book/movie stats) | - |
 | `VPS_API_KEY` | VPS API key (optional) | - |
 
 ## 🛠️ Local Development

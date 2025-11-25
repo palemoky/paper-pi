@@ -156,52 +156,63 @@ async def main():
 
                 logger.info(f"Refreshing at {current_time}")
 
-                # Mode switching logic
+                # Fetch data based on current mode (DataManager handles mode-specific fetching)
+                data = await dm.fetch_all_data()
+
+                # Generate image based on display mode
                 display_mode = Config.display.mode.lower()
                 logger.info(f"Current display mode: {display_mode}")
 
-                if display_mode == "wallpaper":
-                    from .wallpaper import WallpaperManager
+                match display_mode:
+                    case "wallpaper":
+                        # Wallpaper mode: generate wallpaper image
+                        from .wallpaper import WallpaperManager
 
-                    wallpaper_manager = WallpaperManager()
-                    wallpaper_name = (
-                        Config.display.wallpaper_name if Config.display.wallpaper_name else None
-                    )
-                    image = wallpaper_manager.create_wallpaper(
-                        epd.width, epd.height, wallpaper_name
-                    )
-                    logger.info(f"🎨 Wallpaper mode: {wallpaper_name or 'random'}")
-
-                elif display_mode == "quote":
-                    # Quote mode: fetch quote data only
-                    # We reuse DataManager but only need quote
-                    # For simplicity, we can fetch all data or just quote
-                    # Let's fetch all for now to keep it simple, or optimize later
-                    data = await dm.fetch_all_data()
-
-                    # Ensure we have a quote
-                    if not data.get("quote"):
-                        logger.warning(
-                            "Quote mode enabled but no quote found, falling back to dashboard"
+                        wallpaper_manager = WallpaperManager()
+                        wallpaper_name = (
+                            Config.display.wallpaper_name if Config.display.wallpaper_name else None
                         )
-                        image = layout.create_image(epd.width, epd.height, data)
-                    else:
-                        # Force quote display by passing only quote data to a specialized method
-                        # or by modifying data to ensure layout renders quote
-                        # Actually, layout.create_image handles quote if present AND enabled
-                        # We need to ensure layout knows we WANT quote mode
-                        # We will update layout.create_image to respect DISPLAY_MODE
-                        image = layout.create_image(epd.width, epd.height, data)
-                        logger.info("📜 Quote mode active")
+                        image = wallpaper_manager.create_wallpaper(
+                            epd.width, epd.height, wallpaper_name
+                        )
+                        logger.info(f"🎨 Wallpaper mode: {wallpaper_name or 'random'}")
 
-                else:
-                    # Default: Dashboard mode
-                    # 1. Fetch data
-                    data = await dm.fetch_all_data()
+                    case "poetry":
+                        # Poetry mode: use elegant vertical layout
+                        if not data.get("quote"):
+                            logger.warning(
+                                "Poetry mode enabled but no poetry found, falling back to dashboard"
+                            )
+                            image = layout.create_image(epd.width, epd.height, data)
+                        else:
+                            from .poetry_layout import PoetryLayout
 
-                    # 2. Generate image
-                    image = layout.create_image(epd.width, epd.height, data)
-                    logger.info("📊 Dashboard mode active")
+                            poetry_layout = PoetryLayout()
+                            image = poetry_layout.create_poetry_image(
+                                epd.width, epd.height, data["quote"]
+                            )
+                            logger.info("📜 Poetry mode active (vertical layout)")
+
+                    case "quote":
+                        # Quote mode: use elegant quote layout
+                        if not data.get("quote"):
+                            logger.warning(
+                                "Quote mode enabled but no quote found, falling back to dashboard"
+                            )
+                            image = layout.create_image(epd.width, epd.height, data)
+                        else:
+                            from .quote_layout import QuoteLayout
+
+                            quote_layout = QuoteLayout()
+                            image = quote_layout.create_quote_image(
+                                epd.width, epd.height, data["quote"]
+                            )
+                            logger.info("💬 Quote mode active (elegant layout)")
+
+                    case _:
+                        # Default: Dashboard mode
+                        image = layout.create_image(epd.width, epd.height, data)
+                        logger.info("📊 Dashboard mode active")
 
                 if Config.hardware.is_screenshot_mode:
                     # 截图模式：保存到文件

@@ -57,63 +57,123 @@ class DataManager:
             logger.error(f"Failed to save cache: {e}")
 
     async def fetch_all_data(self) -> dict:
-        """并发获取所有数据"""
+        """并发获取所有数据，根据显示模式只获取需要的数据"""
+        display_mode = Config.display.mode.lower()
+        logger.info(f"Fetching data for mode: {display_mode}")
+
+        # Define data requirements for each mode
+        MODE_REQUIREMENTS = {
+            "dashboard": {"weather", "github", "vps", "btc", "week", "year_end", "todo"},
+            "poetry": {"quote"},
+            "quote": {"quote"},
+            "wallpaper": set(),  # No data needed
+        }
+
+        required_data = MODE_REQUIREMENTS.get(display_mode, {"weather", "github", "vps", "btc"})
+        logger.debug(f"Required data for {display_mode}: {required_data}")
+
+        # Initialize data structure
+        data = {
+            "weather": {},
+            "github_commits": 0,
+            "vps_usage": 0,
+            "btc_price": {},
+            "week_progress": 0,
+            "is_year_end": False,
+            "github_year_summary": None,
+            "todo_goals": [],
+            "todo_must": [],
+            "todo_optional": [],
+            "quote": None,
+        }
+
+        # Wallpaper mode: no data needed
+        if display_mode == "wallpaper":
+            logger.info("Wallpaper mode: no data fetching required")
+            self.save_cache(data)
+            return data
+
+        # Quote-based modes: only fetch quote with specific type
+        if display_mode == "poetry":
+            logger.info("Poetry mode: fetching Chinese poetry only")
+            try:
+                from .poetry_provider import get_poetry
+
+                poetry = get_poetry()
+                data["quote"] = poetry
+                logger.info(f"Poetry fetched: {poetry['author']} - {poetry['source']}")
+            except Exception as e:
+                logger.warning(f"Failed to fetch poetry: {e}")
+
+        elif display_mode == "quote":
+            logger.info("Quote mode: fetching famous quotes only")
+            try:
+                from .quote_provider import get_quote
+
+                quote = get_quote()
+                data["quote"] = quote
+                logger.info(f"Quote fetched: {quote['author']}")
+            except Exception as e:
+                logger.warning(f"Failed to fetch quote: {e}")
+
+        if display_mode in ("poetry", "quote"):
+            self.save_cache(data)
+            return data
+
+        # Dashboard mode: fetch all required data concurrently
         async with httpx.AsyncClient() as client:
-            # 使用 TaskGroup 并发获取数据
             async with asyncio.TaskGroup() as tg:
-                weather_task = tg.create_task(providers.get_weather(client))
-                commits_task = tg.create_task(
-                    providers.get_github_commits(client, Config.GITHUB_STATS_MODE.lower())
+                tasks = {}
+
+                if "weather" in required_data:
+                    tasks["weather"] = tg.create_task(providers.get_weather(client))
+
+                if "github" in required_data:
+                    tasks["github"] = tg.create_task(
+                        providers.get_github_commits(client, Config.GITHUB_STATS_MODE.lower())
+                    )
+
+                if "vps" in required_data:
+                    tasks["vps"] = tg.create_task(providers.get_vps_info(client))
+
+                if "btc" in required_data:
+                    tasks["btc"] = tg.create_task(providers.get_btc_data(client))
+
+            # Get results with cache fallback
+            if "weather" in tasks:
+                data["weather"] = self._get_with_cache_fallback(tasks["weather"], "weather", {})
+
+            if "github" in tasks:
+                data["github_commits"] = self._get_with_cache_fallback(
+                    tasks["github"], "github_commits", 0
                 )
-                vps_task = tg.create_task(providers.get_vps_info(client))
-                btc_task = tg.create_task(providers.get_btc_data(client))
 
-            # 获取结果（带缓存回退）
-            weather = self._get_with_cache_fallback(weather_task, "weather", {})
-            commits = self._get_with_cache_fallback(commits_task, "github_commits", 0)
-            vps = self._get_with_cache_fallback(vps_task, "vps_usage", 0)
-            btc = self._get_with_cache_fallback(btc_task, "btc_price", {})
+            if "vps" in tasks:
+                data["vps_usage"] = self._get_with_cache_fallback(tasks["vps"], "vps_usage", 0)
 
-            # 计算周进度
-            week_progress = providers.get_week_progress()
+            if "btc" in tasks:
+                data["btc_price"] = self._get_with_cache_fallback(tasks["btc"], "btc_price", {})
 
-            # 检查是否年终
-            is_year_end, github_year_summary = await providers.check_year_end_summary(client)
+            # Calculate week progress
+            if "week" in required_data:
+                data["week_progress"] = providers.get_week_progress()
+
+            # Check year-end summary
+            if "year_end" in required_data:
+                is_year_end, github_year_summary = await providers.check_year_end_summary(client)
+                data["is_year_end"] = is_year_end
+                data["github_year_summary"] = github_year_summary
 
             # Fetch TODO lists
-            from .todo_providers import get_todo_lists
+            if "todo" in required_data:
+                from .todo_providers import get_todo_lists
 
-            todo_goals, todo_must, todo_optional = await get_todo_lists()
+                todo_goals, todo_must, todo_optional = await get_todo_lists()
+                data["todo_goals"] = todo_goals
+                data["todo_must"] = todo_must
+                data["todo_optional"] = todo_optional
 
-            # Fetch quote (if enabled)
-            quote = None
-            if Config.display.mode == "quote":
-                try:
-                    from .quote_provider import get_quote
-
-                    quote = get_quote()
-                    logger.info(f"Quote fetched: {quote['type']} - {quote['author']}")
-                except Exception as e:
-                    logger.warning(f"Failed to fetch quote: {e}")
-
-            # 组装数据
-            data = {
-                "weather": weather,
-                "github_commits": commits,
-                "vps_usage": vps,
-                "btc_price": btc,
-                "week_progress": week_progress,
-                "is_year_end": is_year_end,
-                "github_year_summary": github_year_summary,
-                "todo_goals": todo_goals,
-                "todo_must": todo_must,
-                "todo_optional": todo_optional,
-                "quote": quote,
-            }
-
-            # 保存缓存
             self.save_cache(data)
-
             return data
 
     def _get_with_cache_fallback(self, task, key, default):

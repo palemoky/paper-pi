@@ -558,7 +558,6 @@ class DashboardLayout:
         type_labels = {
             "poetry": "诗词",
             "quote": "Quote",
-            "movie": "Movie",
         }
         type_label = type_labels.get(quote["type"], "Quote")
         r.draw_text(

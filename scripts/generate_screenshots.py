@@ -60,7 +60,6 @@ def main():
         "vps_usage": 45,
         "btc_price": {"usd": 95234, "usd_24h_change": 2.3},
         "week_progress": 65,
-        "douban": {"book": 12, "movie": 8, "music": 5},
         "is_year_end": False,
         "github_year_summary": None,
     }

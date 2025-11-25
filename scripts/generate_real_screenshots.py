@@ -160,37 +160,6 @@ async def main():
         }
     )
 
-    # Movie line examples
-    scenarios.append(
-        {
-            "name": "quote_movie",
-            "date": None,
-            "category": "quotes",
-            "quote": {
-                "content": "May the Force be with you.",
-                "author": "Star Wars",
-                "source": "Star Wars",
-                "type": "movie",
-            },
-            "description": "Movie line display",
-        }
-    )
-
-    scenarios.append(
-        {
-            "name": "quote_movie_2",
-            "date": None,
-            "category": "quotes",
-            "quote": {
-                "content": "Life is like a box of chocolates. You never know what you're gonna get.",
-                "author": "Forrest Gump",
-                "source": "Forrest Gump",
-                "type": "movie",
-            },
-            "description": "Movie line display 2",
-        }
-    )
-
     # 3. Holidays (2025)
     scenarios.append(
         {"name": "spring_festival", "date": "2025-01-29", "category": "holidays", "quote": None}
