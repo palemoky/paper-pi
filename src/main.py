@@ -159,14 +159,27 @@ async def main():
                 # Fetch data based on current mode (DataManager handles mode-specific fetching)
                 data = await dm.fetch_all_data()
 
-                # Generate image based on display mode
-                display_mode = Config.display.mode.lower()
+                # Determine display mode (holiday and year-end have highest priority)
+                from src.holiday import HolidayManager
+
+                holiday_manager = HolidayManager()
+                holiday = holiday_manager.get_holiday()
+
+                # Check for special modes first
+                if holiday:
+                    display_mode = "holiday"
+                elif data.get("is_year_end") and data.get("github_year_summary"):
+                    display_mode = "year_end"
+                else:
+                    display_mode = Config.display.mode.lower()
+
                 logger.info(f"Current display mode: {display_mode}")
 
+                # Generate image based on display mode
                 match display_mode:
                     case "dashboard":
                         image = layout.create_image(epd.width, epd.height, data)
-                        logger.info("📊 Dashboard mode active")
+                        logger.info("📊 Dashboard")
 
                     case "quote":
                         # Quote mode: use elegant quote layout
@@ -182,7 +195,7 @@ async def main():
                             image = quote_layout.create_quote_image(
                                 epd.width, epd.height, data["quote"]
                             )
-                            logger.info("💬 Quote mode active (elegant layout)")
+                            logger.info("💬 Quote (elegant layout)")
 
                     case "poetry":
                         # Poetry mode: use elegant vertical layout
@@ -198,7 +211,7 @@ async def main():
                             image = poetry_layout.create_poetry_image(
                                 epd.width, epd.height, data["quote"]
                             )
-                            logger.info("📜 Poetry mode active (vertical layout)")
+                            logger.info("📜 Poetry (vertical layout)")
 
                     case "wallpaper":
                         # Wallpaper mode: generate wallpaper image
@@ -211,10 +224,36 @@ async def main():
                         image = wallpaper_manager.create_wallpaper(
                             epd.width, epd.height, wallpaper_name
                         )
-                        logger.info(f"🎨 Wallpaper mode: {wallpaper_name or 'random'}")
+                        logger.info(f"🎨 Wallpaper: {wallpaper_name or 'random'}")
+
+                    case "holiday":
+                        from PIL import Image, ImageDraw
+
+                        image = Image.new("1", (epd.width, epd.height), 255)
+                        draw = ImageDraw.Draw(image)
+                        layout.renderer.draw_full_screen_message(
+                            draw,
+                            epd.width,
+                            epd.height,
+                            holiday["title"],
+                            holiday["message"],
+                            holiday.get("icon"),
+                        )
+                        logger.info(f"🎉 Holiday: {holiday['name']}")
+
+                    case "year_end":
+                        from PIL import Image, ImageDraw
+
+                        image = Image.new("1", (epd.width, epd.height), 255)
+                        draw = ImageDraw.Draw(image)
+                        layout._draw_year_end_summary(
+                            draw, epd.width, epd.height, data["github_year_summary"]
+                        )
+                        logger.info("🎊 Year-end summary")
 
                     case _:
                         logger.warning(f"Unknown display mode: {display_mode}")
+                        image = layout.create_image(epd.width, epd.height, data)
 
                 if Config.hardware.is_screenshot_mode:
                     # 截图模式：保存到文件（使用模式特定的文件名）

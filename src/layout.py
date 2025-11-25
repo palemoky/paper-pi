@@ -9,7 +9,6 @@ import datetime
 from PIL import Image, ImageDraw
 
 from .config import Config
-from .holiday import HolidayManager
 from .renderer import Renderer
 
 
@@ -22,7 +21,6 @@ class DashboardLayout:
 
     def __init__(self):
         self.renderer = Renderer()
-        self.holiday_manager = HolidayManager()
 
         # Layout parameters
         self.TOP_Y = 20  # Top section Y position
@@ -66,24 +64,6 @@ class DashboardLayout:
         # Create canvas
         image = Image.new("1", (width, height), 255)
         draw = ImageDraw.Draw(image)
-
-        # Check for holiday (highest priority)
-        holiday = self.holiday_manager.get_holiday()
-        if holiday:
-            self.renderer.draw_full_screen_message(
-                draw, width, height, holiday["title"], holiday["message"], holiday.get("icon")
-            )
-            return image
-
-        # Check for year-end summary (December 31st)
-        if data.get("is_year_end") and data.get("github_year_summary"):
-            self._draw_year_end_summary(draw, width, height, data["github_year_summary"])
-            return image
-
-        # Check for quote display mode
-        if Config.display.mode == "quote" and data.get("quote"):
-            self._draw_quote_screen(draw, width, height, data["quote"])
-            return image
 
         # Extract data
         now = datetime.datetime.now()
@@ -518,90 +498,6 @@ class DashboardLayout:
             "See you in next year!",
             font=r.font_s,
             align_y_center=True,
-        )
-
-    def _draw_quote_screen(self, draw, width, height, quote):
-        """Draw full-screen quote display.
-
-        Args:
-            draw: PIL ImageDraw object
-            width: Canvas width
-            height: Canvas height
-            quote: Quote dictionary with content, author, source, type
-        """
-        r = self.renderer
-
-        # Draw festive border
-        border_margin = 10
-        border_width = 4
-
-        # Outer rectangle
-        draw.rectangle(
-            (border_margin, border_margin, width - border_margin, height - border_margin),
-            outline=0,
-            width=border_width,
-        )
-
-        # Inner thin rectangle (double border effect)
-        inner_margin = border_margin + 6
-        draw.rectangle(
-            (inner_margin, inner_margin, width - inner_margin, height - inner_margin),
-            outline=0,
-            width=1,
-        )
-
-        # (Optional: Add more complex patterns if needed, but simple double border looks elegant)
-
-        # (Optional: Add more complex patterns if needed, but simple double border looks elegant)
-
-        # Quote type indicator (top right corner)
-        type_labels = {
-            "poetry": "诗词",
-            "quote": "Quote",
-        }
-        type_label = type_labels.get(quote["type"], "Quote")
-        r.draw_text(
-            draw,
-            width - 80,
-            20,
-            type_label,
-            font=r.font_s,
-            fill=0,
-        )
-
-        # Main quote content (centered)
-        content = quote["content"]
-        lines = content.split("\n")
-
-        # Calculate vertical centering
-        line_height = 50
-        total_height = len(lines) * line_height
-        start_y = (height - total_height) // 2 - 40
-
-        # Draw each line
-        for i, line in enumerate(lines):
-            y = start_y + i * line_height
-            r.draw_centered_text(
-                draw,
-                width // 2,
-                y,
-                line,
-                font=r.font_l,
-                align_y_center=False,
-            )
-
-        # Author and source (bottom)
-        attribution = f"—— {quote['author']}"
-        if quote["source"]:
-            attribution += f"《{quote['source']}》"
-
-        r.draw_centered_text(
-            draw,
-            width // 2,
-            height - 80,
-            attribution,
-            font=r.font_m,
-            align_y_center=False,
         )
 
     def _limit_list_items(self, src_list, max_lines):
