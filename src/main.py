@@ -15,9 +15,9 @@ import pendulum
 # Try relative import first (for package mode)
 try:
     from .config import Config, register_reload_callback, start_config_watcher, stop_config_watcher
-    from .data_manager import DataManager
+    from .dashboard_layout import DashboardLayout
+    from .dashboard_provider import DataManager
     from .drivers.factory import get_driver
-    from .layout import DashboardLayout
 except ImportError:
     # If relative import fails, add parent directory to path
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -27,9 +27,9 @@ except ImportError:
         start_config_watcher,
         stop_config_watcher,
     )
-    from src.data_manager import DataManager
+    from src.dashboard_layout import DashboardLayout
+    from src.dashboard_provider import DataManager
     from src.drivers.factory import get_driver
-    from src.layout import DashboardLayout
 
 # 配置日志（支持环境变量控制日志级别）
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()

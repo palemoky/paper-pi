@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from src.providers import get_github_commits, get_weather
+from src.dashboard_provider import get_github_commits, get_weather
 
 
 @pytest.mark.asyncio
