@@ -68,98 +68,114 @@ async def get_weather(client: httpx.AsyncClient):
 
 
 @retry_strategy
-async def get_github_commits(client: httpx.AsyncClient):
-    """Fetch GitHub contribution count using GraphQL API.
-
-    Supports daily, monthly, or yearly statistics based on GITHUB_STATS_MODE config.
+async def get_github_commits(client: httpx.AsyncClient, mode: str = "day"):
+    """
+    Fetch GitHub contributions strictly matching personal homepage.
 
     Args:
-        client: Async HTTP client instance
+        client: httpx.AsyncClient instance
+        mode: "day", "month", or "year"
 
     Returns:
-        Total contribution count (commits + issues + PRs + reviews)
-
-    Raises:
-        httpx.HTTPError: If API request fails
+        int for day mode, or dict for month/year mode:
+        - day: today's contribution count
+        - month: {YYYY-MM: count}
+        - year: {YYYY: count}
     """
     if not Config.GITHUB_USERNAME or not Config.GITHUB_TOKEN:
         logger.warning("GitHub username or token not configured")
-        return 0
+        return 0 if mode == "day" else {}
 
     url = "https://api.github.com/graphql"
-    headers = {"Authorization": f"Bearer {Config.GITHUB_TOKEN}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {Config.GITHUB_TOKEN}",
+        "Content-Type": "application/json",
+    }
 
-    # Calculate time range using user's timezone to match GitHub's contribution calendar
-    # GitHub's personal page uses the user's local timezone, not UTC
+    # 用户本地时间
     now_local = pendulum.now(Config.hardware.timezone)
+    mode = mode.lower()
 
-    mode = Config.GITHUB_STATS_MODE.lower()
-    if mode == "year":
-        start_time = now_local.start_of("year")
-        end_time = now_local
-    elif mode == "month":
-        start_time = now_local.start_of("month")
-        end_time = now_local
-    else:  # default to day
-        # Use user's timezone day boundaries to match GitHub's contribution page
-        start_time = now_local.start_of("day")
-        end_time = now_local
+    if mode not in ("year", "month", "day"):
+        raise ValueError(f"Unsupported mode: {mode}")
 
-    # Convert to UTC for GitHub API (API expects UTC timestamps)
-    start_utc_iso = start_time.in_timezone("UTC").to_iso8601_string()
-    end_utc_iso = end_time.in_timezone("UTC").to_iso8601_string()
+    start_time = now_local.start_of(mode)
+    end_time = now_local
 
-    # Debug logging
-    logger.debug(f"GitHub stats mode: {mode}")
-    logger.debug(f"Current time (local): {now_local}")
-    logger.debug(f"Time range (local): {start_time} to {end_time}")
-    logger.debug(f"Time range (UTC): {start_utc_iso} to {end_utc_iso}")
+    # 转换为 UTC 给 GitHub API
+    start_utc = start_time.in_timezone("UTC").to_iso8601_string()
+    end_utc = end_time.in_timezone("UTC").to_iso8601_string()
 
     query = """
     query($username: String!, $from: DateTime!, $to: DateTime!) {
       user(login: $username) {
         contributionsCollection(from: $from, to: $to) {
-          totalCommitContributions
-          totalIssueContributions
-          totalPullRequestContributions
-          totalPullRequestReviewContributions
+          contributionCalendar {
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+              }
+            }
+          }
         }
       }
     }
     """
 
-    variables = {"username": Config.GITHUB_USERNAME, "from": start_utc_iso, "to": end_utc_iso}
+    variables = {"username": Config.GITHUB_USERNAME, "from": start_utc, "to": end_utc}
 
     try:
         res = await client.post(
-            url, json={"query": query, "variables": variables}, headers=headers, timeout=10
+            url, json={"query": query, "variables": variables}, headers=headers, timeout=15
         )
         res.raise_for_status()
         data = res.json()
 
         if "errors" in data:
             logger.error(f"GitHub GraphQL Error: {data['errors']}")
+            return 0 if mode == "day" else {}
+
+        weeks = (
+            data.get("data", {})
+            .get("user", {})
+            .get("contributionsCollection", {})
+            .get("contributionCalendar", {})
+            .get("weeks", [])
+        )
+
+        # 展平每天的贡献
+        daily_counts = []
+        for week in weeks:
+            for day in week.get("contributionDays", []):
+                daily_counts.append({"date": day["date"], "count": day["contributionCount"]})
+
+        if mode == "day":
+            today_str = now_local.format("YYYY-MM-DD")
+            for d in daily_counts:
+                if d["date"] == today_str:
+                    return d["count"]
             return 0
 
-        collection = data.get("data", {}).get("user", {}).get("contributionsCollection", {})
+        elif mode == "month":
+            current_month = now_local.format("YYYY-MM")
+            month_total = 0
+            for d in daily_counts:
+                if pendulum.parse(d["date"]).format("YYYY-MM") == current_month:
+                    month_total += d["count"]
+            return month_total
 
-        commits = collection.get("totalCommitContributions", 0)
-        issues = collection.get("totalIssueContributions", 0)
-        prs = collection.get("totalPullRequestContributions", 0)
-        reviews = collection.get("totalPullRequestReviewContributions", 0)
-
-        total = commits + issues + prs + reviews
-
-        logger.info(
-            f"GitHub contributions ({mode}): {total} (commits:{commits}, issues:{issues}, prs:{prs}, reviews:{reviews})"
-        )
-        return total
+        elif mode == "year":
+            current_year = now_local.format("YYYY")
+            year_total = 0
+            for d in daily_counts:
+                if pendulum.parse(d["date"]).format("YYYY") == current_year:
+                    year_total += d["count"]
+            return year_total
 
     except Exception as e:
         logger.error(f"GitHub API Error: {e}")
-        if isinstance(e, (httpx.RequestError, httpx.HTTPStatusError)):
-            raise
-        raise RuntimeError(f"GitHub API Error: {e}") from e
+        return 0 if mode == "day" else {}
 
 
 async def check_year_end_summary(client: httpx.AsyncClient):
@@ -254,6 +270,135 @@ async def get_github_year_summary(client: httpx.AsyncClient):
     except Exception as e:
         logger.error(f"GitHub Year Summary Error: {e}")
         return None
+
+
+# async def get_github_contributions_summary(client: httpx.AsyncClient, mode: str = "day"):
+#     """
+#     Fetch GitHub contributions strictly matching personal homepage,
+#     with optional summary statistics for year mode.
+
+#     Args:
+#         client: httpx.AsyncClient instance
+#         mode: "day", "month", or "year"
+
+#     Returns:
+#         - day: int, today's contribution count
+#         - month: dict {YYYY-MM: count}
+#         - year: dict with total, max, avg, and per-year count
+#           e.g. {"total": 1234, "max": 15, "avg": 3.4, "per_year": {"2025": 1234}}
+#     """
+#     if not Config.GITHUB_USERNAME or not Config.GITHUB_TOKEN:
+#         logger.warning("GitHub username or token not configured")
+#         if mode == "day":
+#             return 0
+#         elif mode == "month":
+#             return {}
+#         else:
+#             return {"total": 0, "max": 0, "avg": 0.0, "per_year": {}}
+
+#     url = "https://api.github.com/graphql"
+#     headers = {
+#         "Authorization": f"Bearer {Config.GITHUB_TOKEN}",
+#         "Content-Type": "application/json",
+#     }
+
+#     now_local = pendulum.now(Config.hardware.timezone)
+#     mode = mode.lower()
+
+#     if mode == "year":
+#         start_time = now_local.start_of("year")
+#         end_time = now_local
+#     elif mode == "month":
+#         start_time = now_local.start_of("month")
+#         end_time = now_local
+#     else:  # day
+#         start_time = now_local.start_of("day")
+#         end_time = now_local
+
+#     start_utc = start_time.in_timezone("UTC").to_iso8601_string()
+#     end_utc = end_time.in_timezone("UTC").to_iso8601_string()
+
+#     query = """
+#     query($username: String!, $from: DateTime!, $to: DateTime!) {
+#       user(login: $username) {
+#         contributionsCollection(from: $from, to: $to) {
+#           contributionCalendar {
+#             weeks {
+#               contributionDays {
+#                 date
+#                 contributionCount
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#     """
+
+#     variables = {"username": Config.GITHUB_USERNAME, "from": start_utc, "to": end_utc}
+
+#     try:
+#         res = await client.post(url, json={"query": query, "variables": variables}, headers=headers, timeout=15)
+#         res.raise_for_status()
+#         data = res.json()
+
+#         if "errors" in data:
+#             logger.error(f"GitHub GraphQL Error: {data['errors']}")
+#             if mode == "day":
+#                 return 0
+#             elif mode == "month":
+#                 return {}
+#             else:
+#                 return {"total": 0, "max": 0, "avg": 0.0, "per_year": {}}
+
+#         weeks = (
+#             data.get("data", {})
+#             .get("user", {})
+#             .get("contributionsCollection", {})
+#             .get("contributionCalendar", {})
+#             .get("weeks", [])
+#         )
+
+#         # Flatten daily contributions
+#         daily_counts = []
+#         for week in weeks:
+#             for day in week.get("contributionDays", []):
+#                 daily_counts.append({"date": day["date"], "count": day["contributionCount"]})
+
+#         if mode == "day":
+#             today_str = now_local.format("YYYY-MM-DD")
+#             for d in daily_counts:
+#                 if d["date"] == today_str:
+#                     return d["count"]
+#             return 0
+
+#         elif mode == "month":
+#             monthly = defaultdict(int)
+#             for d in daily_counts:
+#                 month_key = pendulum.parse(d["date"]).format("YYYY-MM")
+#                 monthly[month_key] += d["count"]
+#             return dict(monthly)
+
+#         elif mode == "year":
+#             yearly_counts = defaultdict(int)
+#             for d in daily_counts:
+#                 year_key = pendulum.parse(d["date"]).format("YYYY")
+#                 yearly_counts[year_key] += d["count"]
+
+#             total = sum(d["count"] for d in daily_counts)
+#             max_day = max(d["count"] for d in daily_counts) if daily_counts else 0
+#             avg_day = round(total / len(daily_counts), 1) if daily_counts else 0.0
+
+#             return {"total": total, "max": max_day, "avg": avg_day, "per_year": dict(yearly_counts)}
+
+#     except Exception as e:
+#         logger.error(f"GitHub API Error: {e}")
+#         if mode == "day":
+#             return 0
+#         elif mode == "month":
+#             return {}
+#         else:
+#             return {"total": 0, "max": 0, "avg": 0.0, "per_year": {}}
 
 
 async def get_vps_info(client: httpx.AsyncClient):

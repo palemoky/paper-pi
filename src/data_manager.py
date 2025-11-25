@@ -62,7 +62,9 @@ class DataManager:
             # 使用 TaskGroup 并发获取数据
             async with asyncio.TaskGroup() as tg:
                 weather_task = tg.create_task(providers.get_weather(client))
-                commits_task = tg.create_task(providers.get_github_commits(client))
+                commits_task = tg.create_task(
+                    providers.get_github_commits(client, Config.GITHUB_STATS_MODE.lower())
+                )
                 vps_task = tg.create_task(providers.get_vps_info(client))
                 btc_task = tg.create_task(providers.get_btc_data(client))
 
