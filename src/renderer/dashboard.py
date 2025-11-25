@@ -6,7 +6,7 @@ including text, weather icons, holiday icons, and progress indicators.
 
 import math
 
-from PIL import ImageFont
+from PIL import ImageDraw, ImageFont
 
 from ..config import Config
 
@@ -37,11 +37,29 @@ class DashboardRenderer:
             # Fallback mapping
             self.font_xs = self.font_value = self.font_date_big = self.font_date_small = self.font_s
 
-    def draw_text(self, draw, x, y, text, font, fill=0, anchor=None):
+    def draw_text(
+        self,
+        draw: ImageDraw.ImageDraw,
+        x: int,
+        y: int,
+        text: str,
+        font: ImageFont.FreeTypeFont,
+        fill: int | str = 0,
+        anchor: str = None,
+    ):
         """Draw text at specified coordinates."""
         draw.text((x, y), text, font=font, fill=fill, anchor=anchor)
 
-    def draw_centered_text(self, draw, x, y, text, font, fill=0, align_y_center=True):
+    def draw_centered_text(
+        self,
+        draw: ImageDraw.ImageDraw,
+        x: int,
+        y: int,
+        text: str,
+        font: ImageFont.FreeTypeFont,
+        fill: int | str = 0,
+        align_y_center: bool = True,
+    ):
         try:
             bbox = draw.textbbox((0, 0), text, font=font)
             w = bbox[2] - bbox[0]
@@ -52,7 +70,16 @@ class DashboardRenderer:
         y_offset = (h // 2 + 3) if align_y_center else 0
         draw.text((x - w // 2, y - y_offset), text, font=font, fill=fill)
 
-    def draw_truncated_text(self, draw, x, y, text, font, max_width, fill=0):
+    def draw_truncated_text(
+        self,
+        draw: ImageDraw.ImageDraw,
+        x: int,
+        y: int,
+        text: str,
+        font: ImageFont.FreeTypeFont,
+        max_width: int,
+        fill: int | str = 0,
+    ):
         def get_w(t):
             try:
                 return draw.textlength(t, font=font)
@@ -71,7 +98,15 @@ class DashboardRenderer:
                 draw.text((x, y), temp + ellipsis, font=font, fill=fill)
                 return
 
-    def draw_progress_ring(self, draw, x, y, radius, percent, thickness=5):
+    def draw_progress_ring(
+        self,
+        draw: ImageDraw.ImageDraw,
+        x: int,
+        y: int,
+        radius: int,
+        percent: int | float,
+        thickness: int = 5,
+    ):
         bbox = (x - radius, y - radius, x + radius, y + radius)
         draw.ellipse(bbox, outline=0, width=1)
 
@@ -91,7 +126,9 @@ class DashboardRenderer:
 
     # --- Icons (Scaled) ---
 
-    def draw_weather_icon(self, draw, x, y, icon_name, size=30):
+    def draw_weather_icon(
+        self, draw: ImageDraw.ImageDraw, x: int, y: int, icon_name: str, size: int = 30
+    ) -> bool:
         """
         绘制天气图标（优先从文件加载，失败则使用代码绘制）
 

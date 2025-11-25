@@ -26,6 +26,12 @@ from ..config import Config
 
 logger = logging.getLogger(__name__)
 
+# Constants
+OPENWEATHER_URL = "http://api.openweathermap.org/data/2.5/weather"
+GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
+VPS_API_URL = "https://api.64clouds.com/v1/getServiceInfo"
+COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price"
+
 # Retry strategy for API calls: 3 attempts with 2 second wait
 retry_strategy = retry(
     stop=stop_after_attempt(3),
@@ -54,11 +60,11 @@ async def get_weather(client: httpx.AsyncClient):
     if not Config.OPENWEATHER_API_KEY:
         return {"temp": "13.9", "desc": "Sunny", "icon": "Clear"}
 
-    url = "http://api.openweathermap.org/data/2.5/weather"
+    url = OPENWEATHER_URL
     params = {"q": Config.CITY_NAME, "appid": Config.OPENWEATHER_API_KEY, "units": "metric"}
 
     try:
-        res = await client.get(url, params=params, timeout=10)
+        res = await client.get(url, params=params, timeout=10.0)
         res.raise_for_status()
         data = res.json()
         return {
@@ -92,7 +98,7 @@ async def get_github_commits(client: httpx.AsyncClient, mode: str = "day"):
         logger.warning("GitHub username or token not configured")
         return 0 if mode == "day" else {}
 
-    url = "https://api.github.com/graphql"
+    url = GITHUB_GRAPHQL_URL
     headers = {
         "Authorization": f"Bearer {Config.GITHUB_TOKEN}",
         "Content-Type": "application/json",
@@ -133,7 +139,7 @@ async def get_github_commits(client: httpx.AsyncClient, mode: str = "day"):
 
     try:
         res = await client.post(
-            url, json={"query": query, "variables": variables}, headers=headers, timeout=15
+            url, json={"query": query, "variables": variables}, headers=headers, timeout=15.0
         )
         res.raise_for_status()
         data = res.json()
@@ -220,7 +226,7 @@ async def get_github_year_summary(client: httpx.AsyncClient):
     if not Config.GITHUB_USERNAME or not Config.GITHUB_TOKEN:
         return None
 
-    url = "https://api.github.com/graphql"
+    url = GITHUB_GRAPHQL_URL
     headers = {"Authorization": f"Bearer {Config.GITHUB_TOKEN}", "Content-Type": "application/json"}
 
     now_local = pendulum.now(Config.hardware.timezone)
@@ -250,7 +256,7 @@ async def get_github_year_summary(client: httpx.AsyncClient):
 
     try:
         res = await client.post(
-            url, json={"query": query, "variables": variables}, headers=headers, timeout=15
+            url, json={"query": query, "variables": variables}, headers=headers, timeout=15.0
         )
         res.raise_for_status()
         data = res.json()
@@ -290,11 +296,11 @@ async def get_vps_info(client: httpx.AsyncClient):
     if not Config.VPS_API_KEY:
         return 0
 
-    url = "https://api.64clouds.com/v1/getServiceInfo"
+    url = VPS_API_URL
     params = {"veid": "1550095", "api_key": Config.VPS_API_KEY}
 
     try:
-        res = await client.get(url, params=params, timeout=10)
+        res = await client.get(url, params=params, timeout=10.0)
         data = res.json()
         if data.get("error") != 0:
             return 0
@@ -316,11 +322,11 @@ async def get_btc_data(client: httpx.AsyncClient):
     Returns:
         Dictionary with USD price and 24h change percentage
     """
-    url = "https://api.coingecko.com/api/v3/simple/price"
+    url = COINGECKO_URL
     params = {"ids": "bitcoin", "vs_currencies": "usd", "include_24hr_change": "true"}
 
     try:
-        res = await client.get(url, params=params, timeout=10)
+        res = await client.get(url, params=params, timeout=10.0)
         if res.status_code == 200:
             return res.json().get("bitcoin", {"usd": 0, "usd_24h_change": 0})
     except Exception as e:
