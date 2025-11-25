@@ -89,31 +89,31 @@ async def get_github_commits(client: httpx.AsyncClient):
     url = "https://api.github.com/graphql"
     headers = {"Authorization": f"Bearer {Config.GITHUB_TOKEN}", "Content-Type": "application/json"}
 
-    # Calculate time range using UTC timezone to match GitHub's contribution calendar
-    now_utc = pendulum.now("UTC")
+    # Calculate time range using user's timezone to match GitHub's contribution calendar
+    # GitHub's personal page uses the user's local timezone, not UTC
+    now_local = pendulum.now(Config.hardware.timezone)
 
     mode = Config.GITHUB_STATS_MODE.lower()
     if mode == "year":
-        start_time = now_utc.start_of("year")
-        end_time = now_utc
+        start_time = now_local.start_of("year")
+        end_time = now_local
     elif mode == "month":
-        start_time = now_utc.start_of("month")
-        end_time = now_utc
+        start_time = now_local.start_of("month")
+        end_time = now_local
     else:  # default to day
-        # Use UTC day boundaries to match GitHub's contribution page
-        start_time = now_utc.start_of("day")
-        end_time = now_utc
+        # Use user's timezone day boundaries to match GitHub's contribution page
+        start_time = now_local.start_of("day")
+        end_time = now_local
 
-    # Convert to ISO 8601 format for GitHub API
-    start_utc_iso = start_time.to_iso8601_string()
-    end_utc_iso = end_time.to_iso8601_string()
+    # Convert to UTC for GitHub API (API expects UTC timestamps)
+    start_utc_iso = start_time.in_timezone("UTC").to_iso8601_string()
+    end_utc_iso = end_time.in_timezone("UTC").to_iso8601_string()
 
     # Debug logging
-    now_local = pendulum.now(Config.hardware.timezone)
     logger.debug(f"GitHub stats mode: {mode}")
     logger.debug(f"Current time (local): {now_local}")
-    logger.debug(f"Current time (UTC): {now_utc}")
-    logger.debug(f"Time range (UTC): {start_time} to {end_time}")
+    logger.debug(f"Time range (local): {start_time} to {end_time}")
+    logger.debug(f"Time range (UTC): {start_utc_iso} to {end_utc_iso}")
 
     query = """
     query($username: String!, $from: DateTime!, $to: DateTime!) {
