@@ -15,7 +15,7 @@ The easiest way to run is using Docker - it handles all dependencies and driver 
 ### 📊 Dashboard & Other Modes
 | Dashboard | Quote | Poetry | Wallpaper |
 |-----------|-------|--------|-----------|
-| ![Dashboard](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/dashboard.png) | ![Quote](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/quote.png) | ![Poetry](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/poetry.png) | ![Wallpaper](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/cat.png) |
+| ![Dashboard](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/dashboard.png) | ![Quote](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/quote.png) | ![Poetry](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/poetry.png) | ![Wallpaper](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/wallpaper.png) |
 
 
 ### 🎉 Special Days
