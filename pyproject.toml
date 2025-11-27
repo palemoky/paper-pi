@@ -1,6 +1,6 @@
 [project]
 name = "eink-dashboard"
-version = "0.2.0"
+version = "0.1.0"
 description = "A personalized, asynchronous dashboard for Waveshare E-Ink displays"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -20,7 +20,7 @@ dependencies = [
     "httpx>=0.27.0",
     "pendulum>=3.0.0",
     "Pillow>=10.0.0",
-    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
     "python-dotenv>=1.0.0",
     "tenacity>=8.0.0",
     "borax>=4.0.0",
@@ -37,14 +37,13 @@ hardware = [
     "spidev",
 ]
 dev = [
-    "black",
-    "isort",
     "ruff",
     "mypy",
     "pytest",
     "pytest-asyncio",
     "pytest-mock",
     "pytest-xdist",
+    "pytest-cov",
     "types-requests",
     "types-PyYAML",
 ]
@@ -56,27 +55,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
-[tool.black]
-line-length = 100
-target-version = ['py311']
-exclude = '''
-/(
-    \.git
-  | \.venv
-  | build
-  | dist
-  | src/lib
-)/
-'''
-
-[tool.isort]
-profile = "black"
-line_length = 100
-skip_glob = ["src/lib/*"]
-
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py314"
 exclude = ["src/lib"]
 
 [tool.ruff.lint]
@@ -89,7 +70,7 @@ select = [
     "C4", # flake8-comprehensions
 ]
 ignore = [
-    "E501",  # line too long (handled by black)
+    "E501",  # line too long
 ]
 
 [tool.mypy]
