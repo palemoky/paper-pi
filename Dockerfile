@@ -69,8 +69,7 @@ COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 # 4. 复制源代码
-COPY src/ src/
-COPY README.md .
+COPY . .
 
 # 5. 环境变量与配置
 ENV PYTHONPATH=/app
