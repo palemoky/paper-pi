@@ -23,9 +23,9 @@ The easiest way to run is using Docker - it handles all dependencies and driver 
 | ![Quote](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/quote.png) | ![Poetry](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/poetry.png) | ![Wallpaper](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/wallpaper.png) |
 
 ### 🎉 Special Days
-| Year-End | Birthday | Anniversary |
-|----------|---------|-------------|
-| ![Year-End Summary](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/year_end_summary.png) | ![Birthday](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/birthday.png) | ![Anniversary](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/anniversary.png) |
+| Birthday | Anniversary | Year-End |
+|---------|-------------|----------|
+| ![Birthday](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/birthday.png) | ![Anniversary](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/anniversary.png) | ![Year-End Summary](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/year_end_summary.png) |
 
 | New Year | Christmas | Spring Festival | Moon Festival |
 |----------|----------|----------------|---------------|
