@@ -6,7 +6,6 @@ on:
       - 'v*'
   workflow_dispatch:
 
-# Prevent multiple releases from running simultaneously
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
@@ -18,7 +17,6 @@ env:
   OWNER: palemoky
 
 jobs:
-  # Run tests before building and publishing
   test:
     runs-on: ubuntu-latest
     steps:
@@ -36,16 +34,6 @@ jobs:
           enable-cache: true
           cache-suffix: v1
 
-      - name: Cache Python dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/uv
-            .venv
-          key: ${{ runner.os }}-python-${{ hashFiles('**/uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-python-
-
       - name: Install dependencies
         run: |
           uv sync --frozen --extra dev
@@ -54,7 +42,6 @@ jobs:
         run: |
           uv run python -m pytest tests/
 
-  # Build and publish Docker images to Docker Hub and GHCR
   build-and-push:
     runs-on: ubuntu-latest
     needs: test
@@ -85,7 +72,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -106,12 +93,11 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Disable provenance and SBOM to avoid extra manifest layers
-          # Avoids wasteful buildkit-blob-* cache files with low hit rate
           provenance: false
           sbom: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # Clean up old pre-release images (only for alpha/beta/rc releases)
       - name: Clean up old pre-release images
         if: contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc')
         env:
@@ -126,19 +112,15 @@ jobs:
             "${{ secrets.DOCKERHUB_TOKEN }}" \
             "${{ env.DOCKERHUB_IMAGE }}"
 
-      # Clean up untagged GHCR images (runs on every release)
       - name: Clean up untagged GHCR images
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Wait for GHCR to sync the newly pushed images
           echo "⏳ Waiting 30 seconds for GHCR to sync..."
           sleep 30
-          
           chmod +x .github/scripts/cleanup-ghcr-untagged.sh
           .github/scripts/cleanup-ghcr-untagged.sh "${{ env.PACKAGE_NAME }}" "${{ env.OWNER }}"
 
-  # Sync README to Docker Hub (after successful image build)
   sync-readme:
     runs-on: ubuntu-latest
     needs: build-and-push
