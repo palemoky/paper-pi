@@ -12,11 +12,15 @@ A personalized, asynchronous dashboard for Waveshare E-Ink displays, built with 
 The easiest way to run is using Docker - it handles all dependencies and driver setup automatically.
 
 ## Screenshots
-### 📊 Dashboard & Other Modes
-| Dashboard | Quote | Poetry | Wallpaper |
-|-----------|-------|--------|-----------|
-| ![Dashboard](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/dashboard.png) | ![Quote](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/quote.png) | ![Poetry](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/poetry.png) | ![Wallpaper](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/wallpaper.png) |
+### 📊 Dashboard
+| Todo | HackerNews |
+|-----------|-------|
+| ![Todo](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/dashboard_todo.png) | ![HackerNews](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/dashboard_hackernews.png) |
 
+### 🥷 Other Modes
+| Quote | Poetry | Wallpaper |
+|--------|-----------|-----------|
+| ![Quote](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/quote.png) | ![Poetry](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/poetry.png) | ![Wallpaper](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/wallpaper.png) |
 
 ### 🎉 Special Days
 | Year-End | Birthday | Anniversary |
