@@ -54,7 +54,7 @@ class WaveshareEPDDriver:
 
     def display(self, image: Image.Image) -> None:
         # Waveshare 驱动通常需要 getbuffer
-        buffer = self.epd.getbuffer(image)
+        buffer = self.epd_module.getbuffer(image)
         self.epd.display(buffer)
 
     def display_partial(self, image: Image.Image, x: int, y: int, w: int, h: int) -> None:
@@ -69,7 +69,7 @@ class WaveshareEPDDriver:
         """
         if hasattr(self.epd, "display_Partial"):
             # EPD expects full-size image buffer and end coordinates
-            buffer = self.epd.getbuffer(image)
+            buffer = self.epd_module.getbuffer(image)
             self.epd.display_Partial(buffer, x, y, x + w, y + h)
         else:
             # Fallback to full display if partial not supported
