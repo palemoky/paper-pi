@@ -493,7 +493,10 @@ class Dashboard:
             data["todo_optional"] = todo_optional
             logger.info("📝 Fetched Todo Lists")
         else:
-            # Use empty lists if not in TODO time slot
+            # Set empty lists if not in TODO time slot
+            data["todo_goals"] = []
+            data["todo_must"] = []
+            data["todo_optional"] = []
             logger.info("⏭️  Skipping TODO fetch (not in TODO time slot)")
 
         self.save_cache(data)

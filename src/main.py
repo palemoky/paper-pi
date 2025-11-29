@@ -104,6 +104,7 @@ def is_in_time_slots(time_slots_str: str) -> bool:
 
     Args:
         time_slots_str: Time slots string (e.g., "0-12,18-24" or "20-8" for cross-day)
+                       Note: 24 is treated as midnight (0), so "18-24" means 18:00-23:59
 
     Returns:
         True if current hour is within any of the time slots
@@ -122,11 +123,21 @@ def is_in_time_slots(time_slots_str: str) -> bool:
             if "-" in slot:
                 start, end = map(int, slot.split("-"))
 
-                # Handle cross-day ranges (e.g., "20-8" means 8pm to 8am next day)
-                if start > end:
+                # Handle end=24 as midnight (treat as end of day, inclusive of hour 23)
+                if end == 24:
+                    end = 0  # Convert to 0 for cross-day logic
+
+                # Handle cross-day ranges (e.g., "20-8" or "18-0" means cross midnight)
+                if start > end or (start == end == 0):
                     # Cross-day: check if hour >= start OR hour < end
-                    if current_hour >= start or current_hour < end:
-                        return True
+                    # Special case: if end=0 (from 24), include hour 23
+                    if end == 0:
+                        # e.g., "18-24" → "18-0" → include 18-23
+                        if current_hour >= start:
+                            return True
+                    else:
+                        if current_hour >= start or current_hour < end:
+                            return True
                 else:
                     # Same-day: check if start <= hour < end
                     if start <= current_hour < end:
