@@ -5,11 +5,14 @@ including weather, date, time, GitHub stats, and custom widgets.
 """
 
 import datetime
+import logging
 
 from PIL import Image, ImageDraw
 
 from ..config import Config
 from ..renderer.dashboard import DashboardRenderer
+
+logger = logging.getLogger(__name__)
 
 
 class DashboardLayout:
@@ -536,7 +539,7 @@ class DashboardLayout:
                         center_x - offset_x,
                         self.FOOTER_CENTER_Y - offset_y,
                         str(value["day"]),
-                        font=r.font_xs,
+                        font=r.font_s,
                         align_y_center=True,
                     )
 
@@ -546,7 +549,7 @@ class DashboardLayout:
                         center_x + offset_x,
                         self.FOOTER_CENTER_Y - offset_y,
                         str(value["week"]),
-                        font=r.font_xs,
+                        font=r.font_s,
                         align_y_center=True,
                     )
 
@@ -556,7 +559,7 @@ class DashboardLayout:
                         center_x - offset_x,
                         self.FOOTER_CENTER_Y + offset_y,
                         str(value["month"]),
-                        font=r.font_xs,
+                        font=r.font_s,
                         align_y_center=True,
                     )
 
@@ -566,7 +569,7 @@ class DashboardLayout:
                         center_x + offset_x,
                         self.FOOTER_CENTER_Y + offset_y,
                         str(value["year"]),
-                        font=r.font_xs,
+                        font=r.font_s,
                         align_y_center=True,
                     )
 
@@ -593,15 +596,27 @@ class DashboardLayout:
                         fill=0,
                         width=1,
                     )
-                else:
-                    r.draw_centered_text(
-                        draw,
-                        center_x,
-                        self.FOOTER_CENTER_Y,
-                        item["value"],
-                        font=r.font_date_big,
-                        align_y_center=True,
-                    )
+            elif item["type"] == "text":
+                # Draw text value
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    self.FOOTER_CENTER_Y,
+                    str(item["value"]),
+                    font=r.font_date_big,
+                    align_y_center=True,
+                )
+            else:
+                # Fallback for unknown types
+                logger.warning(f"Unknown footer item type: {item['type']}")
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    self.FOOTER_CENTER_Y,
+                    str(item["value"]),
+                    font=r.font_date_big,
+                    align_y_center=True,
+                )
 
     def _draw_year_end_summary(self, draw, width, height, summary_data):
         """

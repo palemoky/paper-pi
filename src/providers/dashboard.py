@@ -417,9 +417,9 @@ class Dashboard:
         """Fetch all data required for the main dashboard."""
         logger.info("Fetching dashboard data")
 
-        # Determine rotation state: 0-29 min = Todo, 30-59 min = Hacker News
-        now = pendulum.now(Config.hardware.timezone)
-        show_hackernews = now.minute >= 30
+        # Note: show_hackernews will be set by main loop based on time slots
+        # This is just a placeholder for initial data structure
+        show_hackernews = False
 
         # Initialize data structure
         data = {
@@ -431,7 +431,7 @@ class Dashboard:
             "todo_goals": [],
             "todo_must": [],
             "todo_optional": [],
-            "hackernews": [],
+            "hackernews": {},  # Changed to dict to hold pagination data
             "show_hackernews": show_hackernews,
         }
 
@@ -462,27 +462,29 @@ class Dashboard:
         # Calculate week progress
         data["week_progress"] = get_week_progress()
 
-        # Fetch TODO lists or Hacker News based on rotation
-        if show_hackernews:
-            # Fetch Hacker News
-            from .hackernews import get_hackernews
+        # Fetch initial HackerNews data (will be updated by main loop if needed)
+        from .hackernews import get_hackernews
 
-            if self.client:
-                hn_data = await get_hackernews(self.client)
-            else:
-                async with httpx.AsyncClient() as client:
-                    hn_data = await get_hackernews(client)
-            data["hackernews"] = hn_data.get("stories", [])
-            logger.info(f"📰 Showing Hacker News ({len(data['hackernews'])} stories)")
+        if self.client:
+            hn_data = await get_hackernews(self.client)
         else:
-            # Fetch TODO lists
-            from .todo import get_todo_lists
+            async with httpx.AsyncClient() as client:
+                hn_data = await get_hackernews(client)
 
-            todo_goals, todo_must, todo_optional = await get_todo_lists()
-            data["todo_goals"] = todo_goals
-            data["todo_must"] = todo_must
-            data["todo_optional"] = todo_optional
-            logger.info("📝 Showing Todo List")
+        # Store complete pagination data
+        data["hackernews"] = hn_data
+        logger.info(
+            f"📰 Fetched HackerNews: Page {hn_data.get('page', 1)}/{hn_data.get('total_pages', 1)}"
+        )
+
+        # Also fetch TODO lists (main loop will decide which to show)
+        from .todo import get_todo_lists
+
+        todo_goals, todo_must, todo_optional = await get_todo_lists()
+        data["todo_goals"] = todo_goals
+        data["todo_must"] = todo_must
+        data["todo_optional"] = todo_optional
+        logger.info("📝 Fetched Todo Lists")
 
         self.save_cache(data)
         return data
