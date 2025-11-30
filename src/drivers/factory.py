@@ -12,19 +12,25 @@ def get_driver() -> EPDDriver:
     根据环境变量获取 EPD 驱动实例
 
     环境变量:
+    - IS_SCREENSHOT_MODE: 如果为 "true"，使用 Mock 驱动并保存图片到文件
     - MOCK_EPD: 如果为 "true"，强制使用 Mock 驱动
     - EPD_MODEL: Waveshare 驱动型号，默认为 "epd7in5_V2"
     - HARDWARE_USE_GRAYSCALE: 如果为 "true"，启用 4 级灰度模式
     """
     from ..config import Config
 
-    # 1. 检查是否强制使用 Mock
+    # 1. 检查是否启用截图模式
+    if Config.hardware.is_screenshot_mode:
+        logger.info("IS_SCREENSHOT_MODE is true, using MockEPDDriver (screenshots will be saved)")
+        return MockEPDDriver()
+
+    # 2. 检查是否强制使用 Mock
     is_mock = Config.hardware.mock_epd
     if is_mock:
         logger.info("MOCK_EPD is true, using MockEPDDriver")
         return MockEPDDriver()
 
-    # 2. 尝试加载 Waveshare 驱动
+    # 3. 尝试加载 Waveshare 驱动
     epd_model = Config.hardware.epd_model
     use_grayscale = Config.hardware.use_grayscale
     try:
