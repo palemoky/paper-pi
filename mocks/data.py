@@ -96,12 +96,78 @@ def get_mock_quote_data() -> dict:
     }
 
 
-def get_mock_poetry_data() -> dict:
+def get_mock_wuyan_jueju_poetry_data() -> dict:
     """Return mock data for poetry mode."""
     return {
         "poetry": {
-            "content": "床前明月光，疑是地上霜。举头望明月，低头思故乡。",
-            "source": "静夜思",
+            "content": "床前明月光，疑是地上霜。舉頭望明月，低頭思故鄉。",
+            "source": "靜夜思",
+            "author": "李白",
+        }
+    }
+
+
+def get_mock_wuyan_lvshi_poetry_data() -> dict:
+    """Return mock data for poetry mode."""
+    return {
+        "poetry": {
+            "content": "單車欲問邊，屬國過居延。徵蓬出漢塞，歸雁入鬍天。大漠孤菸直，長河落日圓。蕭關逢候騎，都護在燕然。",
+            "source": "使至塞上",
+            "author": "王維",
+        }
+    }
+
+
+def get_mock_qiyan_lvshi_poetry_data() -> dict:
+    """Return mock data for poetry mode."""
+    return {
+        "poetry": {
+            "content": "昔人已乘黄鹤去，此地空余黄鹤楼。黄鹤一去不复返，白云千載空悠悠。晴川历历汉阳树，芳草萋萋鹦鹉洲。日暮乡关何处是，烟波江上使人愁。",
+            "source": "黃鹤樓",
+            "author": "崔顥",
+        }
+    }
+
+
+def get_mock_cipaiming_poetry_data() -> dict:
+    """Return mock data for poetry mode."""
+    return {
+        "poetry": {
+            "content": "人生若只如初见，何事秋风悲画扇。等闲变却故人心，却道故人心易变。骊山语罢清宵半，泪雨霖铃终不怨。何如薄幸锦衣郎，比翼连枝当日愿。",
+            "source": "畫堂春·一生一代一雙人",
+            "author": "納蘭性德",
+        }
+    }
+
+
+def get_mock_qiyan_jueju_poetry_data() -> dict:
+    """Return mock data for poetry mode."""
+    return {
+        "poetry": {
+            "content": "吳門煙月昔同遊，楓葉蘆花並客舟。聚散有期雲北去，浮沈無計水東流。一尊酒盡青山暮，千里書回碧樹秋。何處相思不相見，鳳城龍闕楚江頭，",
+            "source": "京口閑居寄京洛友人",
+            "author": "王昌齡",
+        }
+    }
+
+
+def get_mock_xiaoling_poetry_data() -> dict:
+    """Return mock data for poetry mode."""
+    return {
+        "poetry": {
+            "content": "山一程，水一程，身向榆關那畔行，夜深千帳燈。風一更，雪一更，聒碎鄉心夢不成，故園無此聲。",
+            "source": "長相思·山一程",
+            "author": "納蘭性德",
+        }
+    }
+
+
+def get_mock_wuyan_longlvshi_poetry_data() -> dict:
+    """Return mock data for poetry mode."""
+    return {
+        "poetry": {
+            "content": "今日云景好，水绿秋山明。携壶酌流霞，搴菊泛寒荣。地远松石古，风扬弦管清。窥觞照欢颜，独笑还自倾。落帽醉山月，空歌怀友生。",
+            "source": "九日",
             "author": "李白",
         }
     }

@@ -15,10 +15,16 @@ from src.layouts import DashboardLayout
 
 from . import (
     MockEPD,
+    get_mock_cipaiming_poetry_data,
     get_mock_dashboard_data,
     get_mock_holiday_data,
-    get_mock_poetry_data,
+    get_mock_qiyan_jueju_poetry_data,
+    get_mock_qiyan_lvshi_poetry_data,
     get_mock_quote_data,
+    get_mock_wuyan_jueju_poetry_data,
+    get_mock_wuyan_longlvshi_poetry_data,
+    get_mock_wuyan_lvshi_poetry_data,
+    get_mock_xiaoling_poetry_data,
     get_mock_year_end_data,
 )
 
@@ -82,14 +88,44 @@ def generate_mock_image(mode, holiday_name=None, output_file="debug_output.png")
         quote_layout = QuoteLayout()
         image = quote_layout.create_quote_image(epd.width, epd.height, data["quote"])
 
-    elif mode == "poetry":
         from src.layouts.poetry import PoetryLayout
 
-        data = get_mock_poetry_data()
-        logger.info("Generating poetry image...")
+        # Define all poetry data functions to generate
+        poetry_data_funcs = [
+            ("wuyan_jueju", get_mock_wuyan_jueju_poetry_data),
+            ("wuyan_lvshi", get_mock_wuyan_lvshi_poetry_data),
+            ("wuyan_longlvshi", get_mock_wuyan_longlvshi_poetry_data),
+            ("qiyan_lvshi", get_mock_qiyan_lvshi_poetry_data),
+            ("cipaiming", get_mock_cipaiming_poetry_data),
+            ("qiyan_jueju", get_mock_qiyan_jueju_poetry_data),
+            ("xiaoling", get_mock_xiaoling_poetry_data),
+        ]
 
         poetry_layout = PoetryLayout()
-        image = poetry_layout.create_poetry_image(epd.width, epd.height, data["poetry"])
+
+        # Generate images for all poetry types
+        for poetry_type, data_func in poetry_data_funcs:
+            logger.info(f"Generating {poetry_type} poetry image...")
+            data = data_func()
+            image = poetry_layout.create_poetry_image(epd.width, epd.height, data["poetry"])
+
+            # Save each poetry type with a unique filename
+            if output_file != "mocks/images/debug_output.png":
+                # If custom output specified, append poetry type
+                output_path_obj = Path(output_file)
+                poetry_output = (
+                    output_path_obj.parent
+                    / f"{output_path_obj.stem}_{poetry_type}{output_path_obj.suffix}"
+                )
+                image.save(poetry_output)
+                logger.info(f"Saved {poetry_type} to {poetry_output}")
+            else:
+                # Use default naming
+                image.save(f"mocks/images/debug_poetry_{poetry_type}.png")
+                logger.info(f"Saved {poetry_type} to mocks/images/debug_poetry_{poetry_type}.png")
+
+        # Return the last generated image for backward compatibility
+        return
 
     else:
         logger.error(f"Unknown mode: {mode}")
