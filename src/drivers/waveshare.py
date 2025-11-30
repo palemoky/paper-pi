@@ -100,6 +100,21 @@ class WaveshareEPDDriver:
         Args:
             image: PIL Image to display (mode "L" for grayscale, "1" for B/W)
         """
+        # Save screenshot if enabled
+        from datetime import datetime
+        from pathlib import Path
+
+        from ..config import Config
+
+        if Config.hardware.is_screenshot_mode:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            screenshot_dir = Path("screenshots")
+            screenshot_dir.mkdir(exist_ok=True)
+            screenshot_path = screenshot_dir / f"screenshot_{timestamp}.png"
+            image.save(screenshot_path)
+            logger.info(f"📸 Screenshot saved to {screenshot_path}")
+
+        # Display on actual hardware
         if self.use_grayscale and hasattr(self.epd, "display_4Gray"):
             buffer = self.epd.getbuffer_4Gray(image)
             self.epd.display_4Gray(buffer)
