@@ -273,7 +273,15 @@ class Dashboard:
         """Fetch all data required for the main dashboard."""
         logger.info("Fetching dashboard data")
 
-        show_hackernews = False
+        # Determine current time and time slots
+        from src.core import TimeSlots
+
+        now = pendulum.now(Config.hardware.timezone)
+        todo_slots = TimeSlots(Config.display.todo_time_slots)
+        hn_slots = TimeSlots(Config.display.hackernews_time_slots)
+
+        show_todo = todo_slots.contains_hour(now.hour)
+        show_hackernews = hn_slots.contains_hour(now.hour)
 
         data = {
             "weather": {},
@@ -329,12 +337,6 @@ class Dashboard:
         )
 
         # Conditionally fetch TODO lists based on time slots
-        from src.core import TimeSlots
-
-        todo_slots = TimeSlots(Config.display.todo_time_slots)
-        now = pendulum.now(Config.hardware.timezone)
-        show_todo = todo_slots.contains_hour(now.hour)
-
         if show_todo:
             from .todo import get_todo_lists
 
