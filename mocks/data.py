@@ -62,7 +62,7 @@ def get_mock_holiday_data(holiday_name: str = "Spring Festival") -> dict:
             "name": "Mid-Autumn",
             "title": "Mid-Autumn Festival",
             "message": "Mooncake & Family",
-            "icon": "lantern",
+            "icon": "mooncake",
         },
         "Christmas": {
             "name": "Christmas",
@@ -86,7 +86,7 @@ def get_mock_holiday_data(holiday_name: str = "Spring Festival") -> dict:
             "name": "New Year's Eve",
             "title": "Happy New Year's Eve!",
             "message": "Countdown to 2025",
-            "icon": "firework",
+            "icon": "firecracker",
         },
     }
     return holidays.get(holiday_name, holidays["Spring Festival"])
@@ -97,9 +97,21 @@ def get_mock_year_end_data() -> dict:
     return {
         "is_year_end": True,
         "github_year_summary": {
-            "total": 2024,
-            "max": 15,
-            "avg": 5.5,
+            # New detailed fields
+            "total_contributions": 2989,
+            "total_commits": 1856,
+            "total_prs": 127,
+            "total_reviews": 89,
+            "total_issues": 45,
+            "longest_streak": 67,
+            "current_streak": 12,
+            "total_stars": 342,
+            "top_languages": ["Python", "Rust", "Go"],
+            "most_productive_day": "10.15",
+            # Old fields for backward compatibility
+            "total": 2989,
+            "max": 28,
+            "avg": 8.2,
         },
     }
 

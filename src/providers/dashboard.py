@@ -161,6 +161,18 @@ async def get_github_year_summary(client: httpx.AsyncClient):
               }
             }
           }
+          totalCommitContributions
+          totalPullRequestContributions
+          totalPullRequestReviewContributions
+          totalIssueContributions
+        }
+        repositories(first: 100, ownerAffiliations: OWNER, orderBy: {field: STARGAZERS, direction: DESC}) {
+          nodes {
+            stargazerCount
+            primaryLanguage {
+              name
+            }
+          }
         }
       }
     }
@@ -175,23 +187,91 @@ async def get_github_year_summary(client: httpx.AsyncClient):
         res.raise_for_status()
         data = res.json()
 
-        calendar = (
-            data.get("data", {})
-            .get("user", {})
-            .get("contributionsCollection", {})
-            .get("contributionCalendar", {})
-        )
-        total = calendar.get("totalContributions", 0)
+        user_data = data.get("data", {}).get("user", {})
+        contributions = user_data.get("contributionsCollection", {})
+        calendar = contributions.get("contributionCalendar", {})
 
+        # Basic contribution stats
+        total_contributions = calendar.get("totalContributions", 0)
+        total_commits = contributions.get("totalCommitContributions", 0)
+        total_prs = contributions.get("totalPullRequestContributions", 0)
+        total_reviews = contributions.get("totalPullRequestReviewContributions", 0)
+        total_issues = contributions.get("totalIssueContributions", 0)
+
+        # Calculate daily contributions for streaks and max
         days = []
         for week in calendar.get("weeks", []):
             for day in week.get("contributionDays", []):
-                days.append(day["contributionCount"])
+                days.append({"count": day["contributionCount"], "date": day["date"]})
 
-        max_day = max(days) if days else 0
-        avg_day = total / len(days) if days else 0
+        # Calculate max day and average
+        day_counts = [d["count"] for d in days]
+        max_day = max(day_counts) if day_counts else 0
+        avg_day = total_contributions / len(day_counts) if day_counts else 0
 
-        return {"total": total, "max": max_day, "avg": round(avg_day, 1)}
+        # Find most productive day
+        most_productive_day = ""
+        if days:
+            max_day_data = max(days, key=lambda x: x["count"])
+            if max_day_data["count"] > 0:
+                date_obj = pendulum.parse(max_day_data["date"])
+                most_productive_day = date_obj.format("MMM DD")
+
+        # Calculate streaks
+        current_streak = 0
+        longest_streak = 0
+        temp_streak = 0
+
+        # Sort days by date
+        sorted_days = sorted(days, key=lambda x: x["date"])
+
+        for i, day in enumerate(sorted_days):
+            if day["count"] > 0:
+                temp_streak += 1
+                longest_streak = max(longest_streak, temp_streak)
+                # Check if this is today or a recent day for current streak
+                if i == len(sorted_days) - 1 or (len(sorted_days) - 1 - i) < 2:
+                    current_streak = temp_streak
+            else:
+                temp_streak = 0
+                # Reset current streak if we hit a zero day recently
+                if i >= len(sorted_days) - 2:
+                    current_streak = 0
+
+        # Calculate language statistics
+        repos = user_data.get("repositories", {}).get("nodes", [])
+        language_counts = {}
+        total_stars = 0
+
+        for repo in repos:
+            total_stars += repo.get("stargazerCount", 0)
+            lang = repo.get("primaryLanguage")
+            if lang:
+                lang_name = lang.get("name")
+                language_counts[lang_name] = language_counts.get(lang_name, 0) + 1
+
+        # Get top 3 languages
+        top_languages = sorted(language_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_3_languages = [lang[0] for lang in top_languages]
+
+        return {
+            "total_contributions": total_contributions,
+            "total_commits": total_commits,
+            "total_prs": total_prs,
+            "total_reviews": total_reviews,
+            "total_issues": total_issues,
+            "max_day": max_day,
+            "avg_day": round(avg_day, 1),
+            "longest_streak": longest_streak,
+            "current_streak": current_streak,
+            "total_stars": total_stars,
+            "top_languages": top_3_languages,
+            "most_productive_day": most_productive_day,
+            # Keep old format for backward compatibility
+            "total": total_contributions,
+            "max": max_day,
+            "avg": round(avg_day, 1),
+        }
     except Exception as e:
         logger.error(f"GitHub Year Summary Error: {e}")
         return None
