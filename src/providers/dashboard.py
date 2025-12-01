@@ -206,16 +206,8 @@ async def get_github_year_summary(client: httpx.AsyncClient):
 
         # Calculate max day and average
         day_counts = [d["count"] for d in days]
-        max_day = max(day_counts) if day_counts else 0
+        most_productive_day = max(day_counts) if day_counts else 0
         avg_day = total_contributions / len(day_counts) if day_counts else 0
-
-        # Find most productive day
-        most_productive_day = ""
-        if days:
-            max_day_data = max(days, key=lambda x: x["count"])
-            if max_day_data["count"] > 0:
-                date_obj = pendulum.parse(max_day_data["date"])
-                most_productive_day = date_obj.format("MMM DD")
 
         # Calculate streaks
         current_streak = 0
@@ -260,16 +252,12 @@ async def get_github_year_summary(client: httpx.AsyncClient):
             "total_prs": total_prs,
             "total_reviews": total_reviews,
             "total_issues": total_issues,
-            "max_day": max_day,
             "avg_day": round(avg_day, 1),
             "longest_streak": longest_streak,
             "current_streak": current_streak,
             "total_stars": total_stars,
             "top_languages": top_3_languages,
             "most_productive_day": most_productive_day,
-            # Keep old format for backward compatibility
-            "total": total_contributions,
-            "max": max_day,
             "avg": round(avg_day, 1),
         }
     except Exception as e:
