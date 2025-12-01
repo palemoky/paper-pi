@@ -35,15 +35,16 @@ class HeaderComponent:
         """
         # Define components to display
         header_items = [
-            {"type": "weather", "data": weather},
             {"type": "date", "data": now},
+            {"type": "weather", "data": weather},
             {"type": "greeting"},
             {"type": "time", "data": now},
         ]
 
         # Calculate dynamic layout using LayoutHelper
+        # Use MARGIN_SMALL to match footer's uniform distribution
         col_layout = self.layout.create_column_layout(
-            width, len(header_items), padding=LayoutConstants.MARGIN_TINY
+            width, len(header_items), padding=LayoutConstants.MARGIN_SMALL
         )
 
         # Draw each component
@@ -51,9 +52,13 @@ class HeaderComponent:
             center_x = col_layout.get_column_center(i)
             self._draw_component(draw, center_x, self.TOP_Y, item)
 
-        # Draw divider line using LayoutHelper
+        # Draw divider line using LayoutHelper with matching margins
         self.layout.draw_horizontal_divider(
-            draw, self.LINE_TOP_Y, width=width, line_width=LayoutConstants.LINE_NORMAL
+            draw,
+            self.LINE_TOP_Y,
+            start_x=LayoutConstants.MARGIN_SMALL,
+            end_x=width - LayoutConstants.MARGIN_SMALL,
+            line_width=LayoutConstants.LINE_NORMAL,
         )
 
     def _draw_component(
@@ -76,8 +81,8 @@ class HeaderComponent:
                     align_y_center=False,
                 )
 
-                # Line 2: Icon + description
-                icon_y = top_y + 50
+                # Line 2: Icon + description (vertically centered)
+                icon_y = top_y + 55
                 w_main = data.get("icon", "")
 
                 # Determine icon name
@@ -98,7 +103,7 @@ class HeaderComponent:
                 if desc == "Thunderstorm":
                     desc = "Storm"
 
-                # Calculate centering
+                # Calculate centering for icon + text combination
                 icon_size = self.WEATHER_ICON_SIZE
                 try:
                     text_bbox = r.font_s.getbbox(desc)
@@ -112,7 +117,7 @@ class HeaderComponent:
                 text_x = start_x + icon_size + 2
 
                 r.draw_weather_icon(draw, icon_x, icon_y, icon_name, size=icon_size)
-                draw.text((text_x, icon_y - 12), desc, font=r.font_s, fill=0)
+                draw.text((text_x, icon_y - 16), desc, font=r.font_s, fill=0)
 
             case "date":
                 data = item_data["data"]

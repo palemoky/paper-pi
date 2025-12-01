@@ -42,18 +42,26 @@ class LayoutConstants:
 class ColumnLayout:
     """Helper class for column-based layouts."""
 
-    def __init__(self, width: int, num_cols: int, padding: int = 20):
+    def __init__(self, width: int, num_cols: int, padding: int | tuple[int, int] = 20):
         """Initialize column layout.
 
         Args:
             width: Total width available
             num_cols: Number of columns
-            padding: Padding on left and right edges
+            padding: Padding on edges. Can be:
+                - int: symmetric padding (same on left and right)
+                - tuple[int, int]: (left_padding, right_padding) for asymmetric padding
         """
         self.width = width
         self.num_cols = num_cols
-        self.padding = padding
-        self.content_width = width - 2 * padding
+
+        # Handle both symmetric and asymmetric padding
+        if isinstance(padding, tuple):
+            self.padding_left, self.padding_right = padding
+        else:
+            self.padding_left = self.padding_right = padding
+
+        self.content_width = width - self.padding_left - self.padding_right
         self.col_width = self.content_width / num_cols
 
     def get_column_center(self, col_index: int) -> int:
@@ -65,7 +73,7 @@ class ColumnLayout:
         Returns:
             X-coordinate of column center
         """
-        return int(self.padding + (col_index * self.col_width) + (self.col_width / 2))
+        return int(self.padding_left + (col_index * self.col_width) + (self.col_width / 2))
 
     def get_column_left(self, col_index: int) -> int:
         """Get the left x-coordinate of a column.
@@ -76,7 +84,7 @@ class ColumnLayout:
         Returns:
             X-coordinate of column left edge
         """
-        return int(self.padding + (col_index * self.col_width))
+        return int(self.padding_left + (col_index * self.col_width))
 
     def get_column_right(self, col_index: int) -> int:
         """Get the right x-coordinate of a column.
@@ -87,7 +95,7 @@ class ColumnLayout:
         Returns:
             X-coordinate of column right edge
         """
-        return int(self.padding + ((col_index + 1) * self.col_width))
+        return int(self.padding_left + ((col_index + 1) * self.col_width))
 
 
 class GridLayout:
@@ -382,14 +390,19 @@ class LayoutHelper:
             draw.line([(x, y), (x, y + length)], fill=color, width=line_width)
 
     def create_column_layout(
-        self, width: int, num_cols: int, padding: int = LayoutConstants.MARGIN_SMALL
+        self,
+        width: int,
+        num_cols: int,
+        padding: int | tuple[int, int] = LayoutConstants.MARGIN_SMALL,
     ) -> ColumnLayout:
         """Create a column layout helper.
 
         Args:
             width: Total width available
             num_cols: Number of columns
-            padding: Padding on left and right edges
+            padding: Padding on edges. Can be:
+                - int: symmetric padding (same on left and right)
+                - tuple[int, int]: (left_padding, right_padding) for asymmetric padding
 
         Returns:
             ColumnLayout instance
