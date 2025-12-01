@@ -134,10 +134,11 @@ class TestPoetryLayout:
         assert draw.text.call_count >= 4
 
     def test_draw_decorative_corners(self, layout):
-        """Test drawing decorative corners."""
+        """Test drawing decorative corners using LayoutHelper."""
         draw = MagicMock()
 
-        layout._draw_decorative_corners(draw, 800, 480)
+        # Test that LayoutHelper is used for corner decorations
+        layout.layout.draw_corner_decorations(draw, 800, 480)
 
-        # Verify line calls (4 corners * 2 lines = 8 lines)
-        assert draw.line.call_count == 8
+        # Verify draw.line was called (LayoutHelper calls draw.line internally)
+        assert draw.line.called

@@ -9,6 +9,7 @@ from PIL import ImageDraw
 from src.config import BASE_DIR
 
 from ...renderer.dashboard import DashboardRenderer
+from ..utils.layout_helper import LayoutConstants, LayoutHelper
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class YearEndSummaryComponent:
 
     def __init__(self, renderer: DashboardRenderer):
         self.renderer = renderer
+        self.layout = LayoutHelper(use_grayscale=False)  # Will be updated based on Config if needed
 
     def draw(
         self, draw: ImageDraw.ImageDraw, width: int, height: int, summary_data: dict[str, Any]
@@ -35,8 +37,8 @@ class YearEndSummaryComponent:
         year = now.year
         center_x = width // 2
 
-        # === Layout Constants ===
-        MARGIN_Y = 55
+        # === Layout Constants (using standardized values) ===
+        MARGIN_Y = LayoutConstants.MARGIN_XLARGE - 5  # 55
         TITLE_Y = MARGIN_Y
         DIVIDER_TOP_Y = 120
         DIVIDER_BOTTOM_Y = height - 100
@@ -81,15 +83,16 @@ class YearEndSummaryComponent:
         top_languages = summary_data.get("top_languages", [])
         most_productive_day = summary_data.get("most_productive_day", "N/A")
 
-        # === 3-Column Layout ===
-        col_width = width // 3
-        left_center = col_width // 2
-        mid_center = width // 2
-        right_center = width - (col_width // 2)
+        # === 3-Column Layout using LayoutHelper ===
+        col_layout = self.layout.create_column_layout(width, 3, padding=0)
+        left_center = col_layout.get_column_center(0)
+        mid_center = col_layout.get_column_center(1)
+        right_center = col_layout.get_column_center(2)
 
-        # Vertical Dividers
-        draw.line((col_width, DIVIDER_TOP_Y, col_width, DIVIDER_BOTTOM_Y), fill=0, width=1)
-        draw.line((col_width * 2, DIVIDER_TOP_Y, col_width * 2, DIVIDER_BOTTOM_Y), fill=0, width=1)
+        # Vertical Dividers using LayoutHelper
+        col_width = width // 3
+        self.layout.draw_vertical_divider(draw, col_width, DIVIDER_TOP_Y, DIVIDER_BOTTOM_Y)
+        self.layout.draw_vertical_divider(draw, col_width * 2, DIVIDER_TOP_Y, DIVIDER_BOTTOM_Y)
 
         # === LEFT COLUMN: Activity Details (2x2 Grid) ===
         l_col1_x = left_center - LEFT_COL_OFFSET_INNER
@@ -157,9 +160,12 @@ class YearEndSummaryComponent:
             align_y_center=True,
         )
 
-        # Separator inside middle column
-        draw.line(
-            (mid_center - 40, MID_SEPARATOR_Y, mid_center + 40, MID_SEPARATOR_Y), fill=0, width=1
+        # Separator inside middle column using LayoutHelper
+        self.layout.draw_horizontal_divider(
+            draw,
+            MID_SEPARATOR_Y,
+            start_x=mid_center - 40,
+            end_x=mid_center + 40,
         )
 
         # Top Languages

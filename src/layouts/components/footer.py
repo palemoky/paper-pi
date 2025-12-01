@@ -6,6 +6,7 @@ from typing import Any
 from PIL import ImageDraw
 
 from ...renderer.dashboard import DashboardRenderer
+from ..utils.layout_helper import LayoutConstants, LayoutHelper
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,7 @@ class FooterComponent:
 
     def __init__(self, renderer: DashboardRenderer):
         self.renderer = renderer
+        self.layout = LayoutHelper(use_grayscale=False)  # Will be updated based on Config if needed
         self.FOOTER_CENTER_Y = 410
         self.FOOTER_LABEL_Y = 445
 
@@ -52,14 +54,14 @@ class FooterComponent:
             {"label": "VPS Data", "value": vps_data, "type": "ring"},
         ]
 
-        # Calculate dynamic layout parameters
-        content_width = width - 40
-        start_x = 20
-        slot_width = content_width / len(footer_items)
+        # Calculate dynamic layout using LayoutHelper
+        col_layout = self.layout.create_column_layout(
+            width, len(footer_items), padding=LayoutConstants.MARGIN_SMALL
+        )
 
         # Loop to draw components
         for i, item in enumerate(footer_items):
-            center_x = int(start_x + (i * slot_width) + (slot_width / 2))
+            center_x = col_layout.get_column_center(i)
 
             # Draw label
             r.draw_centered_text(
@@ -170,26 +172,13 @@ class FooterComponent:
                 align_y_center=True,
             )
 
-            # Draw cross lines
-            draw.line(
-                (
-                    center_x,
-                    self.FOOTER_CENTER_Y - offset_y - 10,
-                    center_x,
-                    self.FOOTER_CENTER_Y + offset_y + 10,
-                ),
-                fill=0,
-                width=1,
-            )
-            draw.line(
-                (
-                    center_x - offset_x - 15,
-                    self.FOOTER_CENTER_Y,
-                    center_x + offset_x + 15,
-                    self.FOOTER_CENTER_Y,
-                ),
-                fill=0,
-                width=1,
+            # Draw cross lines using LayoutHelper
+            self.layout.draw_cross_divider(
+                draw,
+                center_x,
+                self.FOOTER_CENTER_Y,
+                h_length=(offset_x + 15) * 2,
+                v_length=(offset_y + 10) * 2,
             )
         else:
             # Fallback to text if not a valid dict

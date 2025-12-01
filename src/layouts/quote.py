@@ -9,6 +9,7 @@ import textwrap
 from PIL import Image, ImageDraw
 
 from ..renderer.dashboard import DashboardRenderer
+from .utils.layout_helper import LayoutConstants, LayoutHelper
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class QuoteLayout:
     def __init__(self):
         """Initialize quote layout with renderer."""
         self.renderer = DashboardRenderer()
+        self.layout = LayoutHelper(use_grayscale=False)
 
     def create_quote_image(self, width: int, height: int, quote: dict) -> Image.Image:
         """Create elegant quote image with automatic text wrapping.
@@ -164,18 +166,22 @@ class QuoteLayout:
             self.renderer.font_value,
         )
 
-        # Draw decorative line above author
+        # Draw decorative line above author using LayoutHelper
         line_y = author_y - 20
         line_start_x = width - margin_x - 200
-        line_end_x = width - margin_x
-        draw.line(
-            [(line_start_x, line_y), (line_end_x, line_y)],
-            fill=0,
-            width=2,
+        self.layout.draw_decorative_line(
+            draw, line_start_x, line_y, 200, orientation="horizontal", line_width=2
         )
 
-        # Draw subtle corner decorations
-        self._draw_corner_decorations(draw, width, height)
+        # Draw subtle corner decorations using LayoutHelper
+        self.layout.draw_corner_decorations(
+            draw,
+            width,
+            height,
+            corner_size=LayoutConstants.CORNER_SMALL,
+            margin=LayoutConstants.MARGIN_MEDIUM,
+            line_width=LayoutConstants.LINE_NORMAL,
+        )
 
         logger.info(f"Created quote layout: {author} (font size: {quote_font_size})")
         return image
@@ -205,72 +211,6 @@ class QuoteLayout:
         )
 
         return wrapped
-
-    def _draw_corner_decorations(self, draw: ImageDraw.Draw, width: int, height: int):
-        """Draw subtle corner decorations.
-
-        Args:
-            draw: PIL ImageDraw object
-            width: Canvas width
-            height: Canvas height
-        """
-        corner_size = 20
-        line_width = 2
-        margin = 30
-
-        # Top-left corner
-        draw.line(
-            [(margin, margin), (margin + corner_size, margin)],
-            fill=0,
-            width=line_width,
-        )
-        draw.line(
-            [(margin, margin), (margin, margin + corner_size)],
-            fill=0,
-            width=line_width,
-        )
-
-        # Top-right corner
-        draw.line(
-            [(width - margin - corner_size, margin), (width - margin, margin)],
-            fill=0,
-            width=line_width,
-        )
-        draw.line(
-            [(width - margin, margin), (width - margin, margin + corner_size)],
-            fill=0,
-            width=line_width,
-        )
-
-        # Bottom-left corner
-        draw.line(
-            [(margin, height - margin), (margin + corner_size, height - margin)],
-            fill=0,
-            width=line_width,
-        )
-        draw.line(
-            [(margin, height - margin - corner_size), (margin, height - margin)],
-            fill=0,
-            width=line_width,
-        )
-
-        # Bottom-right corner
-        draw.line(
-            [
-                (width - margin - corner_size, height - margin),
-                (width - margin, height - margin),
-            ],
-            fill=0,
-            width=line_width,
-        )
-        draw.line(
-            [
-                (width - margin, height - margin - corner_size),
-                (width - margin, height - margin),
-            ],
-            fill=0,
-            width=line_width,
-        )
 
 
 # Suppress false positive lint warnings - all variables are actually used

@@ -7,6 +7,7 @@ from PIL import ImageDraw
 
 from ...config import Config
 from ...renderer.dashboard import DashboardRenderer
+from ..utils.layout_helper import LayoutConstants, LayoutHelper
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,8 @@ class HeaderComponent:
 
     def __init__(self, renderer: DashboardRenderer):
         self.renderer = renderer
-        self.TOP_Y = 20
+        self.layout = LayoutHelper(use_grayscale=Config.hardware.use_grayscale)
+        self.TOP_Y = LayoutConstants.MARGIN_SMALL
         self.LINE_TOP_Y = 100
         self.WEATHER_ICON_SIZE = 30
 
@@ -39,19 +41,20 @@ class HeaderComponent:
             {"type": "time", "data": now},
         ]
 
-        # Calculate dynamic layout parameters
-        content_width = width - 20  # 10px padding on each side
-        start_x = 10
-        slot_width = content_width / len(header_items)
+        # Calculate dynamic layout using LayoutHelper
+        col_layout = self.layout.create_column_layout(
+            width, len(header_items), padding=LayoutConstants.MARGIN_TINY
+        )
 
         # Draw each component
         for i, item in enumerate(header_items):
-            center_x = int(start_x + (i * slot_width) + (slot_width / 2))
+            center_x = col_layout.get_column_center(i)
             self._draw_component(draw, center_x, self.TOP_Y, item)
 
-        # Draw divider line in dark gray
-        line_color = self.renderer.COLOR_DARK_GRAY if Config.hardware.use_grayscale else 0
-        draw.line((30, self.LINE_TOP_Y, width - 30, self.LINE_TOP_Y), fill=line_color, width=2)
+        # Draw divider line using LayoutHelper
+        self.layout.draw_horizontal_divider(
+            draw, self.LINE_TOP_Y, width=width, line_width=LayoutConstants.LINE_NORMAL
+        )
 
     def _draw_component(
         self, draw: ImageDraw.ImageDraw, center_x: int, top_y: int, item_data: dict[str, Any]

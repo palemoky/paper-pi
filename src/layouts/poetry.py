@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from ..config import BASE_DIR
 from ..renderer.dashboard import DashboardRenderer
+from .utils.layout_helper import LayoutConstants, LayoutHelper
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class PoetryLayout:
     def __init__(self):
         """Initialize poetry layout with renderer."""
         self.renderer = DashboardRenderer()
+        self.layout = LayoutHelper(use_grayscale=False)
         self.font_path = POETRY_FONT
         self.seal_font_path = SEAL_FONT if os.path.exists(SEAL_FONT) else POETRY_FONT
 
@@ -210,8 +212,15 @@ class PoetryLayout:
                 y_curr += cfg["text_size"] + cfg["text_spacing"]
             current_x -= cfg["col_spacing"]
 
-        # ============ 绘制四角装饰 ============
-        self._draw_decorative_corners(draw, width, height)
+        # ============ 绘制四角装饰 (using LayoutHelper) ============
+        self.layout.draw_corner_decorations(
+            draw,
+            width,
+            height,
+            corner_size=LayoutConstants.CORNER_MEDIUM,
+            margin=LayoutConstants.MARGIN_SMALL,
+            line_width=LayoutConstants.LINE_THICK,
+        )
 
         logger.info(f"Created vertical poetry layout: {author} - {source}")
         return image
@@ -263,62 +272,3 @@ class PoetryLayout:
                 w, h = 20, 20
 
             draw.text((centers[i][0] - w / 2, centers[i][1] - h / 2 - 1), char, font=font, fill=0)
-
-    def _draw_decorative_corners(self, draw: ImageDraw.Draw, width: int, height: int):
-        """Draw decorative corner elements for traditional aesthetic.
-
-        Args:
-            draw: PIL ImageDraw object
-            width: Canvas width
-            height: Canvas height
-        """
-        corner_size = 30
-        line_width = 3
-
-        # Top-right corner
-        draw.line(
-            [(width - 20 - corner_size, 20), (width - 20, 20)],
-            fill=0,
-            width=line_width,
-        )
-        draw.line(
-            [(width - 20, 20), (width - 20, 20 + corner_size)],
-            fill=0,
-            width=line_width,
-        )
-
-        # Top-left corner
-        draw.line(
-            [(20, 20), (20 + corner_size, 20)],
-            fill=0,
-            width=line_width,
-        )
-        draw.line(
-            [(20, 20), (20, 20 + corner_size)],
-            fill=0,
-            width=line_width,
-        )
-
-        # Bottom-right corner
-        draw.line(
-            [(width - 20 - corner_size, height - 20), (width - 20, height - 20)],
-            fill=0,
-            width=line_width,
-        )
-        draw.line(
-            [(width - 20, height - 20 - corner_size), (width - 20, height - 20)],
-            fill=0,
-            width=line_width,
-        )
-
-        # Bottom-left corner
-        draw.line(
-            [(20, height - 20), (20 + corner_size, height - 20)],
-            fill=0,
-            width=line_width,
-        )
-        draw.line(
-            [(20, height - 20 - corner_size), (20, height - 20)],
-            fill=0,
-            width=line_width,
-        )

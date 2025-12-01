@@ -7,6 +7,7 @@ from PIL import ImageDraw
 
 from ...config import Config
 from ...renderer.dashboard import DashboardRenderer
+from ..utils.layout_helper import LayoutConstants, LayoutHelper
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ class HackerNewsComponent:
 
     def __init__(self, renderer: DashboardRenderer):
         self.renderer = renderer
+        self.layout = LayoutHelper(use_grayscale=Config.hardware.use_grayscale)
         self.LIST_HEADER_Y = 115
         self.LIST_START_Y = 155
         self.LINE_H = 40
@@ -89,10 +91,7 @@ class HackerNewsComponent:
                 fill=0,
             )
 
-        # Draw divider line
-        line_color = self.renderer.COLOR_DARK_GRAY if Config.hardware.use_grayscale else 0
-        draw.line(
-            (30, self.LINE_BOTTOM_Y, width - 30, self.LINE_BOTTOM_Y),
-            fill=line_color,
-            width=2,
+        # Draw divider line using LayoutHelper
+        self.layout.draw_horizontal_divider(
+            draw, self.LINE_BOTTOM_Y, width=width, line_width=LayoutConstants.LINE_NORMAL
         )

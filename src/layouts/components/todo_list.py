@@ -6,6 +6,7 @@ from PIL import ImageDraw
 
 from ...config import Config
 from ...renderer.dashboard import DashboardRenderer
+from ..utils.layout_helper import LayoutConstants, LayoutHelper
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,7 @@ class TodoListComponent:
 
     def __init__(self, renderer: DashboardRenderer):
         self.renderer = renderer
+        self.layout = LayoutHelper(use_grayscale=Config.hardware.use_grayscale)
         self.LIST_HEADER_Y = 115
         self.LIST_START_Y = 155
         self.LINE_H = 40
@@ -23,7 +25,7 @@ class TodoListComponent:
 
         # Column configuration
         self.COLS = [
-            {"x": 40, "max_w": 260},  # Goals
+            {"x": LayoutConstants.MARGIN_LARGE, "max_w": 260},  # Goals
             {"x": 320, "max_w": 220},  # Must
             {"x": 560, "max_w": 220},  # Optional
         ]
@@ -72,12 +74,12 @@ class TodoListComponent:
         self._draw_column(draw, 1, safe_must)
         self._draw_column(draw, 2, safe_optional)
 
-        # Draw divider line
-        line_color = self.renderer.COLOR_DARK_GRAY if Config.hardware.use_grayscale else 0
-        draw.line(
-            (30, self.LINE_BOTTOM_Y, draw.im.size[0] - 30, self.LINE_BOTTOM_Y),
-            fill=line_color,
-            width=2,
+        # Draw divider line using LayoutHelper
+        self.layout.draw_horizontal_divider(
+            draw,
+            self.LINE_BOTTOM_Y,
+            width=draw.im.size[0],
+            line_width=LayoutConstants.LINE_NORMAL,
         )
 
     def _draw_column(self, draw: ImageDraw.ImageDraw, col_idx: int, items: list[str]) -> None:
