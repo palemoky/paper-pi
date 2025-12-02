@@ -225,8 +225,9 @@ async def main():
     # Start config watcher
     start_config_watcher()
 
-    # Initialize time slots for HN switching
-    hn_slots = TimeSlots(Config.display.hackernews_time_slots)
+    # Initialize time slots for TODO display
+    # HackerNews will show during non-TODO hours
+    todo_slots = TimeSlots(Config.display.todo_time_slots)
 
     try:
         async with Dashboard() as dm, TaskManager() as task_mgr:
@@ -247,7 +248,8 @@ async def main():
                 mode = controller.get_current_mode(now)
 
                 # Manage HackerNews pagination task
-                show_hn = mode == "dashboard" and hn_slots.contains_hour(now.hour)
+                # Show HN during non-TODO hours in dashboard mode
+                show_hn = mode == "dashboard" and not todo_slots.contains_hour(now.hour)
 
                 if show_hn:
                     if not await task_mgr.is_running("hackernews"):

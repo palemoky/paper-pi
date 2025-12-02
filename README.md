@@ -160,7 +160,6 @@ docker-compose up -d
 | :--- | :--- | :--- |
 | `LOG_LEVEL` | Log level: `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 | `TODO_TIME_SLOTS` | Time slots for TODO display (e.g., `0-12,18-24`) | `0-24` |
-| `HACKERNEWS_TIME_SLOTS` | Time slots for HackerNews display | `0-24` |
 | `HACKERNEWS_REFRESH_MINUTES` | HN pagination interval (minutes) | `5` |
 
 ## 🛠️ Local Development
