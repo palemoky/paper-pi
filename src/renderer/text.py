@@ -52,7 +52,7 @@ class TextRenderer:
         font: ImageFont.FreeTypeFont,
         max_width: int,
         fill: int | str = 0,
-    ) -> tuple[int, int, int, int] | None:
+    ) -> tuple[float, float, float, float] | None:
         """Draw text with truncation if it exceeds max width.
 
         Returns:

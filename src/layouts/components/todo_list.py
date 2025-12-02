@@ -116,7 +116,7 @@ class TodoListComponent:
         draw: ImageDraw.ImageDraw,
         x: int,
         y: int,
-        bbox: tuple[int, int, int, int],
+        bbox: tuple[float, float, float, float],
         display_text: str,
     ) -> None:
         """Draw strikethrough line over completed text, skipping bullet point.
