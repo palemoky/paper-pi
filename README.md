@@ -1,4 +1,14 @@
-# E-Ink Dashboard
+<h1 align="center">
+  <img src="https://github.com/palemoky/eink-dashboard">
+    <img src="https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/logo.png" alt="Logo" width="128" />
+  <br>
+  E-Ink Dashboard
+  <br>
+</h1>
+
+<h3 align="center">
+Powered by Pi. Rendered in Pixels..
+</h3>
 
 [![Docker Hub](https://img.shields.io/docker/v/palemoky/eink-dashboard?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/palemoky/eink-dashboard)
 [![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/eink-dashboard/latest)](https://hub.docker.com/r/palemoky/eink-dashboard)
@@ -10,7 +20,6 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 
 A modern, modular, and highly customizable dashboard for Waveshare E-Ink displays. Built with Python 3.14+ using async/await patterns and a clean, testable architecture.
 
