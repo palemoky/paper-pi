@@ -59,13 +59,13 @@ mock-poetry:  ## Generate poetry mock image
 	python -m mocks.generate --mode poetry
 
 docker-build:  ## Build Docker image
-	docker build -t eink-dashboard .
+	docker build -t paper-pi .
 
 docker-run:  ## Run Docker container
-	docker run --rm -it --env-file .env eink-dashboard
+	docker run --rm -it --env-file .env paper-pi
 
 docker-dev:  ## Run Docker container in development mode
-	docker run --rm -it --env-file .env -v $(PWD)/data:/app/data eink-dashboard
+	docker run --rm -it --env-file .env -v $(PWD)/data:/app/data paper-pi
 
 check:  ## Run all checks (format, lint, test)
 	@echo "Running format check..."

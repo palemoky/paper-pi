@@ -1,8 +1,8 @@
 version: "3"
 services:
-  eink-dashboard:
-    image: palemoky/eink-dashboard:latest
-    container_name: eink-dashboard
+  paper-pi:
+    image: palemoky/paper-pi:latest
+    container_name: paper-pi
     restart: unless-stopped
     privileged: true # MUST, for GPIO
     env_file:

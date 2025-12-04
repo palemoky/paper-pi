@@ -1,19 +1,19 @@
 <h1 align="center">
-    <img src="https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/logo.png" alt="Logo" width="128" />
+    <img src="https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/logo.png" alt="Logo" width="128" />
   <br>
   Powered by Pi, rendered in Pixels.
   <br>
 </h1>
 
-<h1 align="center">E-Ink Dashboard</h1>
+<h1 align="center">Paper Pi</h1>
 
-[![Docker Hub](https://img.shields.io/docker/v/palemoky/eink-dashboard?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/palemoky/eink-dashboard)
-[![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/eink-dashboard/latest)](https://hub.docker.com/r/palemoky/eink-dashboard)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/palemoky/eink-dashboard/release.yml)](https://github.com/palemoky/eink-dashboard/actions)
-[![Test Coverage](https://img.shields.io/badge/coverage-66%25-green)](https://github.com/palemoky/eink-dashboard)
+[![Docker Hub](https://img.shields.io/docker/v/palemoky/paper-pi?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/palemoky/paper-pi)
+[![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/paper-pi/latest)](https://hub.docker.com/r/palemoky/paper-pi)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/palemoky/paper-pi/release.yml)](https://github.com/palemoky/paper-pi/actions)
+[![Test Coverage](https://img.shields.io/badge/coverage-66%25-green)](https://github.com/palemoky/paper-pi)
 [![Python](https://img.shields.io/badge/python-3.14-blue?logo=python&logoColor=white)](https://www.python.org/)
 
-[![GitHub](https://img.shields.io/github/license/palemoky/eink-dashboard)](https://github.com/palemoky/eink-dashboard)
+[![GitHub](https://img.shields.io/github/license/palemoky/paper-pi)](https://github.com/palemoky/paper-pi)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
@@ -29,34 +29,34 @@ The easiest way to run is using Docker - it handles all dependencies and driver 
 ### 📊 Dashboard
 | Todo | HackerNews |
 |-----------|-------|
-| ![Todo](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/dashboard-todo.png) | ![HackerNews](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/dashboard-hackernews.png) |
+| ![Todo](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/dashboard-todo.png) | ![HackerNews](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/dashboard-hackernews.png) |
 
 ### 🥷 Other Modes
 | Quote | Poetry | Wallpaper |Year-End Summary |
 |--------|-----------|-----------|----------|
-| ![Quote](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/quote.png) | ![Poetry](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/poetry.png) | ![Wallpaper](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/wallpaper.png)| ![Year-End Summary](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/year_end_summary.png) |
+| ![Quote](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/quote.png) | ![Poetry](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/poetry.png) | ![Wallpaper](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/wallpaper.png)| ![Year-End Summary](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/year_end_summary.png) |
 
 ### 🎉 Special Days
 | Birthday | Anniversary | Valentine's Day |
 |---------|-------------|----------|
-| ![Birthday](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/birthday.png) | ![Anniversary](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/anniversary.png) | ![Valentine's Day](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/valentines_day.png) |
+| ![Birthday](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/birthday.png) | ![Anniversary](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/anniversary.png) | ![Valentine's Day](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/valentines_day.png) |
 
 | New Year |  Spring Festival | Mid-Autumn Festival |Christmas |
 |----------|----------|----------------|---------------------|
-| ![New Year](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/new_year.png) | ![Spring Festival](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/spring_festival.png) | ![Mid-Autumn Festival](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/mid_autumn_festival.png) | ![Christmas](https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/screenshots/christmas.png) |
+| ![New Year](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/new_year.png) | ![Spring Festival](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/spring_festival.png) | ![Mid-Autumn Festival](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/mid_autumn_festival.png) | ![Christmas](https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/screenshots/christmas.png) |
 
 ### Pull and Run
 
 ```bash
 # Pull the latest image
-docker pull palemoky/eink-dashboard:latest
+docker pull palemoky/paper-pi:latest
 
 # Or use GitHub Container Registry
-docker pull ghcr.io/palemoky/eink-dashboard:latest
+docker pull ghcr.io/palemoky/paper-pi:latest
 
 # Run with docker-compose (recommended)
-git clone https://github.com/palemoky/eink-dashboard.git
-cd eink-dashboard
+git clone https://github.com/palemoky/paper-pi.git
+cd paper-pi
 cp .env.example .env
 # Edit .env with your API keys
 docker-compose up -d
@@ -602,7 +602,7 @@ cp .env.example .env
 ### Display Not Updating
 - Check SPI is enabled: `sudo raspi-config` → Interface Options → SPI → Yes
 - Verify device permissions: `ls -l /dev/spi* /dev/gpiomem`
-- Check logs: `docker-compose logs -f eink-dashboard`
+- Check logs: `docker-compose logs -f paper-pi`
 
 ### GPIO Errors in Docker
 Ensure `docker-compose.yml` has:

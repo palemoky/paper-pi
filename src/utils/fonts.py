@@ -19,7 +19,7 @@ class FontManager:
     """Manages font files and downloads them on demand."""
 
     # GitHub repository info
-    GITHUB_REPO = "palemoky/eink-dashboard"
+    GITHUB_REPO = "palemoky/paper-pi"
     GITHUB_BRANCH = "main"
 
     # Font URLs - using GitHub raw URLs

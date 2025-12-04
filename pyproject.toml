@@ -1,5 +1,5 @@
 [project]
-name = "eink-dashboard"
+name = "paper-pi"
 version = "0.1.0"
 description = "A personalized, asynchronous dashboard for Waveshare E-Ink displays"
 readme = "README.md"
@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.scripts]
-eink-dashboard = "src.main:main"
+paper-pi = "src.main:main"
 
 [project.optional-dependencies]
 # Hardware dependencies (only needed on Raspberry Pi)

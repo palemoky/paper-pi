@@ -3,7 +3,7 @@
 
 set -e
 
-PACKAGE_NAME="${1:-eink-dashboard}"
+PACKAGE_NAME="${1:-paper-pi}"
 OWNER="${2:-palemoky}"
 
 echo "🧹 Cleaning up untagged GHCR images (SHA256 digests)..."

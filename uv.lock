@@ -132,70 +132,6 @@ wheels = [
 ]
 
 [[package]]
-name = "eink-dashboard"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "borax" },
-    { name = "gspread" },
-    { name = "httpx" },
-    { name = "notion-client" },
-    { name = "pendulum" },
-    { name = "pillow" },
-    { name = "pydantic-settings" },
-    { name = "python-dotenv" },
-    { name = "structlog" },
-    { name = "tenacity" },
-    { name = "watchdog" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-    { name = "pytest-xdist" },
-    { name = "ruff" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-]
-hardware = [
-    { name = "gpiozero" },
-    { name = "rpi-lgpio" },
-    { name = "spidev" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "borax", specifier = ">=4.1.0" },
-    { name = "gpiozero", marker = "extra == 'hardware'" },
-    { name = "gspread", specifier = ">=6.2.0" },
-    { name = "httpx", specifier = ">=0.28.0" },
-    { name = "mypy", marker = "extra == 'dev'" },
-    { name = "notion-client", specifier = ">=2.7.0" },
-    { name = "pendulum", specifier = ">=3.0.0" },
-    { name = "pillow", specifier = ">=12.0.0" },
-    { name = "pydantic-settings", specifier = ">=2.12.0" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'" },
-    { name = "pytest-cov", marker = "extra == 'dev'" },
-    { name = "pytest-mock", marker = "extra == 'dev'" },
-    { name = "pytest-xdist", marker = "extra == 'dev'" },
-    { name = "python-dotenv", specifier = ">=1.2.0" },
-    { name = "rpi-lgpio", marker = "extra == 'hardware'" },
-    { name = "ruff", marker = "extra == 'dev'" },
-    { name = "spidev", marker = "extra == 'hardware'" },
-    { name = "structlog", specifier = ">=25.5.0" },
-    { name = "tenacity", specifier = ">=9.1.0" },
-    { name = "types-pyyaml", marker = "extra == 'dev'" },
-    { name = "types-requests", marker = "extra == 'dev'" },
-    { name = "watchdog", specifier = ">=6.0.0" },
-]
-provides-extras = ["hardware", "dev"]
-
-[[package]]
 name = "execnet"
 version = "2.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -375,6 +311,70 @@ sdist = { url = "https://files.pythonhosted.org/packages/a1/d4/1fc4078c65507b51b
 wheels = [
     { url = "https://files.pythonhosted.org/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl", hash = "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484", size = 66469, upload-time = "2025-04-19T11:48:57.875Z" },
 ]
+
+[[package]]
+name = "paper-pi"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "borax" },
+    { name = "gspread" },
+    { name = "httpx" },
+    { name = "notion-client" },
+    { name = "pendulum" },
+    { name = "pillow" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "structlog" },
+    { name = "tenacity" },
+    { name = "watchdog" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+    { name = "types-pyyaml" },
+    { name = "types-requests" },
+]
+hardware = [
+    { name = "gpiozero" },
+    { name = "rpi-lgpio" },
+    { name = "spidev" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "borax", specifier = ">=4.1.0" },
+    { name = "gpiozero", marker = "extra == 'hardware'" },
+    { name = "gspread", specifier = ">=6.2.0" },
+    { name = "httpx", specifier = ">=0.28.0" },
+    { name = "mypy", marker = "extra == 'dev'" },
+    { name = "notion-client", specifier = ">=2.7.0" },
+    { name = "pendulum", specifier = ">=3.0.0" },
+    { name = "pillow", specifier = ">=12.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.12.0" },
+    { name = "pytest", marker = "extra == 'dev'" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'" },
+    { name = "pytest-cov", marker = "extra == 'dev'" },
+    { name = "pytest-mock", marker = "extra == 'dev'" },
+    { name = "pytest-xdist", marker = "extra == 'dev'" },
+    { name = "python-dotenv", specifier = ">=1.2.0" },
+    { name = "rpi-lgpio", marker = "extra == 'hardware'" },
+    { name = "ruff", marker = "extra == 'dev'" },
+    { name = "spidev", marker = "extra == 'hardware'" },
+    { name = "structlog", specifier = ">=25.5.0" },
+    { name = "tenacity", specifier = ">=9.1.0" },
+    { name = "types-pyyaml", marker = "extra == 'dev'" },
+    { name = "types-requests", marker = "extra == 'dev'" },
+    { name = "watchdog", specifier = ">=6.0.0" },
+]
+provides-extras = ["hardware", "dev"]
 
 [[package]]
 name = "pathspec"
