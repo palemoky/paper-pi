@@ -1,11 +1,11 @@
 <h1 align="center">
     <img src="https://raw.githubusercontent.com/palemoky/eink-dashboard/main/docs/logo.png" alt="Logo" width="128" />
   <br>
-  E-Ink Dashboard
+  Powered by Pi. Rendered in Pixels.
   <br>
 </h1>
 
-<h3 align="center">Powered by Pi. Rendered in Pixels.</h3>
+<h1 align="center">E-Ink Dashboard</h1>
 
 [![Docker Hub](https://img.shields.io/docker/v/palemoky/eink-dashboard?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/palemoky/eink-dashboard)
 [![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/eink-dashboard/latest)](https://hub.docker.com/r/palemoky/eink-dashboard)
