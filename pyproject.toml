@@ -34,12 +34,12 @@ dependencies = [
 paper-pi = "src.main:main"
 
 [project.optional-dependencies]
-# Hardware dependencies (only needed on Raspberry Pi)
 hardware = [
     "rpi-lgpio",
     "gpiozero",
     "spidev",
 ]
+
 dev = [
     "ruff",
     "mypy",
@@ -59,64 +59,70 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
+# Ruff configuration - Fast Python linter and formatter
 [tool.ruff]
 line-length = 100
 target-version = "py314"
-exclude = ["src/lib"]
+exclude = ["src/lib"]  # Exclude third-party library code
 
 [tool.ruff.lint]
+# Enable specific linting rule categories
 select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (undefined names, unused imports)
+    "I",   # isort (import sorting)
+    "B",   # flake8-bugbear (common bugs and design problems)
+    "C4",  # flake8-comprehensions (better list/dict/set comprehensions)
 ]
+# Disable specific rules that conflict with project style
 ignore = [
-    "E501",  # line too long
+    "E501",  # Line too long (handled by formatter)
 ]
 
+# MyPy configuration - Static type checker for Python
 [tool.mypy]
 python_version = "3.14"
-warn_return_any = false  # Disabled to avoid issues with third-party libraries
+warn_return_any = false  # Disabled to reduce noise from third-party libraries
 warn_unused_configs = true
-exclude = ["src/lib"]
-no_implicit_optional = false  # Allow implicit Optional for backward compatibility
+exclude = ["src/lib"]  # Exclude third-party library code
+no_implicit_optional = false  # Allow implicit Optional for cleaner type hints
 
-# Globally disable error codes that cause issues with third-party libraries
+# Disable error codes that cause false positives with third-party libraries
+# These libraries have incomplete or inaccurate type stubs
 disable_error_code = [
-    "no-any-return",      # Third-party libraries often return Any
-    "attr-defined",       # PIL, notion_client have incomplete stubs
-    "union-attr",         # pendulum.parse() returns Union types
-    "arg-type",           # Generic type inference issues
-    "assignment",         # PIL Image type conversions
-    "index",              # Optional dict indexing
-    "valid-type",         # ImageDraw.Draw type issues
+    "no-any-return",      # Third-party libraries often return Any types
+    "attr-defined",       # PIL and notion_client have incomplete type stubs
+    "union-attr",         # pendulum.parse() returns Union types causing issues
+    "arg-type",           # Generic type inference issues with complex types
+    "assignment",         # PIL Image type conversions are not well-typed
+    "index",              # Optional dict indexing patterns
+    "valid-type",         # ImageDraw.Draw has type definition issues
 ]
 
-# Ignore missing imports from third-party libraries
+# Ignore missing type stubs for third-party libraries without py.typed marker
 [[tool.mypy.overrides]]
 module = [
-    "borax.*",
-    "notion_client.*",
-    "PIL.*",
-    "watchdog.*",
+    "borax.*",           # Chinese calendar and date utilities
+    "notion_client.*",   # Notion API client
+    "PIL.*",             # Python Imaging Library (Pillow)
+    "watchdog.*",        # File system event monitoring
 ]
 ignore_missing_imports = true
 
+# Pytest configuration - Testing framework
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = [
-    "-ra",
-    "-q",
-    "--strict-markers",
-    "--strict-config",
-    "--cov=src",
-    "--cov-report=term-missing:skip-covered",
-    "--cov-report=html",
-    "--cov-report=xml",
-    "-n auto",  # 自动并发测试
+    "-ra",                                      # Show summary of all test outcomes
+    "-q",                                       # Quiet mode (less verbose output)
+    "--strict-markers",                         # Enforce marker registration
+    "--strict-config",                          # Enforce strict configuration
+    "--cov=src",                                # Measure code coverage for src/
+    "--cov-report=term-missing:skip-covered",   # Show missing lines in terminal
+    "--cov-report=html",                        # Generate HTML coverage report
+    "--cov-report=xml",                         # Generate XML coverage report for CI
+    "-n auto",                                  # Auto-detect CPU count for parallel testing
 ]
 testpaths = ["tests"]
 pythonpath = ["."]
@@ -124,28 +130,30 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 
+# Commitizen configuration - Semantic versioning and changelog automation
 [tool.commitizen]
-tag_format = "v$version"          # Git Tag 格式，如 v0.1.0
-version_scheme = "pep440"         # 符合 Python 规范的版本号方案
-version_provider = "pep621"       # 🌟 关键：直接读取 [project] 下的 version，不需重复配置
-update_changelog_on_bump = true   # cz bump 时自动更新 CHANGELOG.md
-major_version_zero = true         # 0.x.x 版本时，Breaking Change 不会升到 1.0，而是升 0.2 (适合开发初期)
+tag_format = "v$version"          # Git tag format (e.g., v0.1.0)
+version_scheme = "pep440"         # Use PEP 440 compliant version numbers
+version_provider = "pep621"       # Read version from [project] section (single source of truth)
+update_changelog_on_bump = true   # Automatically update CHANGELOG.md on version bump
+major_version_zero = true         # Keep 0.x.x during development (breaking changes bump minor, not major)
 
+# Conventional commit scopes for better categorization
 scopes = [
-    "hardware",   # 涉及 GPIO, SPI, 树莓派硬件的代码
-    "render",     # 涉及 Pillow 绘图、布局的代码
-    "data",       # 涉及数据获取 (Notion, GSheet, HTTPX)
-    "ui",         # 涉及界面显示逻辑
-    "docker",     # 涉及 Dockerfile, docker-compose
-    "ci",         # 涉及 GitHub Actions, pre-commit
-    "deps",       # 依赖升级
-    "docs",       # 文档修改
+    "hardware",   # GPIO, SPI, Raspberry Pi hardware-related code
+    "render",     # Pillow drawing and layout rendering
+    "data",       # Data fetching (Notion, Google Sheets, HTTP requests)
+    "ui",         # User interface and display logic
+    "docker",     # Dockerfile and docker-compose changes
+    "ci",         # GitHub Actions and CI/CD workflows
+    "deps",       # Dependency updates
+    "docs",       # Documentation changes
 ]
 
 bump_message = "chore(release): bump version $current_version -> $new_version"
-annotated_tag = true              # 创建带有注释的 Tag
-changelog_file = "CHANGELOG.md"   # 变更日志文件名
-changelog_incremental = false     # false=每次重写头部，true=只追加
+annotated_tag = true              # Create annotated Git tags with metadata
+changelog_file = "CHANGELOG.md"   # Changelog output file
+changelog_incremental = false     # Regenerate entire changelog (not incremental)
 
 [tool.commitizen.customize]
 changelog_pattern = "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\(.*\\))?:!?"
