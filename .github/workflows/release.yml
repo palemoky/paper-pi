@@ -62,7 +62,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Log in to GitHub Container Registry
@@ -108,7 +108,7 @@ jobs:
 
           chmod +x .github/scripts/cleanup-dockerhub.sh
           .github/scripts/cleanup-dockerhub.sh \
-            "${{ secrets.DOCKERHUB_USERNAME }}" \
+            "${{ vars.DOCKERHUB_USERNAME }}" \
             "${{ secrets.DOCKERHUB_TOKEN }}" \
             "${{ env.DOCKERHUB_IMAGE }}"
 
@@ -122,8 +122,8 @@ jobs:
       - name: Notify Success
         if: success() && github.event_name != 'pull_request'
         run: |
-          if [ -n "${{ secrets.SPEAKER_WEBHOOK_URL }}" ]; then
-            curl -X POST "${{ secrets.SPEAKER_WEBHOOK_URL }}" \
+          if [ -n "${{ vars.SPEAKER_WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ vars.SPEAKER_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -H "X-API-Key: ${{ secrets.SPEAKER_TOKEN }}" \
             -H "CF-Access-Client-Id: ${{ secrets.CF_CLIENT_ID }}" \
@@ -134,8 +134,8 @@ jobs:
       - name: Notify Failure
         if: failure() && github.event_name != 'pull_request'
         run: |
-          if [ -n "${{ secrets.SPEAKER_WEBHOOK_URL }}" ]; then
-            curl -X POST "${{ secrets.SPEAKER_WEBHOOK_URL }}" \
+          if [ -n "${{ vars.SPEAKER_WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ vars.SPEAKER_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -H "X-API-Key: ${{ secrets.SPEAKER_TOKEN }}" \
             -H "CF-Access-Client-Id: ${{ secrets.CF_CLIENT_ID }}" \
@@ -204,8 +204,8 @@ jobs:
       - name: Sync README to Docker Hub
         uses: peter-evans/dockerhub-description@v4
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
+          repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
           short-description: ${{ github.event.repository.description }}
           readme-filepath: ./README.md
