@@ -35,27 +35,26 @@ class TestPoetryProvider:
 
     @pytest.mark.asyncio
     async def test_get_poetry_from_api_success(self, provider, mock_client):
-        """Test successful poetry fetch from API."""
-        # Mock successful API response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "status": "success",
-            "data": {
-                "origin": {
-                    "content": "Test poetry content",
-                    "author": "Test Author",
-                    "title": "Test Title",
-                }
-            },
-        }
-        mock_client.get.return_value = mock_response
+        """Test successful poetry fetch from custom API."""
+        # Mock POETRY_API_URL configuration
+        with patch("src.providers.poetry.Config") as mock_config:
+            mock_config.display.poetry_api_url = "http://test-api/poems/random"
 
-        poetry = await provider.get_poetry(mock_client)
+            # Mock successful API response (custom API format)
+            mock_response = MagicMock()
+            mock_response.json.return_value = {
+                "title": "Test Title",
+                "author": {"name": "Test Author"},
+                "content": ["Test poetry content"],
+                "dynasty": {"name": "Test Dynasty"},
+            }
+            mock_client.get.return_value = mock_response
 
-        assert poetry["content"] == "Test poetry content"
-        assert poetry["author"] == "Test Author"
-        assert poetry["source"] == "Test Title"
-        assert poetry["type"] == "poetry"
+            poetry = await provider.get_poetry(mock_client)
+
+            assert poetry["content"] == "Test poetry content"
+            assert poetry["author"] == "Test Author"
+            assert poetry["title"] == "Test Dynasty·Test Title"
 
     @pytest.mark.asyncio
     async def test_get_poetry_uses_cache(self, provider):
@@ -66,8 +65,7 @@ class TestPoetryProvider:
             "poetry": {
                 "content": "Cached poetry",
                 "author": "Cached Author",
-                "source": "Cached Source",
-                "type": "poetry",
+                "title": "Cached Title",
             },
         }
         provider.cache_file.write_text(json.dumps(cache_data))
@@ -84,21 +82,25 @@ class TestPoetryProvider:
         old_time = datetime.now() - timedelta(hours=25)
         cache_data = {
             "timestamp": old_time.isoformat(),
-            "poetry": {"content": "Old", "author": "Old", "source": "Old", "type": "poetry"},
+            "poetry": {"content": "Old", "author": "Old", "title": "Old"},
         }
         provider.cache_file.write_text(json.dumps(cache_data))
 
-        # Mock API response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "status": "success",
-            "data": {"origin": {"content": "New", "author": "New", "title": "New"}},
-        }
-        mock_client.get.return_value = mock_response
+        # Mock POETRY_API_URL and API response
+        with patch("src.providers.poetry.Config") as mock_config:
+            mock_config.display.poetry_api_url = "http://test-api/poems/random"
 
-        poetry = await provider.get_poetry(mock_client)
+            mock_response = MagicMock()
+            mock_response.json.return_value = {
+                "title": "New",
+                "author": {"name": "New"},
+                "content": ["New"],
+            }
+            mock_client.get.return_value = mock_response
 
-        assert poetry["content"] == "New"
+            poetry = await provider.get_poetry(mock_client)
+
+            assert poetry["content"] == "New"
 
     @pytest.mark.asyncio
     async def test_get_poetry_api_error_uses_fallback(self, provider, mock_client):
@@ -125,21 +127,25 @@ class TestPoetryProvider:
     @pytest.mark.asyncio
     async def test_fetch_poetry_without_client(self, provider):
         """Test fetching poetry without providing client."""
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_response = MagicMock()
-            mock_response.json.return_value = {
-                "status": "success",
-                "data": {"origin": {"content": "Test", "author": "Test", "title": "Test"}},
-            }
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
+        with patch("src.providers.poetry.Config") as mock_config:
+            mock_config.display.poetry_api_url = "http://test-api/poems/random"
 
-            poetry = await provider._fetch_content()
+            with patch("httpx.AsyncClient") as mock_client_class:
+                mock_client = AsyncMock()
+                mock_response = MagicMock()
+                mock_response.json.return_value = {
+                    "title": "Test",
+                    "author": {"name": "Test"},
+                    "content": ["Test"],
+                }
+                mock_client.get.return_value = mock_response
+                mock_client.__aenter__.return_value = mock_client
+                mock_client.__aexit__.return_value = None
+                mock_client_class.return_value = mock_client
 
-            assert poetry["content"] == "Test"
+                poetry = await provider._fetch_content()
+
+                assert poetry["content"] == "Test"
 
     def test_get_cached_poetry_no_file(self, provider):
         """Test cache retrieval when file doesn't exist."""
@@ -160,16 +166,14 @@ class TestPoetryProvider:
         assert poetry in FALLBACK_POETRY
         assert "content" in poetry
         assert "author" in poetry
-        assert "source" in poetry
-        assert poetry["type"] == "poetry"
+        assert "title" in poetry
 
     def test_save_cache(self, provider):
         """Test cache saving."""
         poetry = {
             "content": "Test",
             "author": "Author",
-            "source": "Source",
-            "type": "poetry",
+            "title": "Title",
         }
 
         provider._save_cache(poetry)
@@ -185,7 +189,7 @@ class TestPoetryProvider:
         provider.cache_file.parent.chmod(0o444)
 
         try:
-            poetry = {"content": "Test", "author": "Test", "source": "Test", "type": "poetry"}
+            poetry = {"content": "Test", "author": "Test", "title": "Test"}
             # Should not raise exception
             provider._save_cache(poetry)
         finally:
@@ -204,8 +208,7 @@ class TestGetPoetryFunction:
                 return_value={
                     "content": "Test",
                     "author": "Test",
-                    "source": "Test",
-                    "type": "poetry",
+                    "title": "Test",
                 }
             )
             mock_provider_class.return_value = mock_provider
