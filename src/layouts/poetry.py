@@ -44,7 +44,7 @@ class PoetryLayout:
         Args:
             width: Display width in pixels
             height: Display height in pixels
-            poetry: Poetry dictionary with content, author, source, type
+            poetry: Poetry dictionary with content, author, title
 
         Returns:
             PIL Image object ready for E-Ink display
@@ -59,7 +59,7 @@ class PoetryLayout:
 
         content = poetry.get("content", "")
         author = poetry.get("author", "")
-        source = poetry.get("source", "")
+        title = poetry.get("title", "")
 
         # Process content: handle both string and list formats
         if isinstance(content, list):
@@ -94,19 +94,19 @@ class PoetryLayout:
 
         # B. 分析标题
         title_mode = 0  # 0: 普通短标题, 1: 词牌名(带·), 2: 超长标题
-        main_title = source
+        main_title = title
         sub_title = ""
 
-        if "·" in source or "・" in source:
+        if "·" in title or "・" in title:
             title_mode = 1
-            parts = source.replace("・", "·").split("·")
+            parts = title.replace("・", "·").split("·")
             main_title = parts[0]
             sub_title = parts[1] if len(parts) > 1 else ""
-        elif len(source) > 5:
+        elif len(title) > 5:
             title_mode = 2
-            mid = math.ceil(len(source) / 2)
-            main_title = source[:mid]
-            sub_title = source[mid:]
+            mid = math.ceil(len(title) / 2)
+            main_title = title[:mid]
+            sub_title = title[mid:]
 
         logger.info(f"布局分析: {line_count}行诗, 最长{max_line_len}字, 标题模式:{title_mode}")
 
@@ -229,7 +229,7 @@ class PoetryLayout:
             line_width=LayoutConstants.LINE_THICK,
         )
 
-        logger.info(f"Created vertical poetry layout: {author} - {source}")
+        logger.info(f"Created vertical poetry layout: {author} - {title}")
         return image
 
     def _draw_seal(self, draw: ImageDraw.Draw, name: str, x: int, y: int, size: int):

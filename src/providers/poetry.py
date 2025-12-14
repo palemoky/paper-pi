@@ -19,8 +19,7 @@ class Poetry(TypedDict):
 
     content: str  # Poetry text
     author: str  # Poet name
-    source: str  # Poem title
-    type: str  # Always "poetry"
+    title: str  # Poem title
 
 
 # Local fallback poetry
@@ -28,32 +27,27 @@ FALLBACK_POETRY: list[Poetry] = [
     {
         "content": "春眠不觉晓，处处闻啼鸟。\\n夜来风雨声，花落知多少。",
         "author": "孟浩然",
-        "source": "春晓",
-        "type": "poetry",
+        "title": "春晓",
     },
     {
         "content": "床前明月光，疑是地上霜。\\n举头望明月，低头思故乡。",
         "author": "李白",
-        "source": "静夜思",
-        "type": "poetry",
+        "title": "静夜思",
     },
     {
         "content": "海内存知己，天涯若比邻。",
         "author": "王勃",
-        "source": "送杜少府之任蜀州",
-        "type": "poetry",
+        "title": "送杜少府之任蜀州",
     },
     {
         "content": "人生自古谁无死，留取丹心照汗青。",
         "author": "文天祥",
-        "source": "过零丁洋",
-        "type": "poetry",
+        "title": "过零丁洋",
     },
     {
         "content": "会当凌绝顶，一览众山小。",
         "author": "杜甫",
-        "source": "望岳",
-        "type": "poetry",
+        "title": "望岳",
     },
 ]
 
@@ -82,7 +76,7 @@ class PoetryProvider(BaseContentProvider):
         return await self.get_content(client)
 
     async def _fetch_content(self, client: httpx.AsyncClient | None = None) -> Poetry:
-        """Fetch Chinese poetry from 今日诗词 API.
+        """Fetch Chinese poetry from custom poetry API.
 
         Args:
             client: Optional Async HTTP client
@@ -92,29 +86,78 @@ class PoetryProvider(BaseContentProvider):
 
         Raises:
             httpx.HTTPError: If HTTP request fails
-            ValueError: If API response is invalid
+            ValueError: If API response is invalid or URL not configured
         """
-        url = "https://v2.jinrishici.com/one.json"
+        api_url = Config.display.poetry_api_url
 
+        if not api_url:
+            raise ValueError(
+                "POETRY_API_URL not configured. Please set it in .env file to use poetry mode."
+            )
+
+        return await self._fetch_from_poetry_api(api_url, client)
+
+    async def _fetch_from_poetry_api(
+        self, url: str, client: httpx.AsyncClient | None = None
+    ) -> Poetry:
+        """Fetch poetry from custom API.
+
+        Expected response format:
+        {
+            "id": 210993,
+            "title": "靜夜思",
+            "author": {"id": 12214, "name": "釋鹹潤"},
+            "content": ["牀前看月光，疑是地上霜。", "舉頭望明月，低头思故乡。"],
+            "dynasty": {"id": 6, "name": "唐", ...},
+            "type": {"id": 11, "name": "五言絕句", ...}
+        }
+
+        Args:
+            url: Custom API URL
+            client: Optional Async HTTP client
+
+        Returns:
+            Poetry dictionary
+        """
         if client:
-            response = await client.get(url, timeout=5.0)
+            response = await client.get(url, timeout=10.0)
         else:
-            async with httpx.AsyncClient(timeout=5.0) as new_client:
+            async with httpx.AsyncClient(timeout=10.0) as new_client:
                 response = await new_client.get(url)
 
         response.raise_for_status()
         data = response.json()
 
-        if data["status"] != "success":
-            raise ValueError(f"API returned error status: {data.get('status')}")
+        # Extract author name (handle both dict and string)
+        author = data.get("author", {})
+        if isinstance(author, dict):
+            author_name = author.get("name", "Unknown")
+        else:
+            author_name = str(author) if author else "Unknown"
 
-        origin = data["data"].get("origin", {})
+        # Extract dynasty name (handle both dict and string)
+        dynasty = data.get("dynasty", {})
+        if isinstance(dynasty, dict):
+            dynasty_name = dynasty.get("name", "")
+        else:
+            dynasty_name = str(dynasty) if dynasty else ""
+
+        # Format content - join list into string with newlines
+        content = data.get("content", [])
+        if isinstance(content, list):
+            content_str = "\\n".join(content)
+        else:
+            content_str = str(content)
+
+        # Build title with dynasty if available
+        poem_title = data.get("title", "")
+        if dynasty_name:
+            poem_title = f"{dynasty_name}·{poem_title}"
 
         return {
-            "content": origin.get("content", ""),
-            "author": origin.get("author", "Unknown"),
-            "source": origin.get("title", ""),
-            "type": "poetry",
+            "content": content_str,
+            "author": author_name,
+            "title": poem_title,
         }
 
 

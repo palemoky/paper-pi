@@ -1,15 +1,32 @@
-version: "3"
 services:
   paper-pi:
     image: palemoky/paper-pi:latest
     container_name: paper-pi
     restart: unless-stopped
     privileged: true # MUST, for GPIO
-    env_file:
-      - .env
+    env_file: .paper-pi.env
     devices:
       - /dev/spidev0.0:/dev/spidev0.0
     environment:
       - TZ=${TIMEZONE:-Asia/Shanghai}
     volumes:
-      - ./data:/app/data
+      - paper-pi-data:/app/data
+    depends_on:
+      poetry-api:
+        condition: service_started
+
+  poetry-api:
+    image: palemoky/chinese-poetry-api:latest
+    container_name: poetry-api
+    restart: unless-stopped
+    env_file: .poetry-api.env
+    ports:
+      - "${PORT:-1279}:${PORT:-1279}"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - poetry-api-data:/app/data
+
+volumes:
+  paper-pi-data:
+  poetry-api-data:

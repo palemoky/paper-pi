@@ -73,6 +73,10 @@ class DisplayConfig(BaseModel):
     todo_time_slots: str = Field(
         default="0-12,18-24", description="Time slots for TODO display (hour ranges)"
     )
+    # Poetry API configuration (optional)
+    poetry_api_url: str = Field(
+        default="", description="Custom poetry API URL (empty = use default jinrishici API)"
+    )
 
     @classmethod
     def from_env(cls) -> "DisplayConfig":
@@ -92,6 +96,7 @@ class DisplayConfig(BaseModel):
             hackernews_stories_per_page=int(os.getenv("HACKERNEWS_STORIES_PER_PAGE", "5")),
             hackernews_gist_id=os.getenv("HACKERNEWS_GIST_ID", ""),
             todo_time_slots=os.getenv("TODO_TIME_SLOTS", "0-12,18-24"),
+            poetry_api_url=os.getenv("POETRY_API_URL", ""),
         )
 
 
