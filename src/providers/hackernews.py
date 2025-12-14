@@ -70,11 +70,18 @@ async def _fetch_all_stories(client: httpx.AsyncClient) -> list[HackerNewsStory]
             if not story:
                 continue
 
+            # Get URL - prefer external URL, fallback to HN item URL
+            url = story.get("url", "")
+            if not url:
+                # For Ask HN, Show HN, etc. that don't have external URLs
+                url = f"https://news.ycombinator.com/item?id={story_ids[i]}"
+
             stories.append(
                 {
                     "id": story_ids[i],
                     "title": story.get("title", ""),
                     "score": story.get("score", 0),
+                    "url": url,
                 }
             )
 
@@ -83,6 +90,15 @@ async def _fetch_all_stories(client: httpx.AsyncClient) -> list[HackerNewsStory]
             return []
 
         logger.info(f"Fetched {len(stories)} HN stories")
+
+        # Save to Gist if configured (non-blocking)
+        try:
+            from src.services.hackernews_gist import save_stories_to_gist
+
+            await save_stories_to_gist(stories, client)
+        except Exception as e:
+            logger.warning(f"Failed to save stories to Gist (non-critical): {e}")
+
         return stories
 
     except httpx.HTTPError as e:

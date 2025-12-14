@@ -37,6 +37,7 @@ class HackerNewsStory(TypedDict):
     id: int  # Story ID
     title: str  # Story title
     score: int  # Story score (upvotes)
+    url: str  # Story URL (either external URL or HN item URL)
 
 
 class HackerNewsData(TypedDict):
