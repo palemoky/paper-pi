@@ -7,28 +7,28 @@ help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
 install:  ## Install production dependencies
-	pip install -r requirements.txt
+	uv sync
 
 install-dev:  ## Install development dependencies
-	pip install -r requirements.txt -r requirements-dev.txt
-	pre-commit install
+	uv sync --extra dev
+	uv run pre-commit install
 
 test:  ## Run tests
-	pytest tests/ -v --cov=src --cov-report=term-missing
+	uv run pytest tests/ -v --cov=src --cov-report=term-missing
 
 test-fast:  ## Run tests without coverage
-	pytest tests/ -v
+	uv run pytest tests/ -v
 
 lint:  ## Run linters
-	ruff check src/ tests/ mocks/
-	mypy src/ --ignore-missing-imports
+	uv run ruff check src/ tests/ mocks/
+	uv run mypy src/ --ignore-missing-imports
 
 format:  ## Format code
-	ruff format src/ tests/ mocks/
-	ruff check --fix src/ tests/ mocks/
+	uv run ruff format src/ tests/ mocks/
+	uv run ruff check --fix src/ tests/ mocks/
 
 format-check:  ## Check code formatting
-	ruff format --check src/ tests/ mocks/
+	uv run ruff format --check src/ tests/ mocks/
 
 clean:  ## Clean up generated files
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
@@ -41,22 +41,22 @@ clean:  ## Clean up generated files
 	rm -rf build/ dist/ .coverage htmlcov/
 
 dev:  ## Run in development mode (screenshot mode)
-	python -m src.main
+	uv run python -m src.main
 
 mock-all:  ## Generate all mock images
-	python -m mocks.generate --all
+	uv run python -m mocks.generate --all
 
 mock-dashboard:  ## Generate dashboard mock image
-	python -m mocks.generate --mode dashboard
+	uv run python -m mocks.generate --mode dashboard
 
 mock-holiday:  ## Generate holiday mock image
-	python -m mocks.generate --mode holiday
+	uv run python -m mocks.generate --mode holiday
 
 mock-quote:  ## Generate quote mock image
-	python -m mocks.generate --mode quote
+	uv run python -m mocks.generate --mode quote
 
 mock-poetry:  ## Generate poetry mock image
-	python -m mocks.generate --mode poetry
+	uv run python -m mocks.generate --mode poetry
 
 docker-build:  ## Build Docker image
 	docker build -t paper-pi .
@@ -76,8 +76,4 @@ check:  ## Run all checks (format, lint, test)
 	@make test
 
 pre-commit:  ## Run pre-commit hooks on all files
-	pre-commit run --all-files
-
-update-deps:  ## Update dependencies
-	pip-compile requirements.in -o requirements.txt
-	pip-compile requirements-dev.in -o requirements-dev.txt
+	uv run pre-commit run --all-files
