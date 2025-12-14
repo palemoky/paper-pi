@@ -23,12 +23,9 @@ class TodoListComponent:
         self.LINE_BOTTOM_Y = 365
         self.MAX_LIST_LINES = 5
 
-        # Column configuration
-        self.COLS = [
-            {"x": LayoutConstants.MARGIN_LARGE, "max_w": 260},  # Goals
-            {"x": 320, "max_w": 220},  # Must
-            {"x": 560, "max_w": 220},  # Optional
-        ]
+        # Column configuration - using equal-width layout
+        self.COLUMN_GAP = 20  # Gap between columns
+        self.num_columns = 3
 
     def draw(
         self,
@@ -51,6 +48,19 @@ class TodoListComponent:
         goals = goals or Config.LIST_GOALS
         must = must or Config.LIST_MUST
         optional = optional or Config.LIST_OPTIONAL
+
+        # Get screen width and calculate equal-width columns
+        screen_width = draw.im.size[0]
+        col_layout = self.layout.create_column_layout(
+            screen_width, self.num_columns, padding=LayoutConstants.MARGIN_LARGE
+        )
+
+        # Calculate column configurations
+        self.COLS = []
+        for i in range(self.num_columns):
+            col_x = col_layout.get_column_left(i)
+            col_width = int(col_layout.col_width - self.COLUMN_GAP)
+            self.COLS.append({"x": col_x, "max_w": col_width})
 
         # Draw column headers
         headers = ["Goals", "Must", "Optional"]
