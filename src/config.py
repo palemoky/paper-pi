@@ -8,7 +8,6 @@ Configuration is organized into logical groups for better maintainability.
 
 import logging
 import os
-import threading
 from pathlib import Path
 from typing import Literal
 
@@ -486,11 +485,7 @@ class Settings(BaseModel):
         logger.info("✅ Configuration validation passed")
 
     def reload(self):
-        """Reload configuration from environment and .env file.
-
-        This method is called by the file watcher when .env changes.
-        Triggers registered callbacks after successful reload.
-        """
+        """Reload configuration from environment and .env file."""
         logger.info("🔄 Reloading configuration from .env file...")
         try:
             new_settings = Settings()
@@ -508,18 +503,6 @@ class Settings(BaseModel):
             logger.debug(f"   Display mode: {self.display.mode}")
             logger.debug(f"   Refresh interval: {self.hardware.refresh_interval}s")
             logger.debug(f"   Quote cache hours: {self.display.quote_cache_hours}h")
-
-            # Trigger callbacks
-            if _reload_callbacks:
-                logger.info(f"🔔 Triggering {len(_reload_callbacks)} reload callback(s)")
-                for callback in _reload_callbacks:
-                    try:
-                        callback()
-                        logger.debug(f"   ✓ Callback executed: {callback.__name__}")
-                    except Exception as e:
-                        logger.error(f"   ✗ Error in reload callback {callback.__name__}: {e}")
-            else:
-                logger.debug("No reload callbacks registered")
         except Exception as e:
             logger.error(f"Failed to reload configuration: {e}", exc_info=True)
             raise
@@ -528,117 +511,3 @@ class Settings(BaseModel):
 # ===== Global Configuration Instance =====
 
 Config = Settings()
-
-# ===== Configuration File Watcher =====
-
-_watcher_thread = None
-_watcher_stop_event = threading.Event()
-_reload_callbacks = []
-_last_reload_time = 0
-RELOAD_DEBOUNCE_SECONDS = 2  # Prevent rapid successive reloads
-
-
-def register_reload_callback(callback):
-    """Register a callback function to be called when config is reloaded.
-
-    Args:
-        callback: A callable that takes no arguments
-    """
-    if callback not in _reload_callbacks:
-        _reload_callbacks.append(callback)
-        logger.debug(f"Registered reload callback: {callback.__name__}")
-
-
-def unregister_reload_callback(callback):
-    """Unregister a reload callback.
-
-    Args:
-        callback: The callback to remove
-    """
-    if callback in _reload_callbacks:
-        _reload_callbacks.remove(callback)
-        logger.debug(f"Unregistered reload callback: {callback.__name__}")
-
-
-def start_config_watcher():
-    """Start watching .env file for changes and reload config automatically.
-
-    This runs in a separate thread and uses watchdog to monitor file changes.
-    Includes debouncing to prevent rapid successive reloads.
-    """
-    global _watcher_thread
-
-    if _watcher_thread and _watcher_thread.is_alive():
-        logger.warning("Config watcher already running")
-        return
-
-    try:
-        import time
-
-        from watchdog.events import FileSystemEventHandler
-        from watchdog.observers import Observer
-
-        class ConfigFileHandler(FileSystemEventHandler):
-            """Handler for .env file changes with debouncing."""
-
-            def on_modified(self, event):
-                global _last_reload_time
-
-                if event.src_path.endswith(".env"):
-                    current_time = time.time()
-
-                    logger.debug(f"📝 File modification detected: {event.src_path}")
-
-                    # Debounce: ignore if last reload was too recent
-                    if current_time - _last_reload_time < RELOAD_DEBOUNCE_SECONDS:
-                        logger.debug(
-                            f"⏭️  Ignoring rapid reload (debounce: "
-                            f"{current_time - _last_reload_time:.1f}s < {RELOAD_DEBOUNCE_SECONDS}s)"
-                        )
-                        return
-
-                    logger.info(f"🔄 Detected change in {event.src_path}, reloading config...")
-                    try:
-                        Config.reload()
-                        _last_reload_time = current_time
-                        logger.info("✅ Config reload completed successfully")
-                    except Exception as e:
-                        logger.error(f"❌ Failed to reload config: {e}", exc_info=True)
-
-        observer = Observer()
-        event_handler = ConfigFileHandler()
-        watch_path = str(BASE_DIR)
-        observer.schedule(event_handler, watch_path, recursive=False)
-        observer.start()
-
-        logger.info(f"👀 Config watcher started, monitoring {watch_path}")
-
-        def run_observer():
-            try:
-                while not _watcher_stop_event.is_set():
-                    _watcher_stop_event.wait(timeout=1)
-                observer.stop()
-                observer.join()
-                logger.info("Config watcher stopped")
-            except Exception as e:
-                logger.error(f"Config watcher error: {e}")
-
-        _watcher_thread = threading.Thread(target=run_observer, daemon=True)
-        _watcher_thread.start()
-
-    except ImportError:
-        logger.warning(
-            "watchdog not installed, config hot reload disabled. Install with: pip install watchdog"
-        )
-    except Exception as e:
-        logger.error(f"Failed to start config watcher: {e}")
-
-
-def stop_config_watcher():
-    """Stop the configuration file watcher."""
-    global _watcher_thread
-    if _watcher_thread and _watcher_thread.is_alive():
-        _watcher_stop_event.set()
-        _watcher_thread.join(timeout=5)
-        _watcher_thread = None
-        logger.info("Config watcher stopped")

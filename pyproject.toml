@@ -26,7 +26,6 @@ dependencies = [
     "borax>=4.1.0",
     "notion-client>=2.7.0",
     "gspread>=6.2.0",
-    "watchdog>=6.0.0",
     "structlog>=25.5.0",
 ]
 
@@ -106,7 +105,6 @@ module = [
     "borax.*",           # Chinese calendar and date utilities
     "notion_client.*",   # Notion API client
     "PIL.*",             # Python Imaging Library (Pillow)
-    "watchdog.*",        # File system event monitoring
 ]
 ignore_missing_imports = true
 

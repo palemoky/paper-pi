@@ -14,7 +14,7 @@ import pendulum
 
 # Try relative import first (for package mode)
 try:
-    from .config import Config, start_config_watcher, stop_config_watcher
+    from .config import Config
     from .core import (
         DisplayController,
         QuietHours,
@@ -31,7 +31,7 @@ try:
 except ImportError:
     # If relative import fails, add parent directory to path
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from src.config import Config, start_config_watcher, stop_config_watcher
+    from src.config import Config
     from src.core import (
         DisplayController,
         QuietHours,
@@ -217,14 +217,6 @@ async def main():
     # Configuration change event
     config_changed = asyncio.Event()
 
-    def on_config_reload():
-        """Callback when config is reloaded."""
-        logger.info("📢 Config reloaded, triggering refresh...")
-        config_changed.set()
-
-    # Start config watcher
-    start_config_watcher()
-
     # Initialize time slots for TODO display
     # HackerNews will show during non-TODO hours
     todo_slots = TimeSlots(Config.display.todo_time_slots)
@@ -291,7 +283,6 @@ async def main():
         logger.error(f"Fatal error: {e}", exc_info=True)
         raise
     finally:
-        stop_config_watcher()
         if _driver:
             try:
                 _driver.sleep()
