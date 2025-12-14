@@ -19,8 +19,7 @@ class Quote(TypedDict):
 
     content: str  # Quote text
     author: str  # Author name
-    source: str  # Source (optional)
-    type: str  # Always "quote"
+    source: str  # Citation source (optional)
 
 
 # Local fallback quotes
@@ -29,31 +28,26 @@ FALLBACK_QUOTES: list[Quote] = [
         "content": "Stay hungry, stay foolish.",
         "author": "Steve Jobs",
         "source": "Stanford Commencement 2005",
-        "type": "quote",
     },
     {
         "content": "The only way to do great work is to love what you do.",
         "author": "Steve Jobs",
         "source": "",
-        "type": "quote",
     },
     {
         "content": "Life is what happens when you're busy making other plans.",
         "author": "John Lennon",
         "source": "",
-        "type": "quote",
     },
     {
         "content": "In the middle of difficulty lies opportunity.",
         "author": "Albert Einstein",
         "source": "",
-        "type": "quote",
     },
     {
         "content": "The future belongs to those who believe in the beauty of their dreams.",
         "author": "Eleanor Roosevelt",
         "source": "",
-        "type": "quote",
     },
 ]
 
@@ -77,7 +71,7 @@ class QuoteProvider(BaseContentProvider):
             client: Optional Async HTTP client
 
         Returns:
-            Quote dictionary with content, author, source, and type
+            Quote dictionary with content, author, and source
         """
         return await self.get_content(client)
 
@@ -108,7 +102,6 @@ class QuoteProvider(BaseContentProvider):
             "content": data["content"],
             "author": data["author"],
             "source": "",
-            "type": "quote",
         }
 
 

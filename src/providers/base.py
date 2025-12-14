@@ -9,7 +9,7 @@ import logging
 import random
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import TypedDict
+from typing import Generic, NotRequired, Required, TypedDict, TypeVar
 
 import httpx
 
@@ -19,15 +19,22 @@ logger = logging.getLogger(__name__)
 
 
 class ContentData(TypedDict):
-    """Base content data structure."""
+    """Base content data structure.
 
-    content: str
-    author: str
-    source: str
-    type: str
+    Supports both Poetry (uses 'title') and Quote (uses 'source').
+    """
+
+    content: Required[str]  # Required
+    author: Required[str]  # Required
+    title: NotRequired[str]  # Optional - used by Poetry
+    source: NotRequired[str]  # Optional - used by Quote
 
 
-class BaseContentProvider(ABC):
+# Type variable for content data
+ContentType = TypeVar("ContentType", bound=ContentData)
+
+
+class BaseContentProvider(ABC, Generic[ContentType]):
     """Base class for content providers with caching and fallback.
 
     Provides unified caching, error handling, and fallback mechanisms.
@@ -37,7 +44,7 @@ class BaseContentProvider(ABC):
     def __init__(
         self,
         cache_filename: str,
-        fallback_data: list[ContentData],
+        fallback_data: list[ContentType],
         content_type: str,
         cache_hours: int,
     ):
@@ -55,7 +62,7 @@ class BaseContentProvider(ABC):
         self.content_type = content_type
         self.cache_hours = cache_hours
 
-    async def get_content(self, client: httpx.AsyncClient | None = None) -> ContentData:
+    async def get_content(self, client: httpx.AsyncClient | None = None) -> ContentType:
         """Get content with caching and fallback.
 
         Args:
@@ -84,7 +91,7 @@ class BaseContentProvider(ABC):
             logger.exception(f"Unexpected error fetching {self.content_type}: {e}")
             return self._get_fallback()
 
-    def _get_cached_content(self) -> ContentData | None:
+    def _get_cached_content(self) -> ContentType | None:
         """Get content from cache if still valid.
 
         Returns:
@@ -123,7 +130,7 @@ class BaseContentProvider(ABC):
             return None
 
     @abstractmethod
-    async def _fetch_content(self, client: httpx.AsyncClient | None = None) -> ContentData:
+    async def _fetch_content(self, client: httpx.AsyncClient | None = None) -> ContentType:
         """Fetch content from API.
 
         Subclasses must implement this method with API-specific logic.
@@ -140,7 +147,7 @@ class BaseContentProvider(ABC):
         """
         pass
 
-    def _get_fallback(self) -> ContentData:
+    def _get_fallback(self) -> ContentType:
         """Get a random fallback content from local database.
 
         Returns:
@@ -148,7 +155,7 @@ class BaseContentProvider(ABC):
         """
         return random.choice(self.fallback_data)
 
-    def _save_cache(self, content: ContentData) -> bool:
+    def _save_cache(self, content: ContentType) -> bool:
         """Save content to cache file with atomic write.
 
         Args:

@@ -71,7 +71,7 @@ class PoetryProvider(BaseContentProvider):
             client: Optional Async HTTP client
 
         Returns:
-            Poetry dictionary with content, author, source, and type
+            Poetry dictionary with content, author, and title
         """
         return await self.get_content(client)
 
