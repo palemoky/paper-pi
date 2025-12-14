@@ -47,7 +47,6 @@ class TestQuoteProvider:
         assert quote["content"] == "Test quote content"
         assert quote["author"] == "Test Author"
         assert quote["source"] == ""
-        assert quote["type"] == "quote"
 
     @pytest.mark.asyncio
     async def test_get_quote_uses_cache(self, provider):
@@ -58,7 +57,6 @@ class TestQuoteProvider:
                 "content": "Cached quote",
                 "author": "Cached Author",
                 "source": "",
-                "type": "quote",
             },
         }
         provider.cache_file.write_text(json.dumps(cache_data))
@@ -74,7 +72,7 @@ class TestQuoteProvider:
         old_time = datetime.now() - timedelta(hours=25)
         cache_data = {
             "timestamp": old_time.isoformat(),
-            "quote": {"content": "Old", "author": "Old", "source": "", "type": "quote"},
+            "quote": {"content": "Old", "author": "Old", "source": ""},
         }
         provider.cache_file.write_text(json.dumps(cache_data))
 
@@ -130,11 +128,11 @@ class TestQuoteProvider:
         assert quote in FALLBACK_QUOTES
         assert "content" in quote
         assert "author" in quote
-        assert quote["type"] == "quote"
+        assert "source" in quote
 
     def test_save_cache(self, provider):
         """Test cache saving."""
-        quote = {"content": "Test", "author": "Author", "source": "", "type": "quote"}
+        quote = {"content": "Test", "author": "Author", "source": ""}
 
         provider._save_cache(quote)
 
@@ -148,7 +146,7 @@ class TestQuoteProvider:
         provider.cache_file.parent.chmod(0o444)
 
         try:
-            quote = {"content": "Test", "author": "Test", "source": "", "type": "quote"}
+            quote = {"content": "Test", "author": "Test", "source": ""}
             provider._save_cache(quote)
         finally:
             provider.cache_file.parent.chmod(0o755)
@@ -163,7 +161,7 @@ class TestGetQuoteFunction:
         with patch("src.providers.quote.QuoteProvider") as mock_provider_class:
             mock_provider = MagicMock()
             mock_provider.get_quote = AsyncMock(
-                return_value={"content": "Test", "author": "Test", "source": "", "type": "quote"}
+                return_value={"content": "Test", "author": "Test", "source": ""}
             )
             mock_provider_class.return_value = mock_provider
 
