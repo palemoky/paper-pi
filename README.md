@@ -7,15 +7,11 @@
 
 <h1 align="center">Paper Pi</h1>
 
-[![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/paper-pi/latest)](https://hub.docker.com/r/palemoky/paper-pi)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/palemoky/paper-pi/release.yml)](https://github.com/palemoky/paper-pi/actions)
+[![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/paper-pi/latest)](https://hub.docker.com/r/palemoky/paper-pi)
 [![Test Coverage](https://img.shields.io/badge/coverage-66%25-green)](https://github.com/palemoky/paper-pi)
 [![Python](https://img.shields.io/badge/python-3.14-blue?logo=python&logoColor=white)](https://www.python.org/)
-
 [![GitHub](https://img.shields.io/github/license/palemoky/paper-pi)](https://github.com/palemoky/paper-pi)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 A modern, modular, and highly customizable dashboard for Waveshare E-Ink displays. Built with Python 3.14+ using async/await patterns and a clean, testable architecture.
 
