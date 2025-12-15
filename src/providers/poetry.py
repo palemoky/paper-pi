@@ -135,13 +135,6 @@ class PoetryProvider(BaseContentProvider):
         else:
             author_name = str(author) if author else "Unknown"
 
-        # Extract dynasty name (handle both dict and string)
-        dynasty = data.get("dynasty", {})
-        if isinstance(dynasty, dict):
-            dynasty_name = dynasty.get("name", "")
-        else:
-            dynasty_name = str(dynasty) if dynasty else ""
-
         # Format content - join list into string with newlines
         content = data.get("content", [])
         if isinstance(content, list):
@@ -149,10 +142,8 @@ class PoetryProvider(BaseContentProvider):
         else:
             content_str = str(content)
 
-        # Build title with dynasty if available
+        # Build title
         poem_title = data.get("title", "")
-        if dynasty_name:
-            poem_title = f"{dynasty_name}·{poem_title}"
 
         return {
             "content": content_str,

@@ -37,7 +37,7 @@ class TestPoetryLayout:
         poetry = {
             "content": "床前明月光，疑是地上霜。\n举头望明月，低头思故乡。",
             "author": "李白",
-            "source": "静夜思",
+            "title": "静夜思",
         }
 
         # Setup mock draw
@@ -58,7 +58,7 @@ class TestPoetryLayout:
         poetry = {
             "content": ["床前明月光", "疑是地上霜", "举头望明月", "低头思故乡"],
             "author": "李白",
-            "source": "静夜思",
+            "title": "静夜思",
         }
 
         mock_draw = MagicMock()
@@ -76,7 +76,7 @@ class TestPoetryLayout:
         poetry = {
             "content": "test",
             "author": "Author",
-            "source": "Very Long Title That Needs Split",
+            "title": "Very Long Title That Needs Split",
         }
 
         mock_draw = MagicMock()
@@ -94,7 +94,7 @@ class TestPoetryLayout:
         poetry = {
             "content": "test",
             "author": "Author",
-            "source": "Cipai·Title",
+            "title": "Cipai·Title",
         }
 
         mock_draw = MagicMock()
