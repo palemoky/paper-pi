@@ -265,10 +265,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📝 License
-
-MIT License - Copyright © 2025 Palemoky
-
 ## 🙏 Acknowledgments
 
 - [Waveshare](https://www.waveshare.com/) for E-Ink display drivers
