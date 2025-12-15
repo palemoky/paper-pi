@@ -17,17 +17,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.14"
+          cache: "pip"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          cache-suffix: v1
+          cache-dependency-glob: "**/pyproject.toml"
 
       - name: Install dependencies
         run: |
@@ -42,11 +45,33 @@ jobs:
       - name: Type check
         run: uv run mypy src/
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
-          uv run python -m pytest tests/
+          uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing -n auto
 
-      - name: Upload coverage
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "### Test Results :test_tube:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage.xml ]; then
+            echo "**Coverage report generated successfully**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload coverage to Codecov
+        if: success()
         uses: codecov/codecov-action@v5
         with:
           file: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-failure-logs
+          path: |
+            coverage.xml
+            .coverage
+          retention-days: 7
