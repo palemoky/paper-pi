@@ -82,10 +82,16 @@ class BaseContentProvider(ABC, Generic[ContentType]):
             self._save_cache(content)
             return content
         except (httpx.HTTPError, httpx.TimeoutException) as e:
-            logger.warning(f"Network error fetching {self.content_type}: {e}")
+            logger.warning(
+                f"Network error fetching {self.content_type}: {type(e).__name__}: {e}",
+                exc_info=True,
+            )
             return self._get_fallback()
         except (json.JSONDecodeError, KeyError, ValueError) as e:
-            logger.error(f"Invalid API response for {self.content_type}: {e}")
+            logger.error(
+                f"Invalid API response for {self.content_type}: {type(e).__name__}: {e}",
+                exc_info=True,
+            )
             return self._get_fallback()
         except Exception as e:
             logger.exception(f"Unexpected error fetching {self.content_type}: {e}")
