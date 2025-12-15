@@ -67,8 +67,6 @@ docker-compose --profile poetry up -d
 
 > **Note**: The `poetry-api` service is optional and only needed when using `DISPLAY_MODE=poetry`. For other modes (dashboard, quote, wallpaper), you can run without the poetry profile to save resources.
 
-````
-
 ### Supported Platforms
 
 - `linux/arm64` - Raspberry Pi 3/4/5 (64-bit)
@@ -215,7 +213,7 @@ flowchart LR
     class ImgBuilder,DashLayout,ContextLayouts,Renderer render
     class DriverFac,EPD,Mock hw
     class Providers,Storage,Strategies subBox
-````
+```
 
 ## 🖥️ Hardware Support
 
