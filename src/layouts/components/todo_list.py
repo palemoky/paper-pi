@@ -49,17 +49,29 @@ class TodoListComponent:
         must = must or Config.LIST_MUST
         optional = optional or Config.LIST_OPTIONAL
 
-        # Get screen width and calculate equal-width columns
+        # Get screen width and calculate equal-width columns with gaps
         screen_width = draw.im.size[0]
+
+        # Calculate total gap space (gaps between columns, not at edges)
+        total_gap_space = self.COLUMN_GAP * (self.num_columns - 1)
+
+        # Create column layout with adjusted padding to account for gaps
+        # We use symmetric padding for left/right edges
         col_layout = self.layout.create_column_layout(
             screen_width, self.num_columns, padding=LayoutConstants.MARGIN_LARGE
         )
 
+        # Calculate actual column width accounting for gaps
+        # Total content width is divided by columns, minus the gaps
+        available_width = col_layout.content_width - total_gap_space
+        actual_col_width = available_width / self.num_columns
+
         # Calculate column configurations
         self.COLS = []
         for i in range(self.num_columns):
-            col_x = col_layout.get_column_left(i)
-            col_width = int(col_layout.col_width - self.COLUMN_GAP)
+            # Each column starts at: left_padding + (column_index * (column_width + gap))
+            col_x = int(col_layout.padding_left + i * (actual_col_width + self.COLUMN_GAP))
+            col_width = int(actual_col_width)
             self.COLS.append({"x": col_x, "max_w": col_width})
 
         # Draw column headers
