@@ -57,8 +57,17 @@ git clone https://github.com/palemoky/paper-pi.git
 cd paper-pi
 cp .env.example .env
 # Edit .env with your API keys
+
+# For dashboard/quote/wallpaper modes (default)
 docker-compose up -d
+
+# For poetry mode (includes poetry-api service)
+docker-compose --profile poetry up -d
 ```
+
+> **Note**: The `poetry-api` service is optional and only needed when using `DISPLAY_MODE=poetry`. For other modes (dashboard, quote, wallpaper), you can run without the poetry profile to save resources.
+
+````
 
 ### Supported Platforms
 
@@ -206,7 +215,7 @@ flowchart LR
     class ImgBuilder,DashLayout,ContextLayouts,Renderer render
     class DriverFac,EPD,Mock hw
     class Providers,Storage,Strategies subBox
-```
+````
 
 ## 🖥️ Hardware Support
 

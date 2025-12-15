@@ -226,9 +226,10 @@ async def main():
             fetcher = DataFetcher(dm)
             builder = ImageBuilder(epd.width, epd.height)
 
-            # Reset HackerNews pagination on startup only if in HackerNews time slot
+            # Reset HackerNews pagination on startup only if in dashboard mode and HackerNews time slot
             now = pendulum.now(Config.hardware.timezone)
-            show_hn = not todo_slots.contains_hour(now.hour)
+            mode = controller.get_current_mode(now)
+            show_hn = mode == "dashboard" and not todo_slots.contains_hour(now.hour)
             if show_hn:
                 await get_hackernews(dm.client, reset_to_first=True)
                 logger.info("🔄 Reset HackerNews pagination on startup")

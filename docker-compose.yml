@@ -11,9 +11,7 @@ services:
       - TZ=${TIMEZONE:-Asia/Shanghai}
     volumes:
       - paper-pi-data:/app/data
-    depends_on:
-      poetry-api:
-        condition: service_started
+    # No hard dependency - poetry-api is optional via profiles
 
   poetry-api:
     image: palemoky/chinese-poetry-api:latest
@@ -26,6 +24,8 @@ services:
       - TZ=Asia/Shanghai
     volumes:
       - poetry-api-data:/app/data
+    profiles:
+      - poetry # Only start when poetry mode is needed
 
 volumes:
   paper-pi-data:
