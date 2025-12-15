@@ -34,8 +34,8 @@ def format_stories_markdown(stories: list[HackerNewsStory]) -> str:
     lines.append(f"*Updated: {_get_current_time()}*\n")
 
     # Table header
-    lines.append("| # | Title | Score |")
-    lines.append("|--:|:------|:------|")
+    lines.append("| #  | Title | Score |")
+    lines.append("|:--:|:------|:------|")
 
     for i, story in enumerate(stories, 1):
         title = story.get("title", "Untitled")
