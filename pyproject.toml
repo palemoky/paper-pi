@@ -151,7 +151,7 @@ scopes = [
 bump_message = "chore(release): bump version $current_version -> $new_version"
 annotated_tag = true              # Create annotated Git tags with metadata
 changelog_file = "CHANGELOG.md"   # Changelog output file
-changelog_incremental = false     # Regenerate entire changelog (not incremental)
+changelog_incremental = true     # Regenerate entire changelog (not incremental)
 
 [tool.commitizen.customize]
 changelog_pattern = "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\(.*\\))?:!?"

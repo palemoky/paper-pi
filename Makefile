@@ -77,3 +77,32 @@ check:  ## Run all checks (format, lint, test)
 
 pre-commit:  ## Run pre-commit hooks on all files
 	uv run pre-commit run --all-files
+
+release:  ## Create and push version tag (Usage: make release v1.0.0)
+	@if [ -z "$(filter-out release,$(MAKECMDGOALS))" ]; then \
+		echo "$(YELLOW)Usage: make release v1.0.0$(NC)"; \
+		exit 1; \
+	fi
+	@VERSION="$(filter-out release,$(MAKECMDGOALS))"; \
+	if git config user.signingkey >/dev/null 2>&1 && command -v gpg >/dev/null 2>&1; then \
+		echo "$(BLUE)Creating GPG signed tag $$VERSION...$(NC)"; \
+		if git tag -s $$VERSION -m "Release $$VERSION" 2>/dev/null; then \
+			echo "$(GREEN)✓ Signed tag $$VERSION created successfully (Verified ✓)$(NC)"; \
+		else \
+			echo "$(YELLOW)⚠ GPG signing failed, using regular tag...$(NC)"; \
+			git tag -a $$VERSION -m "Release $$VERSION"; \
+			echo "$(GREEN)✓ Tag $$VERSION created successfully$(NC)"; \
+		fi \
+	else \
+		echo "$(BLUE)Creating tag $$VERSION...$(NC)"; \
+		git tag -a $$VERSION -m "Release $$VERSION"; \
+		echo "$(GREEN)✓ Tag $$VERSION created successfully$(NC)"; \
+		echo "$(YELLOW)💡 Tip: Configure GPG key to show Verified badge on GitHub$(NC)"; \
+	fi; \
+	echo "$(BLUE)Pushing tag to remote repository...$(NC)"; \
+	git push origin $$VERSION; \
+	echo "$(GREEN)✓ Release $$VERSION completed$(NC)"
+
+# Allow version number as target
+v%:
+	@:
