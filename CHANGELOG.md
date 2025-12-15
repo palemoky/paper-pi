@@ -5,9 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-12-15
+
+### Added
+
+- HackerNews stories now saved to public GitHub Gist for easy sharing ([Live Mirror](https://gist.github.com/palemoky/b04f3dcfb8431784cddc648d1af6dd4c))
+- HackerNews stories formatted as Markdown table with headers
+- Custom poetry API service integration
+
+### Changed
+
+- Migrated all Makefile commands to use `uv` for dependency management
+- Simplified README documentation (reduced by ~50%)
+- Updated poetry data model to use `title` instead of `source`
+- Refactored `ContentData` by removing `type` field and making `title` and `source` optional
+- Dynamically calculate equal-width columns based on screen width
+- Updated GitHub Actions to use newer action versions
+- Recalculated column layout with explicit gap accounting
+
+### Removed
+
+- Config file watcher functionality and `watchdog` dependency (reduced CPU usage)
+- `type` field from quote and poetry data models
+
+### Fixed
+
+- HackerNews gist table header alignment (center-aligned first column)
+- Column positioning and width calculations
+
 ## [0.2.0] - 2025-12-07
 
 ### Added
+
 - Xiaomi speaker notification support for audio alerts
 - Comprehensive test suite with 66% coverage
 - Mock image generation CLI tool for debugging without hardware
@@ -21,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System architecture diagram in documentation
 
 ### Changed
+
 - Renamed project from `eink-dashboard` to `paper-pi`
 - Refactored layout system with `LayoutHelper` for unified coordinate management
 - Improved header rendering to prevent fading on partial refresh
@@ -31,12 +61,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced HackerNews lazy loading and pagination
 
 ### Fixed
+
 - Header fading issue on partial refresh (now uses 4-level COLOR_BLACK)
 - HackerNews pagination reset bug
 - Type checking errors in layout components
 - Concurrent display refresh conflicts
 
 ### Removed
+
 - Deprecated functions from core modules
 - Unnecessary GCC dependency from Dockerfile
 - README.md and LICENSE files from Docker image (reduced size)
@@ -45,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-11-30
 
 ### Added
+
 - Initial release of Paper Pi
 - Multi-mode E-Ink dashboard (Dashboard, Quote, Poetry, Wallpaper)
 - Real-time weather integration (OpenWeatherMap)
@@ -76,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive documentation
 
 ### Infrastructure
+
 - Python 3.14 support
 - UV package manager integration (10-100x faster than pip)
 - Ruff for linting and formatting
