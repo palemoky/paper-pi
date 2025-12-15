@@ -81,7 +81,14 @@ class BaseContentProvider(ABC, Generic[ContentType]):
             content = await self._fetch_content(client)
             self._save_cache(content)
             return content
-        except (httpx.HTTPError, httpx.TimeoutException) as e:
+        except httpx.TimeoutException as e:
+            logger.warning(
+                f"⏱️  Timeout fetching {self.content_type}: API response timeout (>{e.request.extensions.get('timeout', {}).get('read', 'N/A')}s). "
+                f"Hint: First request may be slow, or try simplifying API parameters",
+                exc_info=True,
+            )
+            return self._get_fallback()
+        except httpx.HTTPError as e:
             logger.warning(
                 f"Network error fetching {self.content_type}: {type(e).__name__}: {e}",
                 exc_info=True,
