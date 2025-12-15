@@ -33,6 +33,10 @@ def format_stories_markdown(stories: list[HackerNewsStory]) -> str:
     lines = ["# HackerNews Best Stories\n"]
     lines.append(f"*Updated: {_get_current_time()}*\n")
 
+    # Table header
+    lines.append("| # | Title | Score |")
+    lines.append("|--:|:------|:------|")
+
     for i, story in enumerate(stories, 1):
         title = story.get("title", "Untitled")
         score = story.get("score", 0)
@@ -43,7 +47,7 @@ def format_stories_markdown(stories: list[HackerNewsStory]) -> str:
             story_id = story.get("id", 0)
             url = f"https://news.ycombinator.com/item?id={story_id}"
 
-        lines.append(f"{i}. [{title}]({url}) <span style='float:right'>{score}▲</span>")
+        lines.append(f"| {i} | [{title}]({url}) | ▲{score} |")
 
     return "\n".join(lines)
 
