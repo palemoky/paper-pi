@@ -7,7 +7,6 @@
 
 <h1 align="center">Paper Pi</h1>
 
-[![Docker Hub](https://img.shields.io/docker/v/palemoky/paper-pi?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/palemoky/paper-pi)
 [![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/paper-pi/latest)](https://hub.docker.com/r/palemoky/paper-pi)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/palemoky/paper-pi/release.yml)](https://github.com/palemoky/paper-pi/actions)
 [![Test Coverage](https://img.shields.io/badge/coverage-66%25-green)](https://github.com/palemoky/paper-pi)
