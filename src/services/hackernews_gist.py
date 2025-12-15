@@ -43,7 +43,7 @@ def format_stories_markdown(stories: list[HackerNewsStory]) -> str:
             story_id = story.get("id", 0)
             url = f"https://news.ycombinator.com/item?id={story_id}"
 
-        lines.append(f"{i}. [{title}]({url}) {score}▲")
+        lines.append(f"{i}. [{title}]({url}) <span style='float:right'>{score}▲</span>")
 
     return "\n".join(lines)
 
