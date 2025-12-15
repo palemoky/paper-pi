@@ -54,7 +54,7 @@ class TestPoetryProvider:
 
             assert poetry["content"] == "Test poetry content"
             assert poetry["author"] == "Test Author"
-            assert poetry["title"] == "Test Dynasty·Test Title"
+            assert poetry["title"] == "Test Title"
 
     @pytest.mark.asyncio
     async def test_get_poetry_uses_cache(self, provider):
