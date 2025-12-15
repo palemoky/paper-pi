@@ -83,8 +83,9 @@ async def save_stories_to_gist(stories: list[HackerNewsStory], client: httpx.Asy
         # Prepare Gist update payload
         url = f"https://api.github.com/gists/{gist_id}"
         headers = {
-            "Authorization": f"token {github_token}",
-            "Accept": "application/vnd.github.v3+json",
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {github_token}",
+            "X-GitHub-Api-Version": "2022-11-28",
         }
         payload = {"files": {"hackernews.md": {"content": markdown_content}}}
 
