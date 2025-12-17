@@ -90,8 +90,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           provenance: mode=max
           sbom: true
-          cache-from: type=gha,scope=buildkit-arm64
-          cache-to: type=gha,mode=max,scope=buildkit-arm64
           annotations: |
             index:org.opencontainers.image.description=${{ github.event.repository.description }}
             index:org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
