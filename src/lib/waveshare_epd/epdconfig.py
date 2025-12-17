@@ -50,6 +50,11 @@ class RaspberryPi:
     def __init__(self):
         import gpiozero
         import spidev
+        from gpiozero.pins.lgpio import LGPIOFactory
+
+        # Use LGPIOFactory to reduce background thread overhead
+        # This eliminates gpiozero's default background polling threads
+        gpiozero.Device.pin_factory = LGPIOFactory()
 
         self.SPI = spidev.SpiDev()
         self.GPIO_RST_PIN = gpiozero.LED(self.RST_PIN)
