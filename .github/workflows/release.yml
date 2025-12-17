@@ -179,7 +179,7 @@ jobs:
           fetch-depth: 0
 
       - name: Sync README to Docker Hub
-        uses: peter-evans/dockerhub-description@v4
+        uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
