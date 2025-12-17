@@ -27,6 +27,7 @@ dependencies = [
     "notion-client>=2.7.0",
     "gspread>=6.2.0",
     "structlog>=25.5.0",
+    "uvloop>=0.21.0",
 ]
 
 [project.scripts]

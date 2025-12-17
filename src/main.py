@@ -295,4 +295,12 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Use uvloop for better performance on Linux/macOS
+    # uvloop is a fast, drop-in replacement for the built-in asyncio event loop
+    try:
+        import uvloop
+
+        uvloop.run(main())
+    except ImportError:
+        # Fallback to standard asyncio if uvloop is not available
+        asyncio.run(main())
