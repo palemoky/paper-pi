@@ -1,10 +1,20 @@
-.PHONY: help test lint format clean dev build deploy install-dev
+.PHONY: help install test clean format lint check release
+
+.DEFAULT_GOAL := help
+
+# Colors for terminal output
+BLUE := \033[0;34m
+CYAN := \033[0;36m
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+RED := \033[0;31m
+NC := \033[0m# No Color
 
 help:  ## Show this help message
 	@echo 'Usage: make [target]'
 	@echo ''
 	@echo 'Available targets:'
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-15s$(NC) %s\n", $$1, $$2}'
 
 install:  ## Install production dependencies
 	uv sync
@@ -67,13 +77,7 @@ docker-run:  ## Run Docker container
 docker-dev:  ## Run Docker container in development mode
 	docker run --rm -it --env-file .env -v $(PWD)/data:/app/data paper-pi
 
-check:  ## Run all checks (format, lint, test)
-	@echo "Running format check..."
-	@make format-check
-	@echo "\nRunning linters..."
-	@make lint
-	@echo "\nRunning tests..."
-	@make test
+check: format-check lint test  ## Run all checks (format, lint, test)
 
 pre-commit:  ## Run pre-commit hooks on all files
 	uv run pre-commit run --all-files
