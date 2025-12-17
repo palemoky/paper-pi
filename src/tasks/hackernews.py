@@ -10,7 +10,6 @@ from PIL import Image, ImageDraw
 
 from src.config import Config
 from src.layouts import DashboardLayout
-from src.providers import Dashboard
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,10 @@ _refresh_lock = asyncio.Lock()
 
 
 async def hackernews_pagination_task(
-    stop_event: asyncio.Event, epd, layout: DashboardLayout, dm: Dashboard
+    stop_event: asyncio.Event,
+    epd,
+    layout: DashboardLayout,
+    dm=None,  # dm is deprecated, kept for compatibility
 ):
     """Independent async task for HackerNews page rotation.
 
@@ -35,8 +37,10 @@ async def hackernews_pagination_task(
         stop_event: Event to signal task should stop
         epd: E-Paper Display driver instance
         layout: DashboardLayout instance
-        dm: Dashboard data manager
+        dm: Deprecated, not used (kept for backward compatibility)
     """
+    import httpx
+
     try:
         logger.info("🔄 Starting HackerNews pagination task")
 
@@ -65,10 +69,11 @@ async def hackernews_pagination_task(
                 logger.debug("⏸️  Skipping HN partial refresh (quiet hours)")
                 continue
 
-            # Fetch next page
+            # Fetch next page using on-demand HTTP connection
             from src.providers.hackernews import get_hackernews
 
-            hn_data = await get_hackernews(dm.client, advance_page=True)
+            async with httpx.AsyncClient() as client:
+                hn_data = await get_hackernews(client, advance_page=True)
             logger.info(
                 f"📰 HN Page {hn_data.get('page', 1)}/{hn_data.get('total_pages', 1)} "
                 f"({hn_data.get('start_idx', 1)}~{hn_data.get('end_idx', 0)})"

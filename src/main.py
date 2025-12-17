@@ -24,7 +24,6 @@ try:
     from .core.data_fetcher import DataFetcher
     from .drivers.factory import get_driver
     from .layouts import DashboardLayout
-    from .providers import Dashboard
     from .providers.hackernews import get_hackernews
     from .renderer.image_builder import ImageBuilder
     from .tasks.hackernews import hackernews_pagination_task
@@ -41,7 +40,6 @@ except ImportError:
     from src.core.data_fetcher import DataFetcher
     from src.drivers.factory import get_driver
     from src.layouts import DashboardLayout
-    from src.providers import Dashboard
     from src.providers.hackernews import get_hackernews
     from src.renderer.image_builder import ImageBuilder
     from src.tasks.hackernews import hackernews_pagination_task
@@ -222,8 +220,9 @@ async def main():
     todo_slots = TimeSlots(Config.display.todo_time_slots)
 
     try:
-        async with Dashboard() as dm, TaskManager() as task_mgr:
-            fetcher = DataFetcher(dm)
+        async with TaskManager() as task_mgr:
+            # DataFetcher now uses on-demand connections (no Dashboard dependency)
+            fetcher = DataFetcher()
             builder = ImageBuilder(epd.width, epd.height)
 
             # Reset HackerNews pagination on startup only if in dashboard mode and HackerNews time slot
@@ -231,7 +230,11 @@ async def main():
             mode = controller.get_current_mode(now)
             show_hn = mode == "dashboard" and not todo_slots.contains_hour(now.hour)
             if show_hn:
-                await get_hackernews(dm.client, reset_to_first=True)
+                # Use temporary client for HackerNews reset
+                import httpx
+
+                async with httpx.AsyncClient() as client:
+                    await get_hackernews(client, reset_to_first=True)
                 logger.info("🔄 Reset HackerNews pagination on startup")
 
             # Main loop
@@ -251,13 +254,13 @@ async def main():
                 if show_hn:
                     if not await task_mgr.is_running("hackernews"):
                         await task_mgr.start(
-                            "hackernews", hackernews_pagination_task, epd, layout, dm
+                            "hackernews", hackernews_pagination_task, epd, layout, None
                         )
                 else:
                     if await task_mgr.is_running("hackernews"):
                         await task_mgr.stop("hackernews")
 
-                # Fetch data
+                # Fetch data (uses on-demand HTTP connections)
                 try:
                     data = await fetcher.fetch(mode)
                 except Exception as e:
@@ -274,7 +277,7 @@ async def main():
                 # Update display
                 await update_display(epd, image, config_changed)
 
-                # Wait for next refresh
+                # Wait for next refresh (no HTTP connections held during this time)
                 interval = controller.get_refresh_interval(mode)
                 await wait_for_refresh(interval, config_changed)
 

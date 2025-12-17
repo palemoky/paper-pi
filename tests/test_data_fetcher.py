@@ -1,34 +1,34 @@
-"""Tests for DataFetcher."""
+"""Tests for DataFetcher.
+
+Note: DataFetcher now uses on-demand HTTP connections, so tests mock
+the Dashboard context manager instead of passing a Dashboard instance.
+"""
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from src.core.data_fetcher import DataFetcher
-from src.providers import Dashboard
 
 
 class TestDataFetcher:
     """Tests for DataFetcher class."""
 
     @pytest.fixture
-    def mock_dashboard(self):
-        """Create a mock dashboard provider."""
-        dashboard = MagicMock(spec=Dashboard)
-        dashboard.client = AsyncMock()
-        dashboard.fetch_dashboard_data = AsyncMock(return_value={"test": "data"})
-        dashboard.fetch_year_end_data = AsyncMock(return_value={"year": "end"})
-        return dashboard
-
-    @pytest.fixture
-    def fetcher(self, mock_dashboard):
+    def fetcher(self):
         """Create a DataFetcher instance."""
-        return DataFetcher(mock_dashboard)
+        return DataFetcher()
 
     @pytest.mark.asyncio
-    async def test_fetch_dashboard(self, fetcher, mock_dashboard):
+    async def test_fetch_dashboard(self, fetcher):
         """Test fetching dashboard data."""
-        data = await fetcher.fetch("dashboard")
+        mock_dashboard = MagicMock()
+        mock_dashboard.fetch_dashboard_data = AsyncMock(return_value={"test": "data"})
+        mock_dashboard.__aenter__ = AsyncMock(return_value=mock_dashboard)
+        mock_dashboard.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("src.core.data_fetcher.Dashboard", return_value=mock_dashboard):
+            data = await fetcher.fetch("dashboard")
 
         assert data == {"test": "data"}
         mock_dashboard.fetch_dashboard_data.assert_called_once()
@@ -42,7 +42,7 @@ class TestDataFetcher:
             data = await fetcher.fetch("quote")
 
             assert data == {"quote": "Test Quote"}
-            mock_get_quote.assert_called_once_with(fetcher.dashboard.client)
+            mock_get_quote.assert_called_once_with(client=None)
 
     @pytest.mark.asyncio
     async def test_fetch_poetry(self, fetcher):
@@ -53,7 +53,7 @@ class TestDataFetcher:
             data = await fetcher.fetch("poetry")
 
             assert data == {"poetry": "Test Poetry"}
-            mock_get_poetry.assert_called_once_with(fetcher.dashboard.client)
+            mock_get_poetry.assert_called_once_with(client=None)
 
     @pytest.mark.asyncio
     async def test_fetch_wallpaper(self, fetcher):
@@ -74,17 +74,29 @@ class TestDataFetcher:
             mock_manager.get_holiday.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_fetch_year_end(self, fetcher, mock_dashboard):
+    async def test_fetch_year_end(self, fetcher):
         """Test fetching year-end data."""
-        data = await fetcher.fetch("year_end")
+        mock_dashboard = MagicMock()
+        mock_dashboard.fetch_year_end_data = AsyncMock(return_value={"year": "end"})
+        mock_dashboard.__aenter__ = AsyncMock(return_value=mock_dashboard)
+        mock_dashboard.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("src.core.data_fetcher.Dashboard", return_value=mock_dashboard):
+            data = await fetcher.fetch("year_end")
 
         assert data == {"year": "end"}
         mock_dashboard.fetch_year_end_data.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_fetch_unknown_mode(self, fetcher, mock_dashboard):
+    async def test_fetch_unknown_mode(self, fetcher):
         """Test fetching unknown mode defaults to dashboard."""
-        data = await fetcher.fetch("unknown_mode")
+        mock_dashboard = MagicMock()
+        mock_dashboard.fetch_dashboard_data = AsyncMock(return_value={"test": "data"})
+        mock_dashboard.__aenter__ = AsyncMock(return_value=mock_dashboard)
+        mock_dashboard.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("src.core.data_fetcher.Dashboard", return_value=mock_dashboard):
+            data = await fetcher.fetch("unknown_mode")
 
         assert data == {"test": "data"}
         mock_dashboard.fetch_dashboard_data.assert_called_once()
