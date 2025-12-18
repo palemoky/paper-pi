@@ -1,11 +1,9 @@
-<h3 align="center">
+<div align="center">
     <img src="https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/logo.png" alt="Logo" height="100px" />
-  <br>
-  Powered by Pi, rendered in Pixels.
-  <br>
-</h3>
 
-<h1 align="center">Paper Pi</h1>
+Powered by Pi, rendered in Pixels.
+
+# Paper Pi
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/palemoky/paper-pi/release.yml)](https://github.com/palemoky/paper-pi/actions)
 [![Docker Image Size](https://img.shields.io/docker/image-size/palemoky/paper-pi/latest)](https://hub.docker.com/r/palemoky/paper-pi)
@@ -14,6 +12,8 @@
 [![GitHub](https://img.shields.io/github/license/palemoky/paper-pi)](https://github.com/palemoky/paper-pi)
 
 A modern, modular, and highly customizable dashboard for Waveshare E-Ink displays. Built with Python 3.14+ using async/await patterns and a clean, testable architecture.
+
+</div>
 
 ## 🚀 Quick Start with Docker
 
@@ -75,21 +75,21 @@ docker-compose --profile poetry up -d
 
 ### 📊 Dashboard Widgets
 
+- **Custom To-Do Lists** - Three customizable lists (Goals/Must/Optional) with strikethrough for completed items
+- **HackerNews** - Auto-rotating top stories with pagination and configurable display time ([Live Mirror](https://gist.github.com/palemoky/b04f3dcfb8431784cddc648d1af6dd4c))
 - **Real-time Weather** - OpenWeatherMap integration with icon support
-- **GitHub Contributions** - Daily/Weekly/Monthly/Yearly stats with visual rings
+- **GitHub Contributions** - Daily/Weekly/Monthly/Yearly stats with grid layout
 - **Bitcoin Price** - Live BTC price with 24h change percentage
 - **VPS Data Usage** - Monitor your server's data consumption
 - **Weekly Progress** - Visual progress ring for the current week
-- **Custom To-Do Lists** - Three customizable lists (Goals/Must/Optional) with strikethrough for completed items
-- **HackerNews** - Auto-rotating top stories with pagination and configurable display time ([Live Mirror](https://gist.github.com/palemoky/b04f3dcfb8431784cddc648d1af6dd4c))
 
 ### 🎨 Display Modes
 
 - **Dashboard** - Main information display with time-based TODO/HN switching
 - **Quote** - Inspirational quotes
 - **Poetry** - Classical Chinese poetry
-- **Wallpaper** - Custom images
 - **Holiday Greetings** - Auto-triggered on special days
+- **Wallpaper** - Custom images
 
 ### 🎉 Smart Features
 
@@ -102,7 +102,7 @@ docker-compose --profile poetry up -d
 - **Time-based Switching** - Configurable time slots for TODO lists vs HackerNews
 - **Quiet Hours** - Configurable sleep period (e.g., 1 AM - 6 AM)
 - **Grayscale Support** - 4-level grayscale for enhanced visual quality (white/light gray/dark gray/black)
-- **Audio Notifications** - Xiaomi speaker integration for alerts and announcements
+- **Audio Notifications** - [Xiaomi speaker](https://github.com/palemoky/xiaomi-speaker) [integration](https://github.com/palemoky/xiaomi-speaker-action) for alerts and announcements
 
 ### 🏗️ Modern Architecture
 
@@ -221,67 +221,14 @@ flowchart LR
 - **Other Models**: Configurable via `EPD_MODEL` env var (supports most models in the [official repo](https://github.com/waveshareteam/e-Paper))
 - **Platform**: Raspberry Pi (Zero/3/4/5) or any Linux board with SPI/GPIO
 
-## 🛠️ Development
-
-```bash
-# Install dependencies (using uv - 10-100x faster than pip)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv sync --all-extras
-
-# Setup pre-commit hooks
-uv run pre-commit install --install-hooks
-
-# Run tests
-uv run pytest tests/ --cov=src
-
-# Generate mock images (for debugging without hardware)
-uv run python -m mocks.generate --all
-```
-
-See `Makefile` for more commands. This project uses [Conventional Commits](https://www.conventionalcommits.org/) and pre-commit hooks for code quality.
-
-### Commit Message Convention
-
-This project follows [Conventional Commits](https://www.conventionalcommits.org/) using [Commitizen](https://commitizen-tools.github.io/commitizen/).
-
-**Format**: `<type>(<scope>): <subject>`
-
-**Common Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
-
-**Examples**:
-
-```bash
-feat(render): add grayscale support for weather icons
-fix(data): handle API timeout errors gracefully
-docs(readme): update installation instructions
-
-# Interactive commit
-cz commit
-
-# Bump version and generate changelog
-cz bump
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## 🙏 Acknowledgments
 
+- [Antigravity](https://antigravity.google/) for the pair programming
 - [Waveshare](https://www.waveshare.com/) for E-Ink display drivers
-- [Chinese Poetry](https://github.com/chinese-poetry/chinese-poetry) for poetry
-- [LxgwWenKai](https://github.com/lxgw/LxgwWenKai), [Hanyi](https://hanyi.com.cn/) for font
-- [Flaticon](https://www.flaticon.com/) for icons
-- [Figma](https://www.figma.com/) for UI design
+- [Chinese Poetry](https://github.com/chinese-poetry/chinese-poetry), [LxgwWenKai](https://github.com/lxgw/LxgwWenKai), [Hanyi](https://hanyi.com.cn/) for poetry
+- [Flaticon](https://www.flaticon.com/), [Weather Icons](https://github.com/erikflowers/weather-icons) for icons
 - [CoinGecko](https://www.coingecko.com/) for BTC price
 - [OpenWeatherMap](https://openweathermap.org/) for weather
-- [Weather Icons](https://github.com/erikflowers/weather-icons) for weather icons
-- [HackerNews](https://news.ycombinator.com/) for HackerNews
+- [Figma](https://www.figma.com/) for UI design
 
 - All the open-source libraries that make this project possible
