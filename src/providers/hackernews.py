@@ -27,6 +27,7 @@ _state_manager = StateManager(Config.DATA_DIR)
 
 
 @cached(ttl=Config.display.hackernews_refresh_minutes * 60, maxsize=1)
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 async def _fetch_all_stories(client: httpx.AsyncClient) -> list[HackerNewsStory]:
     """Fetch all Hacker News stories (cached).
 
@@ -42,7 +43,7 @@ async def _fetch_all_stories(client: httpx.AsyncClient) -> list[HackerNewsStory]
     try:
         logger.info("Fetching Hacker News best stories...")
 
-        # Fetch ALL story IDs
+        # Fetch ALL story IDs with retry
         response = await client.get(HN_BEST_STORIES_URL, timeout=10.0)
         response.raise_for_status()
         story_ids = response.json()
@@ -102,10 +103,10 @@ async def _fetch_all_stories(client: httpx.AsyncClient) -> list[HackerNewsStory]
         return stories
 
     except httpx.HTTPError as e:
-        logger.error(f"Failed to fetch Hacker News: {e}")
+        logger.error(f"Failed to fetch Hacker News after retries: {type(e).__name__}: {e}")
         raise ProviderError("hackernews", "Failed to fetch stories", e) from e
     except Exception as e:
-        logger.error(f"Unexpected error fetching Hacker News: {e}")
+        logger.error(f"Unexpected error fetching Hacker News: {type(e).__name__}: {e}")
         raise ProviderError("hackernews", "Unexpected error", e) from e
 
 
