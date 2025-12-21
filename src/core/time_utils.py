@@ -65,7 +65,8 @@ class QuietHours:
         # Check if within range
         if start_time <= now < end_time:
             sleep_seconds = (end_time - now).total_seconds()
-            return True, int(sleep_seconds)
+            # Ensure at least 1 second sleep to avoid busy-wait at boundary
+            return True, max(1, int(sleep_seconds))
 
         return False, 0
 
