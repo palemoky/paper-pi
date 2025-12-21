@@ -11,6 +11,11 @@ services:
       - TZ=${TIMEZONE:-Asia/Shanghai}
     volumes:
       - paper-pi-data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     # No hard dependency - poetry-api is optional via profiles
 
   poetry-api:
@@ -24,6 +29,11 @@ services:
       - TZ=Asia/Shanghai
     volumes:
       - poetry-api-data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     profiles:
       - poetry # Only start when poetry mode is needed
 
