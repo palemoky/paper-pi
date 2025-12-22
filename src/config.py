@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 from typing import Literal
 
+import pendulum
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, field_validator
 
@@ -18,6 +19,22 @@ from pydantic import BaseModel, Field, field_validator
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 logger = logging.getLogger(__name__)
+
+
+def _seconds_until_midnight(timezone: str = "Asia/Shanghai") -> int:
+    """Calculate seconds until next midnight (0:00) in the given timezone.
+
+    Args:
+        timezone: IANA timezone name (e.g., "Asia/Shanghai")
+
+    Returns:
+        Number of seconds until midnight
+    """
+    now = pendulum.now(timezone)
+    # Get tomorrow at 00:00:00
+    midnight = now.add(days=1).start_of("day")
+    # Calculate seconds difference
+    return int((midnight - now).total_seconds())
 
 
 # ===== Configuration Groups =====
@@ -49,10 +66,14 @@ class DisplayConfig(BaseModel):
         ge=0,
     )
     refresh_interval_holiday: int = Field(
-        default=86400, description="Holiday mode refresh interval in seconds", ge=60
+        default=86400,
+        description="Holiday mode refresh interval in seconds (default: until midnight)",
+        ge=60,
     )
     refresh_interval_year_end: int = Field(
-        default=86400, description="Year-end summary mode refresh interval in seconds", ge=60
+        default=86400,
+        description="Year-end summary mode refresh interval in seconds (default: until midnight)",
+        ge=60,
     )
     # HackerNews pagination settings
     hackernews_refresh_minutes: int = Field(
@@ -81,6 +102,9 @@ class DisplayConfig(BaseModel):
     @classmethod
     def from_env(cls) -> "DisplayConfig":
         """Load configuration from environment variables."""
+        # Get timezone for calculating seconds until midnight
+        timezone = os.getenv("TIMEZONE", "Asia/Shanghai")
+
         return cls(
             mode=os.getenv("DISPLAY_MODE", "dashboard"),
             wallpaper_name=os.getenv("WALLPAPER_NAME", ""),
@@ -89,8 +113,13 @@ class DisplayConfig(BaseModel):
             refresh_interval_quote=int(os.getenv("REFRESH_INTERVAL_QUOTE", "3600")),
             refresh_interval_poetry=int(os.getenv("REFRESH_INTERVAL_POETRY", "3600")),
             refresh_interval_wallpaper=int(os.getenv("REFRESH_INTERVAL_WALLPAPER", "0")),
-            refresh_interval_holiday=int(os.getenv("REFRESH_INTERVAL_HOLIDAY", "86400")),
-            refresh_interval_year_end=int(os.getenv("REFRESH_INTERVAL_YEAR_END", "86400")),
+            # Calculate seconds until midnight for holiday and year-end modes
+            refresh_interval_holiday=int(
+                os.getenv("REFRESH_INTERVAL_HOLIDAY", str(_seconds_until_midnight(timezone)))
+            ),
+            refresh_interval_year_end=int(
+                os.getenv("REFRESH_INTERVAL_YEAR_END", str(_seconds_until_midnight(timezone)))
+            ),
             hackernews_refresh_minutes=int(os.getenv("HACKERNEWS_REFRESH_MINUTES", "60")),
             hackernews_page_seconds=int(os.getenv("HACKERNEWS_PAGE_SECONDS", "30")),
             hackernews_stories_per_page=int(os.getenv("HACKERNEWS_STORIES_PER_PAGE", "5")),
