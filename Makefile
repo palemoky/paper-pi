@@ -94,7 +94,7 @@ release:  ## Create and push version tag
 	echo "$(BLUE)════════════════════════════════════════$(NC)"; \
 	echo "$(CYAN)Current latest tag: $(GREEN)$$LATEST_TAG$(NC)"; \
 	echo "$(BLUE)════════════════════════════════════════$(NC)"; \
-	printf "$(YELLOW)Enter new version (e.g., v1.0.0): $(NC)"; \
+	printf "$(YELLOW)Enter new version: $(NC)"; \
 	read -r VERSION; \
 	if [ -z "$$VERSION" ]; then \
 		echo "$(RED)Error: Version cannot be empty$(NC)"; \
