@@ -28,9 +28,9 @@ def format_stories_markdown(stories: list[HackerNewsStory]) -> str:
         2. [Show HN: My Project](https://example.com) 512▲
     """
     if not stories:
-        return "# HackerNews Best Stories\n\nNo stories available.\n"
+        return "# Hacker News Best Stories\n\nNo stories available.\n"
 
-    lines = ["# HackerNews Best Stories\n"]
+    lines = ["# Hacker News Best Stories\n"]
     lines.append(f"*Updated: {_get_current_time()}*\n")
 
     # Table header
