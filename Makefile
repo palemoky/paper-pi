@@ -82,31 +82,56 @@ check: format-check lint test  ## Run all checks (format, lint, test)
 pre-commit:  ## Run pre-commit hooks on all files
 	uv run pre-commit run --all-files
 
-release:  ## Create and push version tag (Usage: make release v1.0.0)
-	@if [ -z "$(filter-out release,$(MAKECMDGOALS))" ]; then \
-		echo "$(YELLOW)Usage: make release v1.0.0$(NC)"; \
+release:  ## Create and push version tag
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "$(RED)Error: Working directory has uncommitted changes$(NC)"; \
+		echo "$(YELLOW)Please commit or stash your changes before releasing$(NC)"; \
 		exit 1; \
-	fi
-	@VERSION="$(filter-out release,$(MAKECMDGOALS))"; \
+	fi; \
+	LATEST_TAG=$$(git describe --tags --abbrev=0 2>/dev/null || echo "none"); \
+	echo "$(BLUE)════════════════════════════════════════$(NC)"; \
+	echo "$(BLUE)         Release New Version$(NC)"; \
+	echo "$(BLUE)════════════════════════════════════════$(NC)"; \
+	echo "$(CYAN)Current latest tag: $(GREEN)$$LATEST_TAG$(NC)"; \
+	echo "$(BLUE)════════════════════════════════════════$(NC)"; \
+	printf "$(YELLOW)Enter new version (e.g., v1.0.0): $(NC)"; \
+	read -r VERSION; \
+	if [ -z "$$VERSION" ]; then \
+		echo "$(RED)Error: Version cannot be empty$(NC)"; \
+		exit 1; \
+	fi; \
+	if ! echo "$$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$$'; then \
+		echo "$(RED)Error: Invalid version format '$$VERSION'$(NC)"; \
+		echo "$(YELLOW)Expected format: v1.0.0$(NC)"; \
+		exit 1; \
+	fi; \
+	if git tag | grep -q "^$$VERSION$$"; then \
+		echo "$(RED)Error: Tag $$VERSION already exists$(NC)"; \
+		exit 1; \
+	fi; \
+	echo ""; \
+	echo "$(YELLOW)About to create and push tag: $(GREEN)$$VERSION$(NC)"; \
+	printf "$(YELLOW)Continue? [y/N] $(NC)"; \
+	read -r CONFIRM; \
+	if [ "$$CONFIRM" != "y" ] && [ "$$CONFIRM" != "Y" ]; then \
+		echo "$(YELLOW)Aborted$(NC)"; \
+		exit 1; \
+	fi; \
 	if git config user.signingkey >/dev/null 2>&1 && command -v gpg >/dev/null 2>&1; then \
 		echo "$(BLUE)Creating GPG signed tag $$VERSION...$(NC)"; \
 		if git tag -s $$VERSION -m "Release $$VERSION" 2>/dev/null; then \
-			echo "$(GREEN)✓ Signed tag $$VERSION created successfully (Verified ✓)$(NC)"; \
+			echo "$(GREEN)✓ Signed tag $$VERSION created (Verified ✓)$(NC)"; \
 		else \
 			echo "$(YELLOW)⚠ GPG signing failed, using regular tag...$(NC)"; \
 			git tag -a $$VERSION -m "Release $$VERSION"; \
-			echo "$(GREEN)✓ Tag $$VERSION created successfully$(NC)"; \
+			echo "$(GREEN)✓ Tag $$VERSION created$(NC)"; \
 		fi \
 	else \
 		echo "$(BLUE)Creating tag $$VERSION...$(NC)"; \
 		git tag -a $$VERSION -m "Release $$VERSION"; \
-		echo "$(GREEN)✓ Tag $$VERSION created successfully$(NC)"; \
-		echo "$(YELLOW)💡 Tip: Configure GPG key to show Verified badge on GitHub$(NC)"; \
+		echo "$(GREEN)✓ Tag $$VERSION created$(NC)"; \
+		echo "$(YELLOW)💡 Tip: Configure GPG key to show Verified badge$(NC)"; \
 	fi; \
-	echo "$(BLUE)Pushing tag to remote repository...$(NC)"; \
+	echo "$(BLUE)Pushing tag to remote...$(NC)"; \
 	git push origin $$VERSION; \
 	echo "$(GREEN)✓ Release $$VERSION completed$(NC)"
-
-# Allow version number as target
-v%:
-	@:
