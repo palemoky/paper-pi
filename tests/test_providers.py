@@ -14,6 +14,13 @@ from src.providers.dashboard import get_github_commits
 class TestBTCProvider:
     """Tests for BTC provider functions."""
 
+    @pytest.fixture(autouse=True)
+    async def clear_cache(self):
+        """Clear cache before each test to ensure isolation."""
+        from src.providers.btc import get_btc_data
+
+        await get_btc_data.cache.clear()
+
     @pytest.fixture
     def mock_client(self):
         """Create a mock HTTP client."""

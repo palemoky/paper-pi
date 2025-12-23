@@ -13,6 +13,13 @@ from src.providers.vps import get_vps_info
 class TestVPSProvider:
     """Tests for VPS provider functions."""
 
+    @pytest.fixture(autouse=True)
+    async def clear_cache(self):
+        """Clear cache before each test to ensure isolation."""
+        from src.providers.vps import get_vps_info
+
+        await get_vps_info.cache.clear()
+
     @pytest.fixture
     def mock_client(self):
         """Create a mock HTTP client."""
