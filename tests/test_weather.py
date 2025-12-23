@@ -13,6 +13,13 @@ from src.providers.weather import get_weather
 class TestWeatherProvider:
     """Tests for weather provider functions."""
 
+    @pytest.fixture(autouse=True)
+    async def clear_cache(self):
+        """Clear cache before each test to ensure isolation."""
+        from src.providers.weather import get_weather
+
+        await get_weather.cache.clear()
+
     @pytest.fixture
     def mock_client(self):
         """Create a mock HTTP client."""

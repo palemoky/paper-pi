@@ -118,25 +118,42 @@ class TTLCache:
         return value
 
 
-def cached(ttl: int = 300, maxsize: int = 128):
+def cached(ttl: int = 300, maxsize: int = 128, exclude_types: tuple | None = None):
     """Decorator for caching async function results with TTL.
 
     Args:
         ttl: Time-to-live in seconds
         maxsize: Maximum cache size
+        exclude_types: Tuple of types to exclude from cache key generation.
+                      Defaults to (httpx.AsyncClient, httpx.Client) to prevent
+                      cache misses when different client instances are used.
 
     Example:
         >>> @cached(ttl=600)
-        >>> async def fetch_data(param):
-        >>>     return await expensive_operation(param)
+        >>> async def fetch_data(client, param):
+        >>>     # client will be excluded from cache key by default
+        >>>     return await expensive_operation(client, param)
     """
+    # Default: exclude HTTP clients from cache key to prevent cache misses
+    # when different client instances are passed
+    if exclude_types is None:
+        try:
+            import httpx
+
+            exclude_types = (httpx.AsyncClient, httpx.Client)
+        except ImportError:
+            exclude_types = ()
+
     cache = TTLCache(maxsize=maxsize, ttl=ttl)
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
-            # Create cache key from args and kwargs
-            key = (args, tuple(sorted(kwargs.items())))
+            # Filter args to exclude certain types from cache key
+            filtered_args = tuple(arg for arg in args if not isinstance(arg, exclude_types))
+
+            # Create cache key from filtered args and kwargs
+            key = (filtered_args, tuple(sorted(kwargs.items())))
 
             # Check cache
             cached_value = await cache.get(key)
