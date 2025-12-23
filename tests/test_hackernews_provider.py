@@ -114,6 +114,9 @@ class TestFetchAllStories:
     @pytest.mark.asyncio
     async def test_fetch_all_stories_with_failures(self):
         """Test fetching stories with some failures."""
+        # Clear cache to ensure test isolation
+        await _fetch_all_stories.cache.clear()
+
         mock_client = AsyncMock(spec=httpx.AsyncClient)
 
         # Mock top stories
