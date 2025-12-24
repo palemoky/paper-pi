@@ -121,13 +121,20 @@ addopts = [
     "--cov-report=term-missing:skip-covered",   # Show missing lines in terminal
     "--cov-report=html",                        # Generate HTML coverage report
     "--cov-report=xml",                         # Generate XML coverage report for CI
-    "-n auto",                                  # Auto-detect CPU count for parallel testing
+    "-n=auto",                                  # Auto-detect CPU count for parallel testing
 ]
 testpaths = ["tests"]
 pythonpath = ["."]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+asyncio_mode = "auto"                           # Automatically detect async test functions
+asyncio_default_fixture_loop_scope = "function" # Each async fixture gets its own event loop
+filterwarnings = [
+    # Ignore warnings about unawaited coroutines from Event.wait during test cleanup
+    # This is a known issue with pytest-asyncio and MagicMock interaction
+    "ignore:coroutine 'Event.wait' was never awaited:RuntimeWarning",
+]
 
 # Commitizen configuration - Semantic versioning and changelog automation
 [tool.commitizen]
