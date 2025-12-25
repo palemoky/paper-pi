@@ -8,8 +8,10 @@ from src.core.display_controller import DisplayController
 class TestDisplayController:
     """Tests for DisplayController class."""
 
-    def test_get_current_mode_default(self):
+    def test_get_current_mode_default(self, mocker):
         """Test default mode when no special conditions."""
+        # Mock HolidayManager to not return any holiday
+        mocker.patch("src.core.display_controller.HolidayManager.get_holiday", return_value=None)
         controller = DisplayController()
 
         # Regular day
@@ -17,8 +19,10 @@ class TestDisplayController:
         mode = controller.get_current_mode(now)
         assert mode == "dashboard"
 
-    def test_get_current_mode_year_end(self):
+    def test_get_current_mode_year_end(self, mocker):
         """Test year-end mode on December 31st."""
+        # Mock HolidayManager to not return any holiday
+        mocker.patch("src.core.display_controller.HolidayManager.get_holiday", return_value=None)
         controller = DisplayController()
 
         # December 31st
