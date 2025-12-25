@@ -8,7 +8,7 @@ import httpx
 import pendulum
 from PIL import Image, ImageDraw
 
-from src.config import Config
+from src.config import Config, _seconds_until_midnight
 from src.core.display_mode import DisplayMode, register_mode
 from src.layouts.holiday import HolidayManager
 from src.layouts.poetry import PoetryLayout
@@ -30,7 +30,8 @@ class HolidayMode(DisplayMode):
 
     @property
     def refresh_interval(self) -> int:
-        return Config.display.refresh_interval_holiday
+        # Dynamically calculate seconds until midnight to ensure accurate countdown
+        return _seconds_until_midnight(Config.hardware.timezone)
 
     def should_activate(self, **kwargs) -> bool:
         """Activate if today is a configured holiday."""
@@ -72,7 +73,8 @@ class YearEndMode(DisplayMode):
 
     @property
     def refresh_interval(self) -> int:
-        return Config.display.refresh_interval_year_end
+        # Dynamically calculate seconds until midnight to ensure accurate countdown
+        return _seconds_until_midnight(Config.hardware.timezone)
 
     def should_activate(self, **kwargs) -> bool:
         """Activate on December 31st."""
