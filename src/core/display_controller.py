@@ -8,7 +8,7 @@ import logging
 
 import pendulum
 
-from src.config import Config
+from src.config import Config, _seconds_until_midnight
 from src.layouts.holiday import HolidayManager
 
 logger = logging.getLogger(__name__)
@@ -76,13 +76,17 @@ class DisplayController:
         Returns:
             Refresh interval in seconds
         """
+        # For holiday and year_end modes, dynamically calculate seconds until midnight
+        if mode in ("holiday", "year_end"):
+            interval = _seconds_until_midnight(self.config.hardware.timezone)
+            logger.debug(f"Refresh interval for mode '{mode}': {interval}s (until midnight)")
+            return interval
+
         interval_map = {
             "dashboard": self.config.display.refresh_interval_dashboard,
             "quote": self.config.display.refresh_interval_quote,
             "poetry": self.config.display.refresh_interval_poetry,
             "wallpaper": self.config.display.refresh_interval_wallpaper,
-            "holiday": self.config.display.refresh_interval_holiday,
-            "year_end": self.config.display.refresh_interval_year_end,
         }
 
         interval = interval_map.get(mode, self.config.hardware.refresh_interval)
