@@ -44,93 +44,95 @@ def generate_mock_image(mode, holiday_name=None, output_file="debug_output.png")
 
     image = None
 
-    if mode == "dashboard":
-        data = get_mock_dashboard_data()
-        logger.info("Generating dashboard image...")
-        image = layout.create_image(epd.width, epd.height, data)
+    match mode:
+        case "dashboard":
+            data = get_mock_dashboard_data()
+            logger.info("Generating dashboard image...")
+            image = layout.create_image(epd.width, epd.height, data)
 
-    elif mode == "holiday":
-        # We need to mock the holiday manager or manually draw the holiday screen
-        # Since HolidayManager.get_holiday() relies on date, we'll manually invoke the renderer
-        # similar to how main.py handles it, but using our mock data.
+        case "holiday":
+            # We need to mock the holiday manager or manually draw the holiday screen
+            # Since HolidayManager.get_holiday() relies on date, we'll manually invoke the renderer
+            # similar to how main.py handles it, but using our mock data.
 
-        holiday = get_mock_holiday_data(holiday_name)
-        logger.info(f"Generating holiday image for: {holiday['name']}")
+            holiday = get_mock_holiday_data(holiday_name)
+            logger.info(f"Generating holiday image for: {holiday['name']}")
 
-        image_mode = "L" if Config.hardware.use_grayscale else "1"
-        image = Image.new(image_mode, (epd.width, epd.height), 255)
-        draw = ImageDraw.Draw(image)
+            image_mode = "L" if Config.hardware.use_grayscale else "1"
+            image = Image.new(image_mode, (epd.width, epd.height), 255)
+            draw = ImageDraw.Draw(image)
 
-        layout.renderer.draw_full_screen_message(
-            draw,
-            epd.width,
-            epd.height,
-            holiday["title"],
-            holiday["message"],
-            holiday.get("icon"),
-        )
+            layout.renderer.draw_full_screen_message(
+                draw,
+                epd.width,
+                epd.height,
+                holiday["title"],
+                holiday["message"],
+                holiday.get("icon"),
+            )
 
-    elif mode == "year_end":
-        data = get_mock_year_end_data()
-        logger.info("Generating year-end summary image...")
+        case "year_end":
+            data = get_mock_year_end_data()
+            logger.info("Generating year-end summary image...")
 
-        image_mode = "L" if Config.hardware.use_grayscale else "1"
-        image = Image.new(image_mode, (epd.width, epd.height), 255)
-        draw = ImageDraw.Draw(image)
-        layout._draw_year_end_summary(draw, epd.width, epd.height, data["github_year_summary"])
+            image_mode = "L" if Config.hardware.use_grayscale else "1"
+            image = Image.new(image_mode, (epd.width, epd.height), 255)
+            draw = ImageDraw.Draw(image)
+            layout._draw_year_end_summary(draw, epd.width, epd.height, data["github_year_summary"])
 
-    elif mode == "quote":
-        from src.layouts.quote import QuoteLayout
+        case "quote":
+            from src.layouts.quote import QuoteLayout
 
-        data = get_mock_quote_data()
-        logger.info("Generating quote image...")
+            data = get_mock_quote_data()
+            logger.info("Generating quote image...")
 
-        quote_layout = QuoteLayout()
-        image = quote_layout.create_quote_image(epd.width, epd.height, data["quote"])
+            quote_layout = QuoteLayout()
+            image = quote_layout.create_quote_image(epd.width, epd.height, data["quote"])
 
-    elif mode == "poetry":
-        from src.layouts.poetry import PoetryLayout
+        case "poetry":
+            from src.layouts.poetry import PoetryLayout
 
-        # Define all poetry data functions to generate
-        poetry_data_funcs = [
-            ("wuyan_jueju", get_mock_wuyan_jueju_poetry_data),
-            ("wuyan_lvshi", get_mock_wuyan_lvshi_poetry_data),
-            ("wuyan_longlvshi", get_mock_wuyan_longlvshi_poetry_data),
-            ("qiyan_lvshi", get_mock_qiyan_lvshi_poetry_data),
-            ("cipaiming", get_mock_cipaiming_poetry_data),
-            ("qiyan_jueju", get_mock_qiyan_jueju_poetry_data),
-            ("xiaoling", get_mock_xiaoling_poetry_data),
-        ]
+            # Define all poetry data functions to generate
+            poetry_data_funcs = [
+                ("wuyan_jueju", get_mock_wuyan_jueju_poetry_data),
+                ("wuyan_lvshi", get_mock_wuyan_lvshi_poetry_data),
+                ("wuyan_longlvshi", get_mock_wuyan_longlvshi_poetry_data),
+                ("qiyan_lvshi", get_mock_qiyan_lvshi_poetry_data),
+                ("cipaiming", get_mock_cipaiming_poetry_data),
+                ("qiyan_jueju", get_mock_qiyan_jueju_poetry_data),
+                ("xiaoling", get_mock_xiaoling_poetry_data),
+            ]
 
-        poetry_layout = PoetryLayout()
+            poetry_layout = PoetryLayout()
 
-        # Generate images for all poetry types
-        for poetry_type, data_func in poetry_data_funcs:
-            logger.info(f"Generating {poetry_type} poetry image...")
-            data = data_func()
-            image = poetry_layout.create_poetry_image(epd.width, epd.height, data["poetry"])
+            # Generate images for all poetry types
+            for poetry_type, data_func in poetry_data_funcs:
+                logger.info(f"Generating {poetry_type} poetry image...")
+                data = data_func()
+                image = poetry_layout.create_poetry_image(epd.width, epd.height, data["poetry"])
 
-            # Save each poetry type with a unique filename
-            if output_file != "mocks/images/debug_output.png":
-                # If custom output specified, append poetry type
-                output_path_obj = Path(output_file)
-                poetry_output = (
-                    output_path_obj.parent
-                    / f"{output_path_obj.stem}_{poetry_type}{output_path_obj.suffix}"
-                )
-                image.save(poetry_output)
-                logger.info(f"Saved {poetry_type} to {poetry_output}")
-            else:
-                # Use default naming
-                image.save(f"mocks/images/debug_poetry_{poetry_type}.png")
-                logger.info(f"Saved {poetry_type} to mocks/images/debug_poetry_{poetry_type}.png")
+                # Save each poetry type with a unique filename
+                if output_file != "mocks/images/debug_output.png":
+                    # If custom output specified, append poetry type
+                    output_path_obj = Path(output_file)
+                    poetry_output = (
+                        output_path_obj.parent
+                        / f"{output_path_obj.stem}_{poetry_type}{output_path_obj.suffix}"
+                    )
+                    image.save(poetry_output)
+                    logger.info(f"Saved {poetry_type} to {poetry_output}")
+                else:
+                    # Use default naming
+                    image.save(f"mocks/images/debug_poetry_{poetry_type}.png")
+                    logger.info(
+                        f"Saved {poetry_type} to mocks/images/debug_poetry_{poetry_type}.png"
+                    )
 
-        # Return the last generated image for backward compatibility
-        return
+            return
 
-    else:
-        logger.error(f"Unknown mode: {mode}")
-        return
+        case _:
+            logger.error(f"Unknown mode: {mode}")
+            return
 
     if image:
         image.save(output_path)
