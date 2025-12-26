@@ -253,9 +253,7 @@ async def main():
 
                 if show_hn:
                     if not await task_mgr.is_running("hackernews"):
-                        await task_mgr.start(
-                            "hackernews", hackernews_pagination_task, epd, layout, None
-                        )
+                        await task_mgr.start("hackernews", hackernews_pagination_task, epd, layout)
                 else:
                     if await task_mgr.is_running("hackernews"):
                         await task_mgr.stop("hackernews")
