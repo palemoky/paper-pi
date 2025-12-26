@@ -29,7 +29,6 @@ async def hackernews_pagination_task(
     stop_event: asyncio.Event,
     epd,
     layout: DashboardLayout,
-    dm=None,  # dm is deprecated, kept for compatibility
 ):
     """Independent async task for HackerNews page rotation.
 
@@ -37,7 +36,6 @@ async def hackernews_pagination_task(
         stop_event: Event to signal task should stop
         epd: E-Paper Display driver instance
         layout: DashboardLayout instance
-        dm: Deprecated, not used (kept for backward compatibility)
     """
     import httpx
 
