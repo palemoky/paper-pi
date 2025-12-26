@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def _seconds_until_midnight(timezone: str = "Asia/Shanghai") -> int:
-    """Calculate seconds until next midnight (0:00) in the given timezone.
+    """Calculate seconds until next midnight (0:01) in the given timezone.
 
     Args:
         timezone: IANA timezone name (e.g., "Asia/Shanghai")
@@ -34,7 +34,7 @@ def _seconds_until_midnight(timezone: str = "Asia/Shanghai") -> int:
     # Get tomorrow at 00:00:00
     midnight = now.add(days=1).start_of("day")
     # Calculate seconds difference
-    return int((midnight - now).total_seconds())
+    return int((midnight - now).total_seconds()) + 60
 
 
 # ===== Configuration Groups =====
