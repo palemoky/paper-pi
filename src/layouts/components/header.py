@@ -61,6 +61,54 @@ class HeaderComponent:
             line_width=LayoutConstants.LINE_NORMAL,
         )
 
+    def _draw_two_line_text(
+        self,
+        draw: ImageDraw.ImageDraw,
+        center_x: int,
+        top_y: int,
+        line1_text: str,
+        line2_text: str,
+        line1_font=None,
+        line2_font=None,
+        line1_offset: int = 0,
+        line2_offset: int = 35,
+    ) -> None:
+        """Draw two lines of centered text with configurable fonts and offsets.
+
+        Args:
+            draw: PIL ImageDraw object
+            center_x: X coordinate for center alignment
+            top_y: Y coordinate for first line
+            line1_text: Text for first line
+            line2_text: Text for second line
+            line1_font: Font for first line (defaults to font_m)
+            line2_font: Font for second line (defaults to font_m)
+            line1_offset: Y offset for first line from top_y
+            line2_offset: Y offset for second line from top_y
+        """
+        r = self.renderer
+        line1_font = line1_font or r.font_m
+        line2_font = line2_font or r.font_m
+
+        r.draw_centered_text(
+            draw,
+            center_x,
+            top_y + line1_offset,
+            line1_text,
+            font=line1_font,
+            fill=r.COLOR_BLACK,
+            align_y_center=False,
+        )
+        r.draw_centered_text(
+            draw,
+            center_x,
+            top_y + line2_offset,
+            line2_text,
+            font=line2_font,
+            fill=r.COLOR_BLACK,
+            align_y_center=False,
+        )
+
     def _draw_component(
         self, draw: ImageDraw.ImageDraw, center_x: int, top_y: int, item_data: dict[str, Any]
     ) -> None:
@@ -86,16 +134,19 @@ class HeaderComponent:
                 icon_y = top_y + 55
                 w_main = data.get("icon", "")
 
-                # Determine icon name
-                icon_name = "cloud"
-                if "Clear" in w_main or "Sun" in w_main:
-                    icon_name = "sun"
-                elif "Rain" in w_main or "Drizzle" in w_main:
-                    icon_name = "rain"
-                elif "Snow" in w_main:
-                    icon_name = "snow"
-                elif "Thunder" in w_main:
-                    icon_name = "thunder"
+                # Determine icon name based on weather condition
+                icon_mapping = {
+                    "sun": ["Clear", "Sun"],
+                    "rain": ["Rain", "Drizzle"],
+                    "snow": ["Snow"],
+                    "thunder": ["Thunder"],
+                }
+
+                icon_name = "cloud"  # Default
+                for icon, keywords in icon_mapping.items():
+                    if any(keyword in w_main for keyword in keywords):
+                        icon_name = icon
+                        break
 
                 # Process description text
                 desc = data.get("desc", "--")
@@ -124,84 +175,47 @@ class HeaderComponent:
                 data = item_data["data"]
                 weekday = data.strftime("%a")
                 day = data.strftime("%d")
-                r.draw_centered_text(
+                month_year = data.strftime("%b %Y")
+
+                self._draw_two_line_text(
                     draw,
                     center_x,
                     top_y,
                     f"{weekday}, {day}",
-                    font=r.font_date_big,
-                    fill=r.COLOR_BLACK,
-                    align_y_center=False,
-                )
-
-                month_year = data.strftime("%b %Y")
-                r.draw_centered_text(
-                    draw,
-                    center_x,
-                    top_y + 40,
                     month_year,
-                    font=r.font_s,
-                    fill=r.COLOR_BLACK,
-                    align_y_center=False,
+                    line1_font=r.font_date_big,
+                    line2_font=r.font_s,
+                    line2_offset=40,
                 )
 
             case "time":
                 data = item_data["data"]
-                r.draw_centered_text(
+                self._draw_two_line_text(
                     draw,
                     center_x,
                     top_y,
                     "Updated",
-                    font=r.font_s,
-                    fill=r.COLOR_BLACK,
-                    align_y_center=False,
-                )
-                r.draw_centered_text(
-                    draw,
-                    center_x,
-                    top_y + 35,
                     data.strftime("%H:%M"),
-                    font=r.font_m,
-                    fill=r.COLOR_BLACK,
-                    align_y_center=False,
+                    line1_font=r.font_s,
+                    line2_font=r.font_m,
                 )
 
             case "greeting":
-                r.draw_centered_text(
+                self._draw_two_line_text(
                     draw,
                     center_x,
                     top_y,
                     Config.personal.greeting_label,
-                    font=r.font_m,
-                    fill=r.COLOR_BLACK,
-                    align_y_center=False,
-                )
-                r.draw_centered_text(
-                    draw,
-                    center_x,
-                    top_y + 35,
                     Config.personal.greeting_text,
-                    font=r.font_m,
-                    fill=r.COLOR_BLACK,
-                    align_y_center=False,
                 )
 
             case "custom":
-                r.draw_centered_text(
+                self._draw_two_line_text(
                     draw,
                     center_x,
                     top_y,
                     item_data["label"],
-                    font=r.font_s,
-                    fill=r.COLOR_BLACK,
-                    align_y_center=False,
-                )
-                r.draw_centered_text(
-                    draw,
-                    center_x,
-                    top_y + 35,
                     item_data["value"],
-                    font=r.font_value,
-                    fill=r.COLOR_BLACK,
-                    align_y_center=False,
+                    line1_font=r.font_s,
+                    line2_font=r.font_value,
                 )
