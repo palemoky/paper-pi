@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def _seconds_until_midnight(timezone: str = "Asia/Shanghai") -> int:
-    """Calculate seconds until next midnight (0:00) in the given timezone.
+    """Calculate seconds until next midnight (0:01) in the given timezone.
 
     Args:
         timezone: IANA timezone name (e.g., "Asia/Shanghai")
@@ -34,7 +34,7 @@ def _seconds_until_midnight(timezone: str = "Asia/Shanghai") -> int:
     # Get tomorrow at 00:00:00
     midnight = now.add(days=1).start_of("day")
     # Calculate seconds difference
-    return int((midnight - now).total_seconds())
+    return int((midnight - now).total_seconds()) + 60
 
 
 # ===== Configuration Groups =====
@@ -360,101 +360,6 @@ class Settings(BaseModel):
 
         # Ensure data directory exists
         self.paths.data_dir.mkdir(parents=True, exist_ok=True)
-
-    # ===== Backward Compatibility Properties =====
-    # Support legacy flat access pattern for smooth migration
-
-    @property
-    def OPENWEATHER_API_KEY(self) -> str:
-        return self.api.openweather_api_key
-
-    @property
-    def CITY_NAME(self) -> str:
-        return self.api.city_name
-
-    @property
-    def VPS_API_KEY(self) -> str:
-        return self.api.vps_api_key
-
-    @property
-    def GITHUB_USERNAME(self) -> str:
-        return self.github.username
-
-    @property
-    def GITHUB_TOKEN(self) -> str:
-        return self.github.token
-
-    @property
-    def TODO_SOURCE(self) -> str:
-        return self.todo.source
-
-    @property
-    def GIST_ID(self) -> str:
-        return self.todo.gist_id
-
-    @property
-    def NOTION_TOKEN(self) -> str:
-        return self.todo.notion_token
-
-    @property
-    def NOTION_DATABASE_ID(self) -> str:
-        return self.todo.notion_database_id
-
-    @property
-    def GOOGLE_SHEETS_ID(self) -> str:
-        return self.todo.google_sheets_id
-
-    @property
-    def GOOGLE_CREDENTIALS_FILE(self) -> str:
-        return self.todo.google_credentials_file
-
-    @property
-    def LIST_GOALS(self) -> list[str]:
-        return self.todo.list_goals
-
-    @property
-    def LIST_MUST(self) -> list[str]:
-        return self.todo.list_must
-
-    @property
-    def LIST_OPTIONAL(self) -> list[str]:
-        return self.todo.list_optional
-
-    @property
-    def USER_NAME(self) -> str:
-        return self.personal.user_name
-
-    @property
-    def BIRTHDAY(self) -> str:
-        return self.personal.birthday
-
-    @property
-    def ANNIVERSARY(self) -> str:
-        return self.personal.anniversary
-
-    @property
-    def GREETING_LABEL(self) -> str:
-        return self.personal.greeting_label
-
-    @property
-    def GREETING_TEXT(self) -> str:
-        return self.personal.greeting_text
-
-    @property
-    def FONT_PATH(self) -> str:
-        return self.paths.font_path
-
-    @property
-    def DATA_DIR(self) -> Path:
-        return self.paths.data_dir
-
-    @property
-    def EPD_MODEL(self) -> str:
-        return self.hardware.epd_model
-
-    @property
-    def MOCK_EPD(self) -> bool:
-        return self.hardware.mock_epd
 
     def validate_required(self):
         """Validate required environment variables and configuration consistency."""

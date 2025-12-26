@@ -38,21 +38,22 @@ class DataFetcher:
         """
         logger.debug(f"Fetching data for mode: {mode}")
 
-        if mode == "dashboard":
-            return await self._fetch_dashboard()
-        elif mode == "quote":
-            return await self._fetch_quote()
-        elif mode == "poetry":
-            return await self._fetch_poetry()
-        elif mode == "wallpaper":
-            return await self._fetch_wallpaper()
-        elif mode == "holiday":
-            return await self._fetch_holiday()
-        elif mode == "year_end":
-            return await self._fetch_year_end()
-        else:
-            logger.warning(f"Unknown mode '{mode}', using dashboard")
-            return await self._fetch_dashboard()
+        match mode:
+            case "dashboard":
+                return await self._fetch_dashboard()
+            case "quote":
+                return await self._fetch_quote()
+            case "poetry":
+                return await self._fetch_poetry()
+            case "wallpaper":
+                return await self._fetch_wallpaper()
+            case "holiday":
+                return await self._fetch_holiday()
+            case "year_end":
+                return await self._fetch_year_end()
+            case _:
+                logger.warning(f"Unknown mode '{mode}', using dashboard")
+                return await self._fetch_dashboard()
 
     async def _fetch_dashboard(self) -> dict[str, Any]:
         """Fetch dashboard data with on-demand HTTP connection."""

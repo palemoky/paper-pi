@@ -30,12 +30,12 @@ async def get_weather(client: httpx.AsyncClient) -> dict[str, str]:
     Raises:
         ProviderError: If API request fails
     """
-    if not Config.OPENWEATHER_API_KEY:
+    if not Config.api.openweather_api_key:
         logger.warning("OpenWeather API key not configured, using fallback")
         return {"temp": "13.9", "desc": "Sunny", "icon": "Clear"}
 
     url = OPENWEATHER_URL
-    params = {"q": Config.CITY_NAME, "appid": Config.OPENWEATHER_API_KEY, "units": "metric"}
+    params = {"q": Config.api.city_name, "appid": Config.api.openweather_api_key, "units": "metric"}
 
     try:
         res = await client.get(url, params=params, timeout=10.0)

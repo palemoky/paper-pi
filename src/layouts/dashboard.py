@@ -37,11 +37,10 @@ class DashboardLayout:
         self.todo_list = TodoListComponent(self.renderer)
         self.year_end = YearEndSummaryComponent(self.renderer)
 
-        # Legacy attributes for backward compatibility if needed
         self._current_hackernews = []
-        self._current_goals = Config.LIST_GOALS
-        self._current_must = Config.LIST_MUST
-        self._current_optional = Config.LIST_OPTIONAL
+        self._current_goals = Config.todo.list_goals
+        self._current_must = Config.todo.list_must
+        self._current_optional = Config.todo.list_optional
 
     def create_image(self, width, height, data):
         """Generate complete dashboard image.
@@ -74,9 +73,9 @@ class DashboardLayout:
         if show_hackernews:
             self._current_hackernews = data.get("hackernews", [])
         else:
-            self._current_goals = data.get("todo_goals", Config.LIST_GOALS)
-            self._current_must = data.get("todo_must", Config.LIST_MUST)
-            self._current_optional = data.get("todo_optional", Config.LIST_OPTIONAL)
+            self._current_goals = data.get("todo_goals", Config.todo.list_goals)
+            self._current_must = data.get("todo_must", Config.todo.list_must)
+            self._current_optional = data.get("todo_optional", Config.todo.list_optional)
 
         # Draw three main sections using components
         self.header.draw(draw, width, now, weather)
@@ -94,9 +93,7 @@ class DashboardLayout:
         return image
 
     def _draw_hackernews(self, draw, width):
-        """Legacy method for backward compatibility/external calls."""
-        # Some tasks might call this directly (e.g. hackernews task)
-        # We delegate to the component
+        """Draw HackerNews section for partial refresh in background task."""
         self.hackernews.draw(draw, width, self._current_hackernews)
 
     def _draw_year_end_summary(self, draw, width, height, summary_data):

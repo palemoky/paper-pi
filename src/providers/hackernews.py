@@ -23,7 +23,7 @@ HN_BEST_STORIES_URL = "https://hacker-news.firebaseio.com/v0/beststories.json"
 HN_ITEM_URL = "https://hacker-news.firebaseio.com/v0/item/{}.json"
 
 # State manager instance
-_state_manager = StateManager(Config.DATA_DIR)
+_state_manager = StateManager(Config.paths.data_dir)
 
 
 @cached(ttl=Config.display.hackernews_refresh_minutes * 60, maxsize=1)

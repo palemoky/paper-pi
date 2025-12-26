@@ -38,13 +38,13 @@ async def get_github_commits(client: httpx.AsyncClient) -> dict[str, int]:
     Returns:
         dict: {"day": int, "week": int, "month": int, "year": int}
     """
-    if not Config.GITHUB_USERNAME or not Config.GITHUB_TOKEN:
+    if not Config.github.username or not Config.github.token:
         logger.warning("GitHub username or token not configured")
         return {"day": 0, "week": 0, "month": 0, "year": 0}
 
     url = GITHUB_GRAPHQL_URL
     headers = {
-        "Authorization": f"Bearer {Config.GITHUB_TOKEN}",
+        "Authorization": f"Bearer {Config.github.token}",
         "Content-Type": "application/json",
     }
 
@@ -73,7 +73,7 @@ async def get_github_commits(client: httpx.AsyncClient) -> dict[str, int]:
     }
     """
 
-    variables = {"username": Config.GITHUB_USERNAME, "from": start_utc, "to": end_utc}
+    variables = {"username": Config.github.username, "from": start_utc, "to": end_utc}
 
     try:
         res = await client.post(
@@ -138,11 +138,11 @@ async def check_year_end_summary(client: httpx.AsyncClient):
 
 async def get_github_year_summary(client: httpx.AsyncClient):
     """Fetch detailed GitHub contribution data for the entire year."""
-    if not Config.GITHUB_USERNAME or not Config.GITHUB_TOKEN:
+    if not Config.github.username or not Config.github.token:
         return None
 
     url = GITHUB_GRAPHQL_URL
-    headers = {"Authorization": f"Bearer {Config.GITHUB_TOKEN}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {Config.github.token}", "Content-Type": "application/json"}
 
     now_local = pendulum.now(Config.hardware.timezone)
     start_of_year = now_local.start_of("year").in_timezone("UTC").to_iso8601_string()
@@ -178,7 +178,7 @@ async def get_github_year_summary(client: httpx.AsyncClient):
     }
     """
 
-    variables = {"username": Config.GITHUB_USERNAME, "from": start_of_year, "to": end_of_year}
+    variables = {"username": Config.github.username, "from": start_of_year, "to": end_of_year}
 
     try:
         res = await client.post(
@@ -285,7 +285,7 @@ class Dashboard:
     """
 
     def __init__(self):
-        self.cache_file = Config.DATA_DIR / "dashboard_cache.json"
+        self.cache_file = Config.paths.data_dir / "dashboard_cache.json"
         self.client = None
 
     async def __aenter__(self):

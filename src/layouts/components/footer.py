@@ -132,45 +132,24 @@ class FooterComponent:
             offset_x = 25
             offset_y = 15
 
-            # Top-left: Day
-            r.draw_centered_text(
-                draw,
-                center_x - offset_x,
-                self.FOOTER_CENTER_Y - offset_y,
-                str(value["day"]),
-                font=r.font_commits,
-                align_y_center=True,
-            )
+            # Define 2x2 grid positions: (key, x_offset, y_offset)
+            positions = [
+                ("day", -offset_x, -offset_y),  # Top-left
+                ("week", +offset_x, -offset_y),  # Top-right
+                ("month", -offset_x, +offset_y),  # Bottom-left
+                ("year", +offset_x, +offset_y),  # Bottom-right
+            ]
 
-            # Top-right: Week
-            r.draw_centered_text(
-                draw,
-                center_x + offset_x,
-                self.FOOTER_CENTER_Y - offset_y,
-                str(value["week"]),
-                font=r.font_commits,
-                align_y_center=True,
-            )
-
-            # Bottom-left: Month
-            r.draw_centered_text(
-                draw,
-                center_x - offset_x,
-                self.FOOTER_CENTER_Y + offset_y,
-                str(value["month"]),
-                font=r.font_commits,
-                align_y_center=True,
-            )
-
-            # Bottom-right: Year
-            r.draw_centered_text(
-                draw,
-                center_x + offset_x,
-                self.FOOTER_CENTER_Y + offset_y,
-                str(value["year"]),
-                font=r.font_commits,
-                align_y_center=True,
-            )
+            # Draw all four values in a loop
+            for key, x_offset, y_offset in positions:
+                r.draw_centered_text(
+                    draw,
+                    center_x + x_offset,
+                    self.FOOTER_CENTER_Y + y_offset,
+                    str(value[key]),
+                    font=r.font_commits,
+                    align_y_center=True,
+                )
 
             # Draw cross lines using LayoutHelper
             self.layout.draw_cross_divider(
