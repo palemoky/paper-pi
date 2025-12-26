@@ -20,7 +20,7 @@ async def get_todo_lists() -> tuple[list[str], list[str], list[str]]:
     Returns:
         (goals, must, optional) 三个列表
     """
-    source = Config.TODO_SOURCE.lower()
+    source = Config.todo.source.lower()
 
     try:
         match source:
@@ -40,9 +40,9 @@ async def get_todo_lists() -> tuple[list[str], list[str], list[str]]:
 def get_todo_from_config() -> tuple[list[str], list[str], list[str]]:
     """从配置文件获取 TODO 列表（默认/回退方案）"""
     return (
-        Config.LIST_GOALS,
-        Config.LIST_MUST,
-        Config.LIST_OPTIONAL,
+        Config.todo.list_goals,
+        Config.todo.list_must,
+        Config.todo.list_optional,
     )
 
 
@@ -63,19 +63,19 @@ async def get_todo_from_gist() -> tuple[list[str], list[str], list[str]]:
     - Item 1
     ```
     """
-    if not Config.GIST_ID or not Config.GITHUB_TOKEN:
+    if not Config.todo.gist_id or not Config.github.token:
         logger.warning("Gist ID or GitHub token not configured")
         return get_todo_from_config()
 
-    url = f"https://api.github.com/gists/{Config.GIST_ID}"
-    headers = {"Authorization": f"token {Config.GITHUB_TOKEN}"}
+    url = f"https://api.github.com/gists/{Config.todo.gist_id}"
+    headers = {"Authorization": f"token {Config.github.token}"}
 
     async with httpx.AsyncClient() as client:
         try:
             res = await client.get(url, headers=headers, timeout=10)
             res.raise_for_status()
 
-            logger.info(f"✅ Successfully fetched gist {Config.GIST_ID}")
+            logger.info(f"✅ Successfully fetched gist {Config.todo.gist_id}")
 
             data = res.json()
             # 查找 todo.md 或第一个 .md 文件
@@ -118,7 +118,7 @@ async def get_todo_from_notion() -> tuple[list[str], list[str], list[str]]:
     - Category (select): Goals / Must / Optional
     - Status (select): Active / Done (只获取 Active)
     """
-    if not Config.NOTION_TOKEN or not Config.NOTION_DATABASE_ID:
+    if not Config.todo.notion_token or not Config.todo.notion_database_id:
         logger.warning("Notion token or database ID not configured")
         return get_todo_from_config()
 
@@ -128,12 +128,12 @@ async def get_todo_from_notion() -> tuple[list[str], list[str], list[str]]:
         logger.error("notion-client not installed. Run: pip install notion-client")
         return get_todo_from_config()
 
-    notion = Client(auth=Config.NOTION_TOKEN)
+    notion = Client(auth=Config.todo.notion_token)
 
     try:
         # 查询数据库，只获取 Active 状态的项目
         response = notion.databases.query(
-            database_id=Config.NOTION_DATABASE_ID,
+            database_id=Config.todo.notion_database_id,
             filter={"property": "Status", "select": {"equals": "Active"}},
         )
 
@@ -183,7 +183,7 @@ async def get_todo_from_sheets() -> tuple[list[str], list[str], list[str]]:
     | Item1 | Item1| Item1    |
     | Item2 | Item2| Item2    |
     """
-    if not Config.GOOGLE_SHEETS_ID:
+    if not Config.todo.google_sheets_id:
         logger.warning("Google Sheets ID not configured")
         return get_todo_from_config()
 
@@ -195,8 +195,8 @@ async def get_todo_from_sheets() -> tuple[list[str], list[str], list[str]]:
 
     try:
         # 使用 service account 认证
-        gc = gspread.service_account(filename=Config.GOOGLE_CREDENTIALS_FILE)
-        sheet = gc.open_by_key(Config.GOOGLE_SHEETS_ID).sheet1
+        gc = gspread.service_account(filename=Config.todo.google_credentials_file)
+        sheet = gc.open_by_key(Config.todo.google_sheets_id).sheet1
 
         # 读取三列数据（跳过标题行）
         all_values = sheet.get_all_values()

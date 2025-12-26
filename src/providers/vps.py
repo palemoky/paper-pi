@@ -29,12 +29,12 @@ async def get_vps_info(client: httpx.AsyncClient) -> int:
     Raises:
         ProviderError: If API request fails
     """
-    if not Config.VPS_API_KEY:
+    if not Config.api.vps_api_key:
         logger.warning("VPS API key not configured")
         return 0
 
     url = VPS_API_URL
-    params = {"veid": "1550095", "api_key": Config.VPS_API_KEY}
+    params = {"veid": "1550095", "api_key": Config.api.vps_api_key}
 
     try:
         res = await client.get(url, params=params, timeout=10.0)

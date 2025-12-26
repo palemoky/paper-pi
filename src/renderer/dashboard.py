@@ -49,10 +49,10 @@ class DashboardRenderer:
         # Get WaveShare font path (should already be downloaded)
         font_path = FontManager.get_font_path("WaveShare.ttc")
 
-        # Fall back to Config.FONT_PATH if FontManager returns invalid path
+        # Fall back to Config.paths.font_path if FontManager returns invalid path
         if not os.path.exists(font_path):
-            logger.warning(f"Font not found at {font_path}, using Config.FONT_PATH")
-            font_path = Config.FONT_PATH
+            logger.warning(f"Font not found at {font_path}, using Config.paths.font_path")
+            font_path = Config.paths.font_path
 
         try:
             self.font_xs = ImageFont.truetype(font_path, 18)

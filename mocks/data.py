@@ -79,13 +79,13 @@ def get_mock_holiday_data(holiday_name: str = "Spring Festival") -> dict:
         "Birthday": {
             "name": "Birthday",
             "title": "Happy Birthday!",
-            "message": f"To {Config.USER_NAME}",
+            "message": f"To {Config.personal.user_name}",
             "icon": "birthday",
         },
         "Anniversary": {
             "name": "Anniversary",
             "title": "Happy Anniversary!",
-            "message": f"To {Config.USER_NAME}",
+            "message": f"To {Config.personal.user_name}",
             "icon": "heart",
         },
         "New Year's Eve": {

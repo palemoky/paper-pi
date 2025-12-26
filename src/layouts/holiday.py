@@ -35,10 +35,10 @@ class HolidayManager:
         matched_holidays = []
 
         # 1. 检查公历节日
-        if Config.BIRTHDAY and today_str == Config.BIRTHDAY:
+        if Config.personal.birthday and today_str == Config.personal.birthday:
             matched_holidays.append("birthday")
 
-        if Config.ANNIVERSARY and today_str == Config.ANNIVERSARY:
+        if Config.personal.anniversary and today_str == Config.personal.anniversary:
             matched_holidays.append("anniversary")
 
         # 2. 特殊情况：生日和纪念日在同一天
@@ -46,7 +46,7 @@ class HolidayManager:
             return {
                 "name": "Birthday & Anniversary",
                 "title": "Double Celebration!",
-                "message": f"Happy Birthday & Anniversary, {Config.USER_NAME}!",
+                "message": f"Happy Birthday & Anniversary, {Config.personal.user_name}!",
                 "icon": "heart",
             }
 
@@ -55,7 +55,7 @@ class HolidayManager:
             return {
                 "name": "Birthday",
                 "title": "Happy Birthday!",
-                "message": f"To {Config.USER_NAME}",
+                "message": f"To {Config.personal.user_name}",
                 "icon": "birthday",
             }
 

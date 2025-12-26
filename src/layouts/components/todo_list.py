@@ -45,9 +45,9 @@ class TodoListComponent:
         r = self.renderer
 
         # Use Config defaults if not provided
-        goals = goals or Config.LIST_GOALS
-        must = must or Config.LIST_MUST
-        optional = optional or Config.LIST_OPTIONAL
+        goals = goals or Config.todo.list_goals
+        must = must or Config.todo.list_must
+        optional = optional or Config.todo.list_optional
 
         # Get screen width and calculate equal-width columns with gaps
         screen_width = draw.im.size[0]
