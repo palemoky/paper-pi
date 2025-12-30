@@ -84,12 +84,12 @@ class HolidayManager:
                 "message": "Love & Romance",
                 "icon": "love",
             },
-            "12-31": {
-                "name": "New Year's Eve",
-                "title": f"Goodbye {now.year}!",
-                "message": "Year-End Celebration",
-                "icon": "celebration",
-            },
+            # "12-31": {
+            #     "name": "New Year's Eve",
+            #     "title": f"Goodbye {now.year}!",
+            #     "message": "Year-End Celebration",
+            #     "icon": "celebration",
+            # },
             "12-25": {
                 "name": "Christmas",
                 "title": "Merry Christmas!",
