@@ -4,7 +4,7 @@ version = "0.2.0"
 description = "A personalized, asynchronous dashboard for Waveshare E-Ink displays"
 readme = "README.md"
 requires-python = ">=3.14"
-license = { text = "MIT" }
+license = { text = "GPL-3.0-or-later" }
 authors = [
     { name = "Palemoky", email = "palemoky@gmail.com" }
 ]
@@ -12,7 +12,7 @@ keywords = ["e-ink", "dashboard", "raspberry-pi", "waveshare"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GPL-3.0-or-later License",
     "Programming Language :: Python :: 3.14",
 ]
 
