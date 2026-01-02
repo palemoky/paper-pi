@@ -48,13 +48,6 @@ async def get_github_commits(client: httpx.AsyncClient) -> dict[str, int]:
         "Content-Type": "application/json",
     }
 
-    now_local = pendulum.now(Config.hardware.timezone)
-    start_time = now_local.start_of("year")
-    end_time = now_local
-
-    start_utc = start_time.in_timezone("UTC").to_iso8601_string()
-    end_utc = end_time.in_timezone("UTC").to_iso8601_string()
-
     query = """
     query($username: String!, $from: DateTime!, $to: DateTime!) {
       user(login: $username) {
@@ -73,7 +66,10 @@ async def get_github_commits(client: httpx.AsyncClient) -> dict[str, int]:
     }
     """
 
-    variables = {"username": Config.github.username, "from": start_utc, "to": end_utc}
+    now_local = pendulum.now(Config.hardware.timezone)
+    start_time = now_local.start_of("year").to_iso8601_string()
+    end_time = now_local.to_iso8601_string()
+    variables = {"username": Config.github.username, "from": start_time, "to": end_time}
 
     try:
         res = await client.post(
@@ -97,9 +93,7 @@ async def get_github_commits(client: httpx.AsyncClient) -> dict[str, int]:
         week_start = now_local.start_of("week")
         week_start_str = week_start.format("YYYY-MM-DD")
 
-        day_count = 0
-        week_count = 0
-        month_count = 0
+        day_count = week_count = month_count = 0
 
         for day in reversed(all_days):
             date_str = day["date"]

@@ -46,23 +46,17 @@ repos:
     hooks:
       - id: mypy
         name: mypy (Type Check)
-        entry: uv run mypy src/
+        entry: uv run mypy
         language: system
-        types:
-          - python
-        stages:
-          - pre-push
+        types: [python]
+        stages: [pre-push]
         require_serial: true # 防止被并行切片
-        pass_filenames: false # 强制检查目录下所有文件
       - id: pytest
         name: pytest (Unit Test)
         entry: uv run pytest # 根据 pytest.ini 发现测试文件
         language: system
-        types:
-          - python
-        stages:
-          - pre-push
-        pass_filenames: false
+        types: [python]
+        stages: [pre-push]
 
   # =======================================================
   # 5. 环境自动同步 (Environment Sync)

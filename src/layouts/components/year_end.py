@@ -35,6 +35,7 @@ class YearEndSummaryComponent:
     LANG_ICON_SIZE = 30
     LANG_ICON_Y_OFFSET = 20
 
+    STATS_SPACING = 80
     STATS_Y = 300
     STATS_ICON_Y_OFFSET = 50
     STATS_ICON_SIZE = 24
@@ -165,11 +166,14 @@ class YearEndSummaryComponent:
         ]
 
         num_stats = len(stats_config)
-        stat_spacing = width // (num_stats + 1)
         stats_icon_y = self.STATS_Y + self.STATS_ICON_Y_OFFSET
 
+        # Calculate starting position to center all icons
+        total_width = self.STATS_SPACING * (num_stats - 1)
+        start_x = (width - total_width) // 2
+
         for i, (value, icon_file) in enumerate(stats_config):
-            x = stat_spacing * (i + 1)
+            x = start_x + (self.STATS_SPACING * i)
 
             # Draw value
             value_str = str(value) if not isinstance(value, str) else value
