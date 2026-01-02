@@ -105,6 +105,22 @@ release:  ## Create and push version tag
 		echo "$(YELLOW)Expected format: v1.0.0$(NC)"; \
 		exit 1; \
 	fi; \
+	if [ "$$LATEST_TAG" != "none" ]; then \
+		NEW_VER=$$(echo $$VERSION | sed 's/^v//'); \
+		CUR_VER=$$(echo $$LATEST_TAG | sed 's/^v//'); \
+		NEW_MAJOR=$$(echo $$NEW_VER | cut -d. -f1); \
+		NEW_MINOR=$$(echo $$NEW_VER | cut -d. -f2); \
+		NEW_PATCH=$$(echo $$NEW_VER | cut -d. -f3); \
+		CUR_MAJOR=$$(echo $$CUR_VER | cut -d. -f1); \
+		CUR_MINOR=$$(echo $$CUR_VER | cut -d. -f2); \
+		CUR_PATCH=$$(echo $$CUR_VER | cut -d. -f3); \
+		if [ $$NEW_MAJOR -lt $$CUR_MAJOR ] || \
+		   ([ $$NEW_MAJOR -eq $$CUR_MAJOR ] && [ $$NEW_MINOR -lt $$CUR_MINOR ]) || \
+		   ([ $$NEW_MAJOR -eq $$CUR_MAJOR ] && [ $$NEW_MINOR -eq $$CUR_MINOR ] && [ $$NEW_PATCH -le $$CUR_PATCH ]); then \
+			echo "$(RED)Error: New version $$VERSION must be greater than $$LATEST_TAG$(NC)"; \
+			exit 1; \
+		fi; \
+	fi; \
 	if git tag | grep -q "^$$VERSION$$"; then \
 		echo "$(RED)Error: Tag $$VERSION already exists$(NC)"; \
 		exit 1; \
