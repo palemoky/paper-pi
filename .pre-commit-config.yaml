@@ -53,10 +53,11 @@ repos:
         require_serial: true # 防止被并行切片
       - id: pytest
         name: pytest (Unit Test)
-        entry: uv run pytest # 根据 pytest.ini 发现测试文件
+        entry: .venv/bin/pytest # 使用虚拟环境中的 pytest，确保所有 dev 依赖可用
         language: system
         types: [python]
         stages: [pre-push]
+        pass_filenames: false
 
   # =======================================================
   # 5. 环境自动同步 (Environment Sync)
