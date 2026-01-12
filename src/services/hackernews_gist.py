@@ -40,12 +40,10 @@ def format_stories_markdown(stories: list[HackerNewsStory]) -> str:
     for i, story in enumerate(stories, 1):
         title = story.get("title", "Untitled")
         score = story.get("score", 0)
-        url = story.get("url", "")
+        story_id = story.get("id", 0)
 
-        # If no URL, use HN item URL
-        if not url:
-            story_id = story.get("id", 0)
-            url = f"https://news.ycombinator.com/item?id={story_id}"
+        # Always use HN discussion page for valuable comments
+        url = f"https://news.ycombinator.com/item?id={story_id}"
 
         lines.append(f"| {i} | [{title}]({url}) | ▲{score} |")
 
