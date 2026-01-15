@@ -19,6 +19,10 @@ A modern, modular, and highly customizable dashboard for Waveshare E-Ink display
 
 The easiest way to run is using Docker - it handles all dependencies and driver setup automatically.
 
+<div align="center">
+    <img src="https://raw.githubusercontent.com/palemoky/paper-pi/main/docs/demo.webp" alt="Device Demo" width="70%" />
+</div>
+
 ## Screenshots
 
 ### 📊 Dashboard
