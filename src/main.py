@@ -224,6 +224,7 @@ async def main():
             # DataFetcher now uses on-demand connections (no Dashboard dependency)
             fetcher = DataFetcher()
             builder = ImageBuilder(epd.width, epd.height)
+            consecutive_errors = 0  # Track consecutive errors for backoff
 
             # Reset HackerNews pagination on startup only if in dashboard mode and HackerNews time slot
             now = pendulum.now(Config.hardware.timezone)
@@ -262,15 +263,30 @@ async def main():
                 try:
                     data = await fetcher.fetch(mode)
                 except Exception as e:
-                    logger.error(f"Failed to fetch data: {e}")
+                    consecutive_errors += 1
+                    delay = min(30 * consecutive_errors, 300)
+                    logger.error(
+                        f"Failed to fetch data: {e} "
+                        f"(attempt {consecutive_errors}, retrying in {delay}s)"
+                    )
+                    await asyncio.sleep(delay)
                     continue
 
                 # Generate image
                 try:
                     image = builder.build(mode, data, layout)
                 except Exception as e:
-                    logger.error(f"Failed to generate image: {e}")
+                    consecutive_errors += 1
+                    delay = min(30 * consecutive_errors, 300)
+                    logger.error(
+                        f"Failed to generate image: {e} "
+                        f"(attempt {consecutive_errors}, retrying in {delay}s)"
+                    )
+                    await asyncio.sleep(delay)
                     continue
+
+                # Reset error counter on successful fetch + build
+                consecutive_errors = 0
 
                 # Update display
                 await update_display(epd, image, config_changed)
