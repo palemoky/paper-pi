@@ -234,7 +234,10 @@ async def main():
                 # Use temporary client for HackerNews reset
                 import httpx
 
-                async with httpx.AsyncClient() as client:
+                async with httpx.AsyncClient(
+                    timeout=httpx.Timeout(15.0, connect=10.0),
+                    limits=httpx.Limits(max_connections=2, max_keepalive_connections=0),
+                ) as client:
                     await get_hackernews(client, reset_to_first=True)
                 logger.info("🔄 Reset HackerNews pagination on startup")
 
