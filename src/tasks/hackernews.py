@@ -70,7 +70,10 @@ async def hackernews_pagination_task(
             # Fetch next page using on-demand HTTP connection
             from src.providers.hackernews import get_hackernews
 
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(15.0, connect=10.0),
+                limits=httpx.Limits(max_connections=2, max_keepalive_connections=0),
+            ) as client:
                 hn_data = await get_hackernews(client, advance_page=True)
             logger.info(
                 f"📰 HN Page {hn_data.get('page', 1)}/{hn_data.get('total_pages', 1)} "

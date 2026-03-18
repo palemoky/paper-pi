@@ -70,7 +70,10 @@ async def get_todo_from_gist() -> tuple[list[str], list[str], list[str]]:
     url = f"https://api.github.com/gists/{Config.todo.gist_id}"
     headers = {"Authorization": f"token {Config.github.token}"}
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(10.0, connect=5.0),
+        limits=httpx.Limits(max_connections=2, max_keepalive_connections=0),
+    ) as client:
         try:
             res = await client.get(url, headers=headers, timeout=10)
             res.raise_for_status()

@@ -115,7 +115,10 @@ class QuoteMode(DisplayMode):
 
     async def fetch_data(self, **kwargs) -> dict:
         """Fetch quote data."""
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(5.0, connect=5.0),
+            limits=httpx.Limits(max_connections=2, max_keepalive_connections=0),
+        ) as client:
             quote = await get_quote(client)
             return {"quote": quote}
 
@@ -139,7 +142,10 @@ class PoetryMode(DisplayMode):
 
     async def fetch_data(self, **kwargs) -> dict:
         """Fetch poetry data."""
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(10.0, connect=5.0),
+            limits=httpx.Limits(max_connections=2, max_keepalive_connections=0),
+        ) as client:
             poetry = await get_poetry(client)
             return {"poetry": poetry}
 

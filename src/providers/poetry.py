@@ -122,7 +122,10 @@ class PoetryProvider(BaseContentProvider):
         if client:
             response = await client.get(url, timeout=10.0)
         else:
-            async with httpx.AsyncClient(timeout=10.0) as new_client:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(10.0, connect=5.0),
+                limits=httpx.Limits(max_connections=2, max_keepalive_connections=0),
+            ) as new_client:
                 response = await new_client.get(url)
 
         response.raise_for_status()

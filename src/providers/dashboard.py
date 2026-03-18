@@ -22,6 +22,11 @@ from .weather import get_weather
 
 logger = logging.getLogger(__name__)
 
+# Limit connections to avoid exhausting file descriptors during network failures.
+# connect=10s prevents hanging sockets when proxy/network is misconfigured.
+_HTTP_LIMITS = httpx.Limits(max_connections=5, max_keepalive_connections=2)
+_HTTP_TIMEOUT = httpx.Timeout(timeout=15.0, connect=10.0)
+
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
 
 
@@ -284,7 +289,7 @@ class Dashboard:
 
     async def __aenter__(self):
         """Async context manager entry."""
-        self.client = httpx.AsyncClient()
+        self.client = httpx.AsyncClient(limits=_HTTP_LIMITS, timeout=_HTTP_TIMEOUT)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -324,7 +329,7 @@ class Dashboard:
             data["is_year_end"] = is_year_end
             data["github_year_summary"] = github_year_summary
         else:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(limits=_HTTP_LIMITS, timeout=_HTTP_TIMEOUT) as client:
                 is_year_end, github_year_summary = await check_year_end_summary(client)
                 data["is_year_end"] = is_year_end
                 data["github_year_summary"] = github_year_summary
@@ -367,7 +372,7 @@ class Dashboard:
                 tasks["vps"] = tg.create_task(get_vps_info(self.client))
                 tasks["btc"] = tg.create_task(get_btc_data(self.client))
         else:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(limits=_HTTP_LIMITS, timeout=_HTTP_TIMEOUT) as client:
                 async with asyncio.TaskGroup() as tg:
                     tasks = {}
                     tasks["weather"] = tg.create_task(get_weather(client))
@@ -403,7 +408,7 @@ class Dashboard:
             if self.client:
                 hn_data = await get_hackernews(self.client, reset_to_first=False)
             else:
-                async with httpx.AsyncClient() as client:
+                async with httpx.AsyncClient(limits=_HTTP_LIMITS, timeout=_HTTP_TIMEOUT) as client:
                     hn_data = await get_hackernews(client, reset_to_first=False)
 
             data["hackernews"] = hn_data
