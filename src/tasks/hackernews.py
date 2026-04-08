@@ -39,85 +39,108 @@ async def hackernews_pagination_task(
     """
     import httpx
 
+    from src.config import HTTP_LIMITS, HTTP_TIMEOUT
+
+    consecutive_errors = 0
+    max_consecutive_errors = 5  # Stop task after this many consecutive failures
+
     try:
         logger.info("🔄 Starting HackerNews pagination task")
 
-        while not stop_event.is_set():
-            # Wait for page duration or stop signal
-            try:
-                await asyncio.wait_for(
-                    stop_event.wait(), timeout=Config.display.hackernews_page_seconds
-                )
-                # If we got here, stop_event was set
-                break
-            except asyncio.TimeoutError:
-                # Timeout is normal - time to advance page
-                pass
-
-            # Check if in quiet hours before refreshing
-            from src.core.time_utils import QuietHours
-
-            quiet = QuietHours(
-                Config.hardware.quiet_start_hour,
-                Config.hardware.quiet_end_hour,
-                Config.hardware.timezone,
-            )
-            is_quiet, _ = quiet.check()
-            if is_quiet:
-                logger.debug("⏸️  Skipping HN partial refresh (quiet hours)")
-                continue
-
-            # Fetch next page using on-demand HTTP connection
-            from src.providers.hackernews import get_hackernews
-
-            async with httpx.AsyncClient(
-                timeout=httpx.Timeout(15.0, connect=10.0),
-                limits=httpx.Limits(max_connections=2, max_keepalive_connections=0),
-            ) as client:
-                hn_data = await get_hackernews(client, advance_page=True)
-            logger.info(
-                f"📰 HN Page {hn_data.get('page', 1)}/{hn_data.get('total_pages', 1)} "
-                f"({hn_data.get('start_idx', 1)}~{hn_data.get('end_idx', 0)})"
-            )
-
-            # Update layout data
-            layout._current_hackernews = hn_data
-
-            # Acquire lock to prevent concurrent refreshes
-            async with _refresh_lock:
-                # Create FULL-SIZE image (EPD requires full image for partial refresh)
-                # Partial refresh usually requires 1-bit B/W image
-                image_mode = "1"
-                full_img = Image.new(image_mode, (epd.width, epd.height), 255)
-                full_draw = ImageDraw.Draw(full_img)
-
-                # Draw HN section at the correct position
-                layout._draw_hackernews(full_draw, epd.width)
-
-                # Partial refresh - EPD will only update the specified region
+        # Use a single client for the task's lifetime to avoid
+        # creating/destroying connections every cycle.
+        async with httpx.AsyncClient(
+            timeout=HTTP_TIMEOUT,
+            limits=HTTP_LIMITS,
+        ) as client:
+            while not stop_event.is_set():
+                # Wait for page duration or stop signal
                 try:
-                    # Need to call init_part before partial refresh
-                    if hasattr(epd, "init_part"):
-                        epd.init_part()
-
-                    buffer = epd.getbuffer(full_img)
-
-                    # Log the refresh region for debugging
-                    logger.debug(
-                        f"Partial refresh region: x={HN_REGION['x']}, y={HN_REGION['y']}, "
-                        f"x_end={HN_REGION['x'] + HN_REGION['w']}, y_end={HN_REGION['y'] + HN_REGION['h']}"
+                    await asyncio.wait_for(
+                        stop_event.wait(), timeout=Config.display.hackernews_page_seconds
                     )
+                    # If we got here, stop_event was set
+                    break
+                except asyncio.TimeoutError:
+                    # Timeout is normal - time to advance page
+                    pass
 
-                    epd.display_partial_buffer(
-                        buffer,
-                        HN_REGION["x"],
-                        HN_REGION["y"],
-                        HN_REGION["x"] + HN_REGION["w"],
-                        HN_REGION["y"] + HN_REGION["h"],
-                    )
-                    logger.debug("✅ HN partial refresh complete")
+                # Check if in quiet hours before refreshing
+                from src.core.time_utils import QuietHours
+
+                quiet = QuietHours(
+                    Config.hardware.quiet_start_hour,
+                    Config.hardware.quiet_end_hour,
+                    Config.hardware.timezone,
+                )
+                is_quiet, _ = quiet.check()
+                if is_quiet:
+                    logger.debug("⏸️  Skipping HN partial refresh (quiet hours)")
+                    continue
+
+                # Fetch next page using the shared client
+                try:
+                    from src.providers.hackernews import get_hackernews
+
+                    hn_data = await get_hackernews(client, advance_page=True)
+                    consecutive_errors = 0  # Reset on success
                 except Exception as e:
-                    logger.error(f"Failed to perform partial refresh: {e}")
+                    consecutive_errors += 1
+                    logger.warning(
+                        f"HN pagination fetch failed ({consecutive_errors}/{max_consecutive_errors}): {e}"
+                    )
+                    if consecutive_errors >= max_consecutive_errors:
+                        logger.error(
+                            "Too many consecutive HN pagination errors, stopping task to preserve resources"
+                        )
+                        break
+                    # Back off before retrying
+                    await asyncio.sleep(min(30 * consecutive_errors, 120))
+                    continue
+
+                logger.info(
+                    f"📰 HN Page {hn_data.get('page', 1)}/{hn_data.get('total_pages', 1)} "
+                    f"({hn_data.get('start_idx', 1)}~{hn_data.get('end_idx', 0)})"
+                )
+
+                # Update layout data
+                layout._current_hackernews = hn_data
+
+                # Acquire lock to prevent concurrent refreshes
+                async with _refresh_lock:
+                    # Create FULL-SIZE image (EPD requires full image for partial refresh)
+                    # Partial refresh usually requires 1-bit B/W image
+                    image_mode = "1"
+                    full_img = Image.new(image_mode, (epd.width, epd.height), 255)
+                    full_draw = ImageDraw.Draw(full_img)
+
+                    # Draw HN section at the correct position
+                    layout._draw_hackernews(full_draw, epd.width)
+
+                    # Partial refresh - EPD will only update the specified region
+                    try:
+                        # Need to call init_part before partial refresh
+                        if hasattr(epd, "init_part"):
+                            epd.init_part()
+
+                        buffer = epd.getbuffer(full_img)
+
+                        # Log the refresh region for debugging
+                        logger.debug(
+                            f"Partial refresh region: x={HN_REGION['x']}, y={HN_REGION['y']}, "
+                            f"x_end={HN_REGION['x'] + HN_REGION['w']}, y_end={HN_REGION['y'] + HN_REGION['h']}"
+                        )
+
+                        epd.display_partial_buffer(
+                            buffer,
+                            HN_REGION["x"],
+                            HN_REGION["y"],
+                            HN_REGION["x"] + HN_REGION["w"],
+                            HN_REGION["y"] + HN_REGION["h"],
+                        )
+                        logger.debug("✅ HN partial refresh complete")
+                    except Exception as e:
+                        logger.error(f"Failed to perform partial refresh: {e}")
 
     except asyncio.CancelledError:
         logger.info("🛑 HackerNews pagination task cancelled")

@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 from typing import Literal
 
+import httpx
 import pendulum
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, field_validator
@@ -19,6 +20,14 @@ from pydantic import BaseModel, Field, field_validator
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 logger = logging.getLogger(__name__)
+
+# ===== HTTP Client Defaults =====
+# Shared by all providers to ensure consistent connection management.
+# max_connections: limits concurrent sockets (prevents fd exhaustion under load)
+# max_keepalive_connections=0: close idle sockets eagerly (prevents fd accumulation
+# when network is unreachable and requests fail repeatedly)
+HTTP_LIMITS = httpx.Limits(max_connections=5, max_keepalive_connections=0)
+HTTP_TIMEOUT = httpx.Timeout(timeout=15.0, connect=10.0)
 
 
 def _seconds_until_midnight(timezone: str = "Asia/Shanghai") -> int:
