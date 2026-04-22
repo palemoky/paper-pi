@@ -7,6 +7,7 @@ Individual providers are in separate modules for better organization.
 import asyncio
 import json
 import logging
+from typing import Any
 
 import httpx
 import pendulum
@@ -23,6 +24,7 @@ from .weather import get_weather
 logger = logging.getLogger(__name__)
 
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
+CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
 
 
 # ===== GitHub Provider (kept here due to complexity) =====
@@ -271,6 +273,39 @@ def get_week_progress():
     return int((passed_seconds / total_seconds) * 100)
 
 
+@cached(ttl=300)  # Cache for 5 minutes
+async def get_claude_usage(client: httpx.AsyncClient) -> dict[str, int] | None:
+    """Fetch Claude Code usage percentages for 5h and weekly windows.
+
+    Returns:
+        dict with keys {"five_hour": int, "weekly": int} or None when token is not configured.
+    """
+    token = Config.api.claude_oauth_token.strip()
+    if not token:
+        return None
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "anthropic-beta": "oauth-2025-04-20",
+        "Accept": "application/json",
+    }
+
+    try:
+        res = await client.get(CLAUDE_USAGE_URL, headers=headers, timeout=10.0)
+        res.raise_for_status()
+        payload: dict[str, Any] = res.json()
+
+        five_hour_raw = (payload.get("five_hour") or {}).get("utilization", 0)
+        weekly_raw = (payload.get("seven_day") or {}).get("utilization", 0)
+
+        five_hour = max(0, min(100, int(float(five_hour_raw))))
+        weekly = max(0, min(100, int(float(weekly_raw))))
+        return {"five_hour": five_hour, "weekly": weekly}
+    except Exception as e:
+        logger.warning(f"Claude usage API unavailable, fallback to 0% usage rings: {e}")
+        return {"five_hour": 0, "weekly": 0}
+
+
 class Dashboard:
     """Manages data fetching from multiple API providers.
 
@@ -351,6 +386,7 @@ class Dashboard:
             "vps_usage": 0,
             "btc_price": {},
             "week_progress": 0,
+            "claude_usage": None,
             "todo_goals": [],
             "todo_must": [],
             "todo_optional": [],
@@ -366,6 +402,7 @@ class Dashboard:
                 tasks["github"] = tg.create_task(get_github_commits(self.client))
                 tasks["vps"] = tg.create_task(get_vps_info(self.client))
                 tasks["btc"] = tg.create_task(get_btc_data(self.client))
+                tasks["claude_usage"] = tg.create_task(get_claude_usage(self.client))
         else:
             async with httpx.AsyncClient(limits=HTTP_LIMITS, timeout=HTTP_TIMEOUT) as client:
                 async with asyncio.TaskGroup() as tg:
@@ -374,12 +411,16 @@ class Dashboard:
                     tasks["github"] = tg.create_task(get_github_commits(client))
                     tasks["vps"] = tg.create_task(get_vps_info(client))
                     tasks["btc"] = tg.create_task(get_btc_data(client))
+                    tasks["claude_usage"] = tg.create_task(get_claude_usage(client))
 
         # Get results with cache fallback
         data["weather"] = self._get_with_cache_fallback(tasks["weather"], "weather", {})
         data["github_commits"] = self._get_with_cache_fallback(tasks["github"], "github_commits", 0)
         data["vps_usage"] = self._get_with_cache_fallback(tasks["vps"], "vps_usage", 0)
         data["btc_price"] = self._get_with_cache_fallback(tasks["btc"], "btc_price", {})
+        data["claude_usage"] = self._get_with_cache_fallback(
+            tasks["claude_usage"], "claude_usage", None
+        )
 
         # Calculate week progress
         data["week_progress"] = get_week_progress()

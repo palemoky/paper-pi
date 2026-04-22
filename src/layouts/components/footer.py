@@ -28,6 +28,7 @@ class FooterComponent:
         vps_data: int,
         btc_data: dict[str, Any],
         week_prog: int,
+        claude_usage: dict[str, int] | None = None,
     ) -> None:
         """Draw the footer section: supports dynamic slot distribution.
 
@@ -38,6 +39,7 @@ class FooterComponent:
             vps_data: VPS usage data
             btc_data: Bitcoin price data
             week_prog: Week progress percentage
+            claude_usage: Claude usage percentages with keys five_hour/weekly
         """
         r = self.renderer
 
@@ -47,8 +49,19 @@ class FooterComponent:
         btc_label = f"BTC ({change:+.1f}%)"
 
         # Define footer components
+        left_item = {"label": "Weekly", "value": week_prog, "type": "ring"}
+        if isinstance(claude_usage, dict):
+            left_item = {
+                "label": "Claude 5h/W",
+                "value": {
+                    "five_hour": int(claude_usage.get("five_hour", 0)),
+                    "weekly": int(claude_usage.get("weekly", 0)),
+                },
+                "type": "double_ring",
+            }
+
         footer_items = [
-            {"label": "Weekly", "value": week_prog, "type": "ring"},
+            left_item,
             {"label": "Commits", "value": commits, "type": "cross"},
             {"label": btc_label, "value": btc_val, "type": "text"},
             {"label": "VPS Data", "value": vps_data, "type": "ring"},
@@ -76,6 +89,8 @@ class FooterComponent:
             # Draw value based on type
             if item["type"] == "ring":
                 self._draw_ring_item(draw, center_x, item["value"])
+            elif item["type"] == "double_ring":
+                self._draw_double_ring_item(draw, center_x, item["value"])
             elif item["type"] == "cross":
                 self._draw_cross_item(draw, center_x, item["value"])
             elif item["type"] == "text":
@@ -102,6 +117,51 @@ class FooterComponent:
             self.FOOTER_CENTER_Y,
             f"{value}%",
             font=r.font_xs,
+            align_y_center=True,
+        )
+
+    def _draw_double_ring_item(
+        self, draw: ImageDraw.ImageDraw, center_x: int, value: dict[str, int]
+    ) -> None:
+        """Draw nested rings for Claude 5h (inner) and weekly (outer) usage."""
+        r = self.renderer
+        five_hour = max(0, min(100, int(value.get("five_hour", 0))))
+        weekly = max(0, min(100, int(value.get("weekly", 0))))
+
+        # Outer ring: weekly usage
+        r.draw_progress_ring(
+            draw,
+            center_x,
+            self.FOOTER_CENTER_Y,
+            radius=32,
+            percent=weekly,
+            thickness=5,
+        )
+
+        # Inner ring: 5h usage
+        r.draw_progress_ring(
+            draw,
+            center_x,
+            self.FOOTER_CENTER_Y,
+            radius=22,
+            percent=five_hour,
+            thickness=4,
+        )
+
+        r.draw_centered_text(
+            draw,
+            center_x,
+            self.FOOTER_CENTER_Y - 5,
+            f"{five_hour}%",
+            font=r.font_xxs,
+            align_y_center=True,
+        )
+        r.draw_centered_text(
+            draw,
+            center_x,
+            self.FOOTER_CENTER_Y + 5,
+            f"{weekly}%",
+            font=r.font_xxs,
             align_y_center=True,
         )
 

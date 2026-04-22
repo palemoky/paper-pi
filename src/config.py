@@ -206,6 +206,7 @@ class APIConfig(BaseModel):
     openweather_api_key: str = Field(default="", description="OpenWeatherMap API key")
     city_name: str = Field(default="Beijing", description="City name for weather")
     vps_api_key: str = Field(default="", description="VPS API key (64clouds)")
+    claude_oauth_token: str = Field(default="", description="Claude Code OAuth token")
 
     @classmethod
     def from_env(cls) -> "APIConfig":
@@ -214,6 +215,7 @@ class APIConfig(BaseModel):
             openweather_api_key=os.getenv("OPENWEATHER_API_KEY", ""),
             city_name=os.getenv("CITY_NAME", "Beijing"),
             vps_api_key=os.getenv("VPS_API_KEY", ""),
+            claude_oauth_token=os.getenv("CLAUDE_OAUTH_TOKEN", ""),
         )
 
 
