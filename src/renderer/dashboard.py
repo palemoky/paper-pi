@@ -55,6 +55,7 @@ class DashboardRenderer:
             font_path = Config.paths.font_path
 
         try:
+            self.font_xxs = ImageFont.truetype(font_path, 10)
             self.font_xs = ImageFont.truetype(font_path, 18)
             self.font_s = ImageFont.truetype(font_path, 24)
             self.font_m = ImageFont.truetype(font_path, 28)

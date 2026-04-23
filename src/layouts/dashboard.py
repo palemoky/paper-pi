@@ -65,6 +65,7 @@ class DashboardLayout:
         vps_data = data.get("vps_usage", 0)
         btc_data = data.get("btc_price", {})
         week_prog = data.get("week_progress", 0)
+        claude_usage = data.get("claude_usage")
 
         # Check rotation state
         show_hackernews = data.get("show_hackernews", False)
@@ -88,7 +89,7 @@ class DashboardLayout:
                 draw, self._current_goals, self._current_must, self._current_optional
             )
 
-        self.footer.draw(draw, width, commits, vps_data, btc_data, week_prog)
+        self.footer.draw(draw, width, commits, vps_data, btc_data, week_prog, claude_usage)
 
         return image
 
