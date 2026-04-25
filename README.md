@@ -64,12 +64,7 @@ cp .env.example .env
 
 # For dashboard/quote/wallpaper modes (default)
 docker-compose up -d
-
-# For poetry mode (includes poetry-api service)
-docker-compose --profile poetry up -d
 ```
-
-> **Note**: The `poetry-api` service is optional and only needed when using `DISPLAY_MODE=poetry`. For other modes (dashboard, quote, wallpaper), you can run without the poetry profile to save resources.
 
 ### Supported Platforms
 

@@ -21,6 +21,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_POETRY_API_URL = "https://poetry.palemoky.com/api/poems/random"
+
 # ===== HTTP Client Defaults =====
 # Shared by all providers to ensure consistent connection management.
 # max_connections: limits concurrent sockets (prevents fd exhaustion under load)
@@ -103,9 +105,10 @@ class DisplayConfig(BaseModel):
     todo_time_slots: str = Field(
         default="0-12,18-24", description="Time slots for TODO display (hour ranges)"
     )
-    # Poetry API configuration (optional)
+    # Poetry API configuration (uses hosted API by default)
     poetry_api_url: str = Field(
-        default="", description="Custom poetry API URL (empty = use default jinrishici API)"
+        default=DEFAULT_POETRY_API_URL,
+        description="Poetry API URL (defaults to hosted public endpoint)",
     )
 
     @classmethod
@@ -134,7 +137,7 @@ class DisplayConfig(BaseModel):
             hackernews_stories_per_page=int(os.getenv("HACKERNEWS_STORIES_PER_PAGE", "5")),
             hackernews_gist_id=os.getenv("HACKERNEWS_GIST_ID", ""),
             todo_time_slots=os.getenv("TODO_TIME_SLOTS", "0-12,18-24"),
-            poetry_api_url=os.getenv("POETRY_API_URL", ""),
+            poetry_api_url=os.getenv("POETRY_API_URL", DEFAULT_POETRY_API_URL),
         )
 
 
