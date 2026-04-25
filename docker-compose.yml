@@ -16,27 +16,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    # No hard dependency - poetry-api is optional via profiles
-
-  poetry-api:
-    image: palemoky/chinese-poetry-api:latest
-    container_name: poetry-api
-    restart: unless-stopped
-    env_file: .poetry-api.env
-    ports:
-      - "${PORT:-1279}:${PORT:-1279}"
-    environment:
-      - TZ=Asia/Shanghai
-    volumes:
-      - poetry-api-data:/app/data
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    profiles:
-      - poetry # Only start when poetry mode is needed
 
 volumes:
   paper-pi-data:
-  poetry-api-data:
