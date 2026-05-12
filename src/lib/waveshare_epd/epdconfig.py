@@ -167,6 +167,9 @@ class RaspberryPi:
             self.DEV_SPI.DEV_Module_Init()
 
         else:
+            # Close first to prevent FD leak if already open (spidev.open() does
+            # not close the previous fd before assigning the new one)
+            self.SPI.close()
             # SPI device, bus = 0, device = 0
             self.SPI.open(0, 0)
             self.SPI.max_speed_hz = 4000000
