@@ -23,11 +23,11 @@ def get_mock_dashboard_data() -> dict:
             "usd_24h_change": 2.5,
         },
         "week_progress": 65,
-        "claude_usage": {
+        "llm_usage": {
             "hourly_usage": 42,
             "weekly_usage": 66,
             "hourly_reset": "1h",
-            "weekly_reset": "2d 5h",
+            "weekly_reset": "2d5h",
         },
         "todo_goals": ["Finish project ABCDEF", "Read a book", "Exercise"],
         "todo_must": ["Pay bills and reply to emails", "Reply to emails"],

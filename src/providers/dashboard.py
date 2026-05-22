@@ -353,6 +353,7 @@ class Dashboard:
             "vps_usage": 0,
             "btc_price": {},
             "week_progress": 0,
+            "llm_usage": None,
             "claude_usage": None,
             "chatgpt_usage": None,
             "kimi_usage": None,
@@ -405,6 +406,8 @@ class Dashboard:
             data.get("chatgpt_usage"),
             data.get("kimi_usage"),
         )
+        data["llm_usage"] = selected_usage
+        # Backward-compatibility for existing consumers/cache expecting this key.
         data["claude_usage"] = selected_usage
         data["ai_usage_last_provider"] = (
             str(selected_usage.get("provider_name", "")) if isinstance(selected_usage, dict) else ""

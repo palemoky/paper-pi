@@ -103,8 +103,8 @@ def test_layout_hackernews_mode(monkeypatch):
     assert img.mode == "1"
 
 
-def test_layout_with_claude_usage_table(monkeypatch):
-    """Test layout renders with Claude usage table footer item."""
+def test_layout_with_llm_usage_table(monkeypatch):
+    """Test layout renders with LLM usage table footer item."""
     monkeypatch.setattr(Config.api, "city_name", "TestCity")
     monkeypatch.setattr(Config.hardware, "use_grayscale", False)
 
@@ -116,12 +116,12 @@ def test_layout_with_claude_usage_table(monkeypatch):
         "vps_usage": 50,
         "btc_price": {"usd": 50000, "usd_24h_change": 5.0},
         "week_progress": 75,
-        "claude_usage": {
+        "llm_usage": {
             "provider_name": "ChatGPT",
             "hourly_usage": 42,
             "weekly_usage": 66,
             "hourly_reset": "1h",
-            "weekly_reset": "2d 5h",
+            "weekly_reset": "2d5h",
         },
         "show_hackernews": False,
         "todo_goals": ["Goal 1"],
