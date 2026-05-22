@@ -24,6 +24,7 @@ from .weather import get_weather
 logger = logging.getLogger(__name__)
 
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
+AI_USAGE_ROTATION_ORDER = ("Claude", "ChatGPT", "Kimi")
 
 
 # ===== GitHub Provider (kept here due to complexity) =====
@@ -398,11 +399,16 @@ class Dashboard:
         )
         data["kimi_usage"] = self._get_with_cache_fallback(tasks["kimi_usage"], "kimi_usage", None)
 
-        # Prefer Kimi table, then ChatGPT, then Claude.
-        if data["kimi_usage"]:
-            data["claude_usage"] = data["kimi_usage"]
-        elif data["chatgpt_usage"]:
-            data["claude_usage"] = data["chatgpt_usage"]
+        # Rotate table display across configured providers on each refresh.
+        selected_usage = self._select_rotating_ai_usage(
+            data.get("claude_usage"),
+            data.get("chatgpt_usage"),
+            data.get("kimi_usage"),
+        )
+        data["claude_usage"] = selected_usage
+        data["ai_usage_last_provider"] = (
+            str(selected_usage.get("provider_name", "")) if isinstance(selected_usage, dict) else ""
+        )
 
         # Calculate week progress
         data["week_progress"] = get_week_progress()
@@ -441,6 +447,33 @@ class Dashboard:
 
         self.save_cache(data)
         return data
+
+    def _select_rotating_ai_usage(self, claude_usage, chatgpt_usage, kimi_usage):
+        """Select one AI usage payload in round-robin order per refresh."""
+        candidates = {}
+        for usage in (claude_usage, chatgpt_usage, kimi_usage):
+            if not isinstance(usage, dict):
+                continue
+            provider_name = str(usage.get("provider_name", "")).strip()
+            if provider_name:
+                candidates[provider_name] = usage
+
+        ordered_providers = [name for name in AI_USAGE_ROTATION_ORDER if name in candidates]
+        if not ordered_providers:
+            return None
+
+        cache = self.load_cache()
+        last_provider = str(cache.get("ai_usage_last_provider", "")).strip()
+
+        if last_provider in ordered_providers:
+            next_index = (ordered_providers.index(last_provider) + 1) % len(ordered_providers)
+        else:
+            next_index = 0
+
+        selected_provider = ordered_providers[next_index]
+        cache["ai_usage_last_provider"] = selected_provider
+        self.save_cache(cache)
+        return candidates[selected_provider]
 
     def _get_with_cache_fallback(self, task, key, default):
         """Get result from task, use cache on failure."""
