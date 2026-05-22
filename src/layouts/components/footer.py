@@ -60,6 +60,7 @@ class FooterComponent:
             left_item = {
                 "label": "AI Usage",
                 "value": {
+                    "provider_name": str(claude_usage.get("provider_name", "Claude")),
                     "hourly_usage": hourly_usage,
                     "weekly_usage": weekly_usage,
                     "hourly_reset": str(claude_usage.get("hourly_reset", "--")),
@@ -136,6 +137,7 @@ class FooterComponent:
         r = self.renderer
         hourly_usage = max(0, min(100, int(value.get("hourly_usage", value.get("hourly", 0)))))
         weekly_usage = max(0, min(100, int(value.get("weekly_usage", value.get("weekly", 0)))))
+        provider_name = str(value.get("provider_name", "Claude"))
         hourly_reset = str(value.get("hourly_reset", "--"))
         weekly_reset = str(value.get("weekly_reset", "--"))
 
@@ -161,7 +163,7 @@ class FooterComponent:
         draw.line((left, y1, right, y1), fill=0, width=1)
         draw.line((left, y2, right, y2), fill=0, width=1)
 
-        headers = ["Claude", "Hourly", "Weekly"]
+        headers = [provider_name, "Hourly", "Weekly"]
         usage_row = ["Usage", f"{hourly_usage}%", f"{weekly_usage}%"]
         reset_row = ["Reset", hourly_reset, weekly_reset]
 

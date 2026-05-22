@@ -14,7 +14,7 @@ import pendulum
 from ..config import HTTP_LIMITS, HTTP_TIMEOUT, Config
 from ..core.cache import cached
 from ..exceptions import ProviderError
-from .ai_usage import get_claude_usage
+from .ai_usage import get_chatgpt_usage, get_claude_usage
 from .btc import get_btc_data
 from .vps import get_vps_info
 
@@ -353,6 +353,7 @@ class Dashboard:
             "btc_price": {},
             "week_progress": 0,
             "claude_usage": None,
+            "chatgpt_usage": None,
             "todo_goals": [],
             "todo_must": [],
             "todo_optional": [],
@@ -369,6 +370,7 @@ class Dashboard:
                 tasks["vps"] = tg.create_task(get_vps_info(self.client))
                 tasks["btc"] = tg.create_task(get_btc_data(self.client))
                 tasks["claude_usage"] = tg.create_task(get_claude_usage(self.client))
+                tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(self.client))
         else:
             async with httpx.AsyncClient(limits=HTTP_LIMITS, timeout=HTTP_TIMEOUT) as client:
                 async with asyncio.TaskGroup() as tg:
@@ -378,6 +380,7 @@ class Dashboard:
                     tasks["vps"] = tg.create_task(get_vps_info(client))
                     tasks["btc"] = tg.create_task(get_btc_data(client))
                     tasks["claude_usage"] = tg.create_task(get_claude_usage(client))
+                    tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(client))
 
         # Get results with cache fallback
         data["weather"] = self._get_with_cache_fallback(tasks["weather"], "weather", {})
@@ -387,6 +390,13 @@ class Dashboard:
         data["claude_usage"] = self._get_with_cache_fallback(
             tasks["claude_usage"], "claude_usage", None
         )
+        data["chatgpt_usage"] = self._get_with_cache_fallback(
+            tasks["chatgpt_usage"], "chatgpt_usage", None
+        )
+
+        # Prefer ChatGPT table when available; fallback to Claude.
+        if data["chatgpt_usage"]:
+            data["claude_usage"] = data["chatgpt_usage"]
 
         # Calculate week progress
         data["week_progress"] = get_week_progress()

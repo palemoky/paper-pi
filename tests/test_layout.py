@@ -117,6 +117,7 @@ def test_layout_with_claude_usage_table(monkeypatch):
         "btc_price": {"usd": 50000, "usd_24h_change": 5.0},
         "week_progress": 75,
         "claude_usage": {
+            "provider_name": "ChatGPT",
             "hourly_usage": 42,
             "weekly_usage": 66,
             "hourly_reset": "1h",

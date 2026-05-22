@@ -210,6 +210,12 @@ class APIConfig(BaseModel):
     city_name: str = Field(default="Beijing", description="City name for weather")
     vps_api_key: str = Field(default="", description="VPS API key (64clouds)")
     claude_oauth_token: str = Field(default="", description="Claude Code OAuth token")
+    chatgpt_oauth_token: str = Field(default="", description="ChatGPT/Codex OAuth token")
+    chatgpt_account_id: str = Field(default="", description="Optional ChatGPT account ID")
+    chatgpt_base_url: str = Field(
+        default="https://chatgpt.com/backend-api",
+        description="ChatGPT backend API base URL",
+    )
 
     @classmethod
     def from_env(cls) -> "APIConfig":
@@ -219,6 +225,9 @@ class APIConfig(BaseModel):
             city_name=os.getenv("CITY_NAME", "Beijing"),
             vps_api_key=os.getenv("VPS_API_KEY", ""),
             claude_oauth_token=os.getenv("CLAUDE_OAUTH_TOKEN", ""),
+            chatgpt_oauth_token=os.getenv("CHATGPT_OAUTH_TOKEN", ""),
+            chatgpt_account_id=os.getenv("CHATGPT_ACCOUNT_ID", ""),
+            chatgpt_base_url=os.getenv("CHATGPT_BASE_URL", "https://chatgpt.com/backend-api"),
         )
 
 
