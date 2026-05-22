@@ -18,14 +18,22 @@ repos:
   # =======================================================
   # 2. 代码格式与 Lint (Ruff)
   #    运行阶段: pre-commit
+  #    说明: 直接使用 uv 环境中的 ruff，与 GitHub Actions 保持一致
   # =======================================================
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.6
+  - repo: local
     hooks:
       - id: ruff
-        args:
-          - --fix
+        name: ruff (Lint + Auto-fix)
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+        stages: [pre-commit]
       - id: ruff-format
+        name: ruff-format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+        stages: [pre-commit]
 
   # =======================================================
   # 3. 提交信息规范 (Commit Message)

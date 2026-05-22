@@ -243,7 +243,7 @@ def _kimi_to_int(value: Any) -> int | None:
     """Best-effort integer parser."""
     try:
         return int(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
 
 
@@ -344,7 +344,7 @@ def _parse_percent(value: Any) -> int:
     """Parse and clamp usage percent to 0-100 integer."""
     try:
         return max(0, min(100, int(float(value))))
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return 0
 
 
@@ -381,7 +381,7 @@ def _extract_reset_seconds(window: dict[str, Any]) -> int | None:
             continue
         try:
             return max(0, int(float(raw)))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             continue
 
     reset_at_keys = ("reset_at", "resets_at", "resetAt", "resetsAt")
