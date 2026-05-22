@@ -103,8 +103,8 @@ def test_layout_hackernews_mode(monkeypatch):
     assert img.mode == "1"
 
 
-def test_layout_with_llm_usage_table(monkeypatch):
-    """Test layout renders with LLM usage table footer item."""
+def test_layout_with_llm_usage_cross_item(monkeypatch):
+    """Test layout renders with LLM usage cross footer item."""
     monkeypatch.setattr(Config.api, "city_name", "TestCity")
     monkeypatch.setattr(Config.hardware, "use_grayscale", False)
 
