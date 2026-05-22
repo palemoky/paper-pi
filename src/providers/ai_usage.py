@@ -361,7 +361,7 @@ def _format_window_reset_left(window: dict[str, Any]) -> str:
     minutes = rem // 60
 
     if days > 0:
-        return f"{days}d {hours}h"
+        return f"{days}d{hours}h"
     if hours > 0:
         return f"{hours}h"
     return f"{minutes}m"
