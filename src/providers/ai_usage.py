@@ -265,7 +265,7 @@ def _kimi_reset_text(data: dict[str, Any]) -> str | None:
 
 
 def _format_seconds_left(seconds: int) -> str:
-    """Format seconds into compact `Left ...` text."""
+    """Format seconds into compact `...` text."""
     if seconds <= 0:
         return "0m"
 
@@ -274,10 +274,10 @@ def _format_seconds_left(seconds: int) -> str:
     minutes = rem // 60
 
     if days > 0:
-        return f"Left {days}d {hours}h"
+        return f"{days}d {hours}h"
     if hours > 0:
-        return f"Left {hours}h"
-    return f"Left {minutes}m"
+        return f"{hours}h"
+    return f"{minutes}m"
 
 
 def _normalize_chatgpt_base_url(url: str) -> str:
@@ -349,7 +349,7 @@ def _parse_percent(value: Any) -> int:
 
 
 def _format_window_reset_left(window: dict[str, Any]) -> str:
-    """Return compact "Left ..." text for a Claude usage window."""
+    """Return compact "..." text for a Claude usage window."""
     seconds = _extract_reset_seconds(window)
     if seconds is None:
         return "--"
@@ -361,10 +361,10 @@ def _format_window_reset_left(window: dict[str, Any]) -> str:
     minutes = rem // 60
 
     if days > 0:
-        return f"Left {days}d {hours}h"
+        return f"{days}d {hours}h"
     if hours > 0:
-        return f"Left {hours}h"
-    return f"Left {minutes}m"
+        return f"{hours}h"
+    return f"{minutes}m"
 
 
 def _extract_reset_seconds(window: dict[str, Any]) -> int | None:
