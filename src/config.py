@@ -216,6 +216,11 @@ class APIConfig(BaseModel):
         default="https://chatgpt.com/backend-api",
         description="ChatGPT backend API base URL",
     )
+    kimi_api_key: str = Field(default="", description="Kimi Code API key")
+    kimi_base_url: str = Field(
+        default="https://api.kimi.com/coding/v1",
+        description="Kimi Code API base URL",
+    )
 
     @classmethod
     def from_env(cls) -> "APIConfig":
@@ -228,6 +233,11 @@ class APIConfig(BaseModel):
             chatgpt_oauth_token=os.getenv("CHATGPT_OAUTH_TOKEN", ""),
             chatgpt_account_id=os.getenv("CHATGPT_ACCOUNT_ID", ""),
             chatgpt_base_url=os.getenv("CHATGPT_BASE_URL", "https://chatgpt.com/backend-api"),
+            kimi_api_key=os.getenv("KIMI_API_KEY", ""),
+            kimi_base_url=os.getenv(
+                "KIMI_BASE_URL",
+                os.getenv("KIMI_CODE_BASE_URL", "https://api.kimi.com/coding/v1"),
+            ),
         )
 
 

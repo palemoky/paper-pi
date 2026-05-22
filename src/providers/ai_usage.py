@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
 CHATGPT_USAGE_PATH = "/wham/usage"
+KIMI_USAGE_PATH = "/usages"
 
 
 @cached(ttl=300)  # Cache for 5 minutes
@@ -127,6 +128,156 @@ async def get_chatgpt_usage(client: httpx.AsyncClient) -> dict[str, int | str] |
             "hourly_reset": "--",
             "weekly_reset": "--",
         }
+
+
+@cached(ttl=300)  # Cache for 5 minutes
+async def get_kimi_usage(client: httpx.AsyncClient) -> dict[str, int | str] | None:
+    """Fetch Kimi Code usage from /usages endpoint."""
+    api_key = Config.api.kimi_api_key.strip()
+    if not api_key:
+        return None
+
+    base_url = (Config.api.kimi_base_url or "https://api.kimi.com/coding/v1").strip().rstrip("/")
+    url = f"{base_url}{KIMI_USAGE_PATH}"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "User-Agent": "paper-pi",
+        "Accept": "application/json",
+    }
+
+    try:
+        res = await client.get(url, headers=headers, timeout=10.0)
+        res.raise_for_status()
+        payload = res.json()
+        if not isinstance(payload, dict):
+            raise ValueError("Expected dict response from Kimi /usages")
+
+        summary, limits = _parse_kimi_payload(payload)
+        rows: list[dict[str, Any]] = []
+        if summary:
+            rows.append(summary)
+        rows.extend(limits)
+        rows = rows[:2]
+
+        primary = rows[0] if rows else {"used_percent": 0, "reset_text": "--"}
+        secondary = rows[1] if len(rows) > 1 else {"used_percent": 0, "reset_text": "--"}
+
+        return {
+            "provider_name": "Kimi",
+            "hourly_usage": _parse_percent(primary.get("used_percent", 0)),
+            "weekly_usage": _parse_percent(secondary.get("used_percent", 0)),
+            "hourly_reset": str(primary.get("reset_text", "--")),
+            "weekly_reset": str(secondary.get("reset_text", "--")),
+        }
+    except Exception as e:
+        logger.warning(f"Kimi usage API unavailable, fallback to 0% usage table: {e}")
+        return {
+            "provider_name": "Kimi",
+            "hourly_usage": 0,
+            "weekly_usage": 0,
+            "hourly_reset": "--",
+            "weekly_reset": "--",
+        }
+
+
+def _parse_kimi_payload(
+    payload: dict[str, Any],
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    """Parse Kimi /usages payload into summary and per-limit rows."""
+    summary: dict[str, Any] | None = None
+    limits: list[dict[str, Any]] = []
+
+    usage = payload.get("usage")
+    if isinstance(usage, dict):
+        summary = _kimi_window_from_data(usage, default_label="Usage")
+
+    raw_limits = payload.get("limits")
+    if isinstance(raw_limits, list):
+        for idx, item in enumerate(raw_limits):
+            if not isinstance(item, dict):
+                continue
+            detail_raw = item.get("detail")
+            detail = detail_raw if isinstance(detail_raw, dict) else item
+
+            label = (
+                item.get("name")
+                or item.get("title")
+                or detail.get("name")
+                or detail.get("title")
+                or f"Limit #{idx + 1}"
+            )
+            row = _kimi_window_from_data(detail, default_label=str(label))
+            if row:
+                limits.append(row)
+
+    return summary, limits
+
+
+def _kimi_window_from_data(data: dict[str, Any], default_label: str) -> dict[str, Any] | None:
+    """Convert Kimi usage object to normalized row data."""
+    limit = _kimi_to_int(data.get("limit"))
+    used = _kimi_to_int(data.get("used"))
+    if used is None:
+        remaining = _kimi_to_int(data.get("remaining"))
+        if remaining is not None and limit is not None:
+            used = limit - remaining
+
+    if used is None and limit is None:
+        return None
+
+    used_value = max(0, used or 0)
+    if limit and limit > 0:
+        used_percent = max(0, min(100, int((used_value / limit) * 100)))
+    else:
+        used_percent = 0
+
+    reset_text = _kimi_reset_text(data) or "--"
+    return {
+        "label": str(data.get("name") or data.get("title") or default_label),
+        "used_percent": used_percent,
+        "reset_text": reset_text,
+    }
+
+
+def _kimi_to_int(value: Any) -> int | None:
+    """Best-effort integer parser."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _kimi_reset_text(data: dict[str, Any]) -> str | None:
+    """Parse reset hint fields from Kimi usage payload."""
+    for key in ("reset_at", "resetAt", "reset_time", "resetTime"):
+        value = data.get(key)
+        if value:
+            left = _format_window_reset_left({"resets_at": value})
+            return left if left != "--" else None
+
+    for key in ("reset_in", "resetIn", "ttl", "window"):
+        seconds = _kimi_to_int(data.get(key))
+        if seconds is None:
+            continue
+        return _format_seconds_left(seconds)
+
+    return None
+
+
+def _format_seconds_left(seconds: int) -> str:
+    """Format seconds into compact `Left ...` text."""
+    if seconds <= 0:
+        return "0m"
+
+    days, rem = divmod(seconds, 24 * 3600)
+    hours, rem = divmod(rem, 3600)
+    minutes = rem // 60
+
+    if days > 0:
+        return f"Left {days}d {hours}h"
+    if hours > 0:
+        return f"Left {hours}h"
+    return f"Left {minutes}m"
 
 
 def _normalize_chatgpt_base_url(url: str) -> str:

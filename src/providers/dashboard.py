@@ -14,7 +14,7 @@ import pendulum
 from ..config import HTTP_LIMITS, HTTP_TIMEOUT, Config
 from ..core.cache import cached
 from ..exceptions import ProviderError
-from .ai_usage import get_chatgpt_usage, get_claude_usage
+from .ai_usage import get_chatgpt_usage, get_claude_usage, get_kimi_usage
 from .btc import get_btc_data
 from .vps import get_vps_info
 
@@ -354,6 +354,7 @@ class Dashboard:
             "week_progress": 0,
             "claude_usage": None,
             "chatgpt_usage": None,
+            "kimi_usage": None,
             "todo_goals": [],
             "todo_must": [],
             "todo_optional": [],
@@ -371,6 +372,7 @@ class Dashboard:
                 tasks["btc"] = tg.create_task(get_btc_data(self.client))
                 tasks["claude_usage"] = tg.create_task(get_claude_usage(self.client))
                 tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(self.client))
+                tasks["kimi_usage"] = tg.create_task(get_kimi_usage(self.client))
         else:
             async with httpx.AsyncClient(limits=HTTP_LIMITS, timeout=HTTP_TIMEOUT) as client:
                 async with asyncio.TaskGroup() as tg:
@@ -381,6 +383,7 @@ class Dashboard:
                     tasks["btc"] = tg.create_task(get_btc_data(client))
                     tasks["claude_usage"] = tg.create_task(get_claude_usage(client))
                     tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(client))
+                    tasks["kimi_usage"] = tg.create_task(get_kimi_usage(client))
 
         # Get results with cache fallback
         data["weather"] = self._get_with_cache_fallback(tasks["weather"], "weather", {})
@@ -393,9 +396,12 @@ class Dashboard:
         data["chatgpt_usage"] = self._get_with_cache_fallback(
             tasks["chatgpt_usage"], "chatgpt_usage", None
         )
+        data["kimi_usage"] = self._get_with_cache_fallback(tasks["kimi_usage"], "kimi_usage", None)
 
-        # Prefer ChatGPT table when available; fallback to Claude.
-        if data["chatgpt_usage"]:
+        # Prefer Kimi table, then ChatGPT, then Claude.
+        if data["kimi_usage"]:
+            data["claude_usage"] = data["kimi_usage"]
+        elif data["chatgpt_usage"]:
             data["claude_usage"] = data["chatgpt_usage"]
 
         # Calculate week progress
