@@ -103,8 +103,8 @@ def test_layout_hackernews_mode(monkeypatch):
     assert img.mode == "1"
 
 
-def test_layout_with_claude_usage_rings(monkeypatch):
-    """Test layout renders with Claude usage dual-ring footer item."""
+def test_layout_with_claude_usage_table(monkeypatch):
+    """Test layout renders with Claude usage table footer item."""
     monkeypatch.setattr(Config.api, "city_name", "TestCity")
     monkeypatch.setattr(Config.hardware, "use_grayscale", False)
 
@@ -116,7 +116,12 @@ def test_layout_with_claude_usage_rings(monkeypatch):
         "vps_usage": 50,
         "btc_price": {"usd": 50000, "usd_24h_change": 5.0},
         "week_progress": 75,
-        "claude_usage": {"five_hour": 42, "weekly": 66},
+        "claude_usage": {
+            "hourly_usage": 42,
+            "weekly_usage": 66,
+            "hourly_reset": "1h",
+            "weekly_reset": "2d 5h",
+        },
         "show_hackernews": False,
         "todo_goals": ["Goal 1"],
         "todo_must": ["Must 1"],
