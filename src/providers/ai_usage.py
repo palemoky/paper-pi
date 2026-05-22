@@ -274,7 +274,7 @@ def _format_seconds_left(seconds: int) -> str:
     minutes = rem // 60
 
     if days > 0:
-        return f"{days}d {hours}h"
+        return f"{days}d{hours}h"
     if hours > 0:
         return f"{hours}h"
     return f"{minutes}m"
