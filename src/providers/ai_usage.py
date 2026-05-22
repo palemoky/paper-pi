@@ -397,7 +397,7 @@ def _extract_reset_seconds(window: dict[str, Any]) -> int | None:
             else:
                 reset_at = pendulum.parse(str(raw))
             if reset_at.timezone is None:
-                reset_at = reset_at.replace(tz="UTC")
+                reset_at = reset_at.replace(tzinfo=pendulum.timezone("UTC"))
             reset_local = reset_at.in_timezone(local_tz)
             return max(0, int((reset_local - now_local).total_seconds()))
         except Exception:
