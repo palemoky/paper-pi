@@ -28,7 +28,7 @@ class FooterComponent:
         vps_data: int,
         btc_data: dict[str, Any],
         week_prog: int,
-        claude_usage: dict[str, int] | None = None,
+        claude_usage: dict[str, int | str] | None = None,
     ) -> None:
         """Draw the footer section: supports dynamic slot distribution.
 
@@ -39,7 +39,7 @@ class FooterComponent:
             vps_data: VPS usage data
             btc_data: Bitcoin price data
             week_prog: Week progress percentage
-            claude_usage: Claude usage percentages with keys five_hour/weekly
+            claude_usage: Claude usage values with keys hourly_usage/weekly_usage and reset strings
         """
         r = self.renderer
 
@@ -51,13 +51,22 @@ class FooterComponent:
         # Define footer components
         left_item = {"label": "Weekly", "value": week_prog, "type": "ring"}
         if isinstance(claude_usage, dict):
+            hourly_usage = max(
+                0, min(100, int(claude_usage.get("hourly_usage", claude_usage.get("hourly", 0))))
+            )
+            weekly_usage = max(
+                0, min(100, int(claude_usage.get("weekly_usage", claude_usage.get("weekly", 0))))
+            )
             left_item = {
-                "label": "Claude 5h/W",
+                "label": "AI Usage",
                 "value": {
-                    "five_hour": int(claude_usage.get("five_hour", 0)),
-                    "weekly": int(claude_usage.get("weekly", 0)),
+                    "provider_name": str(claude_usage.get("provider_name", "Claude")),
+                    "hourly_usage": hourly_usage,
+                    "weekly_usage": weekly_usage,
+                    "hourly_reset": str(claude_usage.get("hourly_reset", "--")),
+                    "weekly_reset": str(claude_usage.get("weekly_reset", "--")),
                 },
-                "type": "double_ring",
+                "type": "usage_table",
             }
 
         footer_items = [
@@ -77,20 +86,21 @@ class FooterComponent:
             center_x = col_layout.get_column_center(i)
 
             # Draw label
-            r.draw_centered_text(
-                draw,
-                center_x,
-                self.FOOTER_LABEL_Y,
-                item["label"],
-                font=r.font_s,
-                align_y_center=False,
-            )
+            if item["label"]:
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    self.FOOTER_LABEL_Y,
+                    item["label"],
+                    font=r.font_s,
+                    align_y_center=False,
+                )
 
             # Draw value based on type
             if item["type"] == "ring":
                 self._draw_ring_item(draw, center_x, item["value"])
-            elif item["type"] == "double_ring":
-                self._draw_double_ring_item(draw, center_x, item["value"])
+            elif item["type"] == "usage_table":
+                self._draw_usage_table_item(draw, center_x, item["value"])
             elif item["type"] == "cross":
                 self._draw_cross_item(draw, center_x, item["value"])
             elif item["type"] == "text":
@@ -120,50 +130,56 @@ class FooterComponent:
             align_y_center=True,
         )
 
-    def _draw_double_ring_item(
-        self, draw: ImageDraw.ImageDraw, center_x: int, value: dict[str, int]
+    def _draw_usage_table_item(
+        self, draw: ImageDraw.ImageDraw, center_x: int, value: dict[str, int | str]
     ) -> None:
-        """Draw nested rings for Claude 5h (inner) and weekly (outer) usage."""
+        """Draw Claude usage as a 3-column table: Claude/Hourly/Weekly."""
         r = self.renderer
-        five_hour = max(0, min(100, int(value.get("five_hour", 0))))
-        weekly = max(0, min(100, int(value.get("weekly", 0))))
+        hourly_usage = max(0, min(100, int(value.get("hourly_usage", value.get("hourly", 0)))))
+        weekly_usage = max(0, min(100, int(value.get("weekly_usage", value.get("weekly", 0)))))
+        provider_name = str(value.get("provider_name", "Claude"))
+        hourly_reset = str(value.get("hourly_reset", "--"))
+        weekly_reset = str(value.get("weekly_reset", "--"))
 
-        # Outer ring: weekly usage
-        r.draw_progress_ring(
-            draw,
-            center_x,
-            self.FOOTER_CENTER_Y,
-            radius=32,
-            percent=weekly,
-            thickness=5,
-        )
+        table_w = 150
+        table_h = 57
+        left = center_x - table_w // 2
+        top = self.FOOTER_CENTER_Y - table_h // 2
+        right = left + table_w
+        bottom = top + table_h
 
-        # Inner ring: 5h usage
-        r.draw_progress_ring(
-            draw,
-            center_x,
-            self.FOOTER_CENTER_Y,
-            radius=22,
-            percent=five_hour,
-            thickness=4,
-        )
+        # Outer border
+        draw.rectangle((left, top, right, bottom), outline=0, width=1)
 
-        r.draw_centered_text(
-            draw,
-            center_x,
-            self.FOOTER_CENTER_Y - 5,
-            f"{five_hour}%",
-            font=r.font_xxs,
-            align_y_center=True,
-        )
-        r.draw_centered_text(
-            draw,
-            center_x,
-            self.FOOTER_CENTER_Y + 5,
-            f"{weekly}%",
-            font=r.font_xxs,
-            align_y_center=True,
-        )
+        col_w = table_w // 3
+        x1 = left + col_w
+        x2 = left + 2 * col_w
+        draw.line((x1, top, x1, bottom), fill=0, width=1)
+        draw.line((x2, top, x2, bottom), fill=0, width=1)
+
+        row_h = table_h // 3
+        y1 = top + row_h
+        y2 = top + 2 * row_h
+        draw.line((left, y1, right, y1), fill=0, width=1)
+        draw.line((left, y2, right, y2), fill=0, width=1)
+
+        headers = [provider_name, "Hourly", "Weekly"]
+        usage_row = ["Usage", f"{hourly_usage}%", f"{weekly_usage}%"]
+        reset_row = ["Reset", hourly_reset, weekly_reset]
+
+        rows = [headers, usage_row, reset_row]
+        for row_index, row_values in enumerate(rows):
+            center_y = top + row_h * row_index + row_h // 2
+            for col_index, text in enumerate(row_values):
+                cell_center_x = left + col_w * col_index + col_w // 2
+                r.draw_centered_text(
+                    draw,
+                    cell_center_x,
+                    center_y,
+                    str(text),
+                    font=r.font_xxs,
+                    align_y_center=True,
+                )
 
     def _draw_text_item(self, draw: ImageDraw.ImageDraw, center_x: int, value: str) -> None:
         """Draw a simple text item."""
