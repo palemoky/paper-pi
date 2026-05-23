@@ -26,8 +26,8 @@ def get_mock_dashboard_data() -> dict:
         "llm_usage": {
             "hourly_usage": 42,
             "weekly_usage": 66,
-            "hourly_reset": "1h",
-            "weekly_reset": "2d5h",
+            "hourly_reset": "--",
+            "weekly_reset": "2d23h",
         },
         "todo_goals": ["Finish project ABCDEF", "Read a book", "Exercise"],
         "todo_must": ["Pay bills and reply to emails", "Reply to emails"],

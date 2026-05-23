@@ -162,20 +162,21 @@ class FooterComponent:
             self._draw_text_item(draw, center_x, str(value))
             return
 
-        offset_x = 25
-        offset_y = 15
+        offset_x = 30
+        offset_y = 18
 
         for position_name, x_sign, y_sign in self._CROSS_POSITIONS:
             text_x = center_x + (x_sign * offset_x)
             text_y = self.FOOTER_CENTER_Y + (y_sign * offset_y)
             text_value = normalized_value[position_name]
+            text_font = r.font_commits if y_sign < 0 else r.font_xs
 
             r.draw_centered_text(
                 draw,
                 text_x,
                 text_y,
                 text_value,
-                font=r.font_commits,
+                font=text_font,
                 align_y_center=True,
             )
 
@@ -183,7 +184,7 @@ class FooterComponent:
             draw,
             center_x,
             self.FOOTER_CENTER_Y,
-            h_length=(offset_x + 15) * 2,
+            h_length=(offset_x + 25) * 2,
             v_length=(offset_y + 10) * 2,
         )
 
