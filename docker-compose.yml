@@ -11,6 +11,7 @@ services:
       - TZ=${TIMEZONE:-Asia/Shanghai}
     volumes:
       - paper-pi-data:/app/data
+      - ${PAPER_PI_SECRETS_DIR:-./secrets}:/run/secrets:ro
     logging:
       driver: json-file
       options:

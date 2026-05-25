@@ -1,6 +1,7 @@
 """AI usage providers for Claude and future model platforms."""
 
 import logging
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -16,6 +17,63 @@ CHATGPT_USAGE_PATH = "/wham/usage"
 KIMI_USAGE_PATH = "/usages"
 
 
+_INVALID_TOKEN_BY_PROVIDER: dict[str, str] = {}
+
+
+def _fallback_usage(provider_name: str) -> dict[str, int | str]:
+    """Return a stable fallback payload used when token is invalid/expired."""
+    return {
+        "provider_name": provider_name,
+        "hourly_usage": "--",
+        "weekly_usage": "--",
+        "hourly_reset": "--",
+        "weekly_reset": "--",
+    }
+
+
+def _read_secret_token(file_path: str) -> str:
+    """Read token from a mounted secret file (first non-empty line)."""
+    if not file_path:
+        return ""
+
+    try:
+        raw = Path(file_path).read_text(encoding="utf-8")
+    except OSError as e:
+        logger.warning(f"Cannot read secret token file '{file_path}': {e}")
+        return ""
+
+    for line in raw.splitlines():
+        token = line.strip()
+        if token:
+            return token
+    return ""
+
+
+def _resolve_token(provider_name: str, file_path: str, env_token: str) -> str:
+    """Resolve token by preferring mounted secret file over env var."""
+    token = _read_secret_token(file_path) or (env_token or "").strip()
+
+    invalid_token = _INVALID_TOKEN_BY_PROVIDER.get(provider_name)
+    if token and invalid_token and token == invalid_token:
+        # Token already known as invalid/expired; wait for macOS sync to rotate it.
+        return ""
+    return token
+
+
+def _mark_invalid_token(provider_name: str, token: str) -> None:
+    """Remember invalid token and skip future requests until token changes."""
+    if token:
+        _INVALID_TOKEN_BY_PROVIDER[provider_name] = token
+
+
+def _clear_invalid_token(provider_name: str, token: str) -> None:
+    """Clear invalid marker once a request succeeds with current token."""
+    if not token:
+        return
+    if _INVALID_TOKEN_BY_PROVIDER.get(provider_name) == token:
+        _INVALID_TOKEN_BY_PROVIDER.pop(provider_name, None)
+
+
 @cached(ttl=300)  # Cache for 5 minutes
 async def get_claude_usage(client: httpx.AsyncClient) -> dict[str, int | str] | None:
     """Fetch Claude Code usage and reset windows for 5h and weekly periods.
@@ -28,9 +86,13 @@ async def get_claude_usage(client: httpx.AsyncClient) -> dict[str, int | str] | 
             "weekly_reset": str,
         } or None when token is not configured.
     """
-    token = Config.api.claude_oauth_token.strip()
+    token = _resolve_token(
+        "Claude",
+        Config.api.claude_oauth_token_file,
+        Config.api.claude_oauth_token,
+    )
     if not token:
-        return None
+        return _fallback_usage("Claude")
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -41,6 +103,7 @@ async def get_claude_usage(client: httpx.AsyncClient) -> dict[str, int | str] | 
     try:
         res = await client.get(CLAUDE_USAGE_URL, headers=headers, timeout=10.0)
         res.raise_for_status()
+        _clear_invalid_token("Claude", token)
         payload: dict[str, Any] = res.json()
 
         hourly_window = payload.get("five_hour") or payload.get("hourly") or {}
@@ -58,15 +121,16 @@ async def get_claude_usage(client: httpx.AsyncClient) -> dict[str, int | str] | 
             "hourly_reset": _format_window_reset_left(hourly_window),
             "weekly_reset": _format_window_reset_left(seven_day_window),
         }
+    except httpx.HTTPStatusError as e:
+        _mark_invalid_token("Claude", token)
+        logger.warning(
+            "Claude usage API returned non-200 (%s), waiting for refreshed token sync",
+            e.response.status_code,
+        )
+        return _fallback_usage("Claude")
     except Exception as e:
-        logger.warning(f"Claude usage API unavailable, fallback to 0% usage table: {e}")
-        return {
-            "provider_name": "Claude",
-            "hourly_usage": 0,
-            "weekly_usage": 0,
-            "hourly_reset": "--",
-            "weekly_reset": "--",
-        }
+        logger.warning(f"Claude usage API unavailable, fallback to '--': {e}")
+        return _fallback_usage("Claude")
 
 
 @cached(ttl=300)  # Cache for 5 minutes
@@ -82,9 +146,13 @@ async def get_chatgpt_usage(client: httpx.AsyncClient) -> dict[str, int | str] |
             "weekly_reset": str,
         } or None when token is not configured.
     """
-    token = Config.api.chatgpt_oauth_token.strip()
+    token = _resolve_token(
+        "ChatGPT",
+        Config.api.chatgpt_oauth_token_file,
+        Config.api.chatgpt_oauth_token,
+    )
     if not token:
-        return None
+        return _fallback_usage("ChatGPT")
 
     base_url = _normalize_chatgpt_base_url(Config.api.chatgpt_base_url)
     url = f"{base_url}{CHATGPT_USAGE_PATH}"
@@ -101,6 +169,7 @@ async def get_chatgpt_usage(client: httpx.AsyncClient) -> dict[str, int | str] |
     try:
         res = await client.get(url, headers=headers, timeout=10.0)
         res.raise_for_status()
+        _clear_invalid_token("ChatGPT", token)
         payload: dict[str, Any] = res.json()
 
         primary, secondary = _extract_chatgpt_windows(payload)
@@ -119,23 +188,28 @@ async def get_chatgpt_usage(client: httpx.AsyncClient) -> dict[str, int | str] |
             "hourly_reset": _format_window_reset_left(primary),
             "weekly_reset": _format_window_reset_left(secondary or {}),
         }
+    except httpx.HTTPStatusError as e:
+        _mark_invalid_token("ChatGPT", token)
+        logger.warning(
+            "ChatGPT usage API returned non-200 (%s), waiting for refreshed token sync",
+            e.response.status_code,
+        )
+        return _fallback_usage("ChatGPT")
     except Exception as e:
-        logger.warning(f"ChatGPT usage API unavailable, fallback to 0% usage table: {e}")
-        return {
-            "provider_name": "ChatGPT",
-            "hourly_usage": 0,
-            "weekly_usage": 0,
-            "hourly_reset": "--",
-            "weekly_reset": "--",
-        }
+        logger.warning(f"ChatGPT usage API unavailable, fallback to '--': {e}")
+        return _fallback_usage("ChatGPT")
 
 
 @cached(ttl=300)  # Cache for 5 minutes
 async def get_kimi_usage(client: httpx.AsyncClient) -> dict[str, int | str] | None:
     """Fetch Kimi Code usage from /usages endpoint."""
-    api_key = Config.api.kimi_api_key.strip()
+    api_key = _resolve_token(
+        "Kimi",
+        Config.api.kimi_api_key_file,
+        Config.api.kimi_api_key,
+    )
     if not api_key:
-        return None
+        return _fallback_usage("Kimi")
 
     base_url = (Config.api.kimi_base_url or "https://api.kimi.com/coding/v1").strip().rstrip("/")
     url = f"{base_url}{KIMI_USAGE_PATH}"
@@ -148,6 +222,7 @@ async def get_kimi_usage(client: httpx.AsyncClient) -> dict[str, int | str] | No
     try:
         res = await client.get(url, headers=headers, timeout=10.0)
         res.raise_for_status()
+        _clear_invalid_token("Kimi", api_key)
         payload = res.json()
         if not isinstance(payload, dict):
             raise ValueError("Expected dict response from Kimi /usages")
@@ -169,15 +244,16 @@ async def get_kimi_usage(client: httpx.AsyncClient) -> dict[str, int | str] | No
             "hourly_reset": str(primary.get("reset_text", "--")),
             "weekly_reset": str(secondary.get("reset_text", "--")),
         }
+    except httpx.HTTPStatusError as e:
+        _mark_invalid_token("Kimi", api_key)
+        logger.warning(
+            "Kimi usage API returned non-200 (%s), waiting for refreshed token sync",
+            e.response.status_code,
+        )
+        return _fallback_usage("Kimi")
     except Exception as e:
-        logger.warning(f"Kimi usage API unavailable, fallback to 0% usage table: {e}")
-        return {
-            "provider_name": "Kimi",
-            "hourly_usage": 0,
-            "weekly_usage": 0,
-            "hourly_reset": "--",
-            "weekly_reset": "--",
-        }
+        logger.warning(f"Kimi usage API unavailable, fallback to '--': {e}")
+        return _fallback_usage("Kimi")
 
 
 def _parse_kimi_payload(
