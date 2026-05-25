@@ -8,8 +8,8 @@ set -euo pipefail
 #   bash <(curl -fsSL https://raw.githubusercontent.com/palemoky/paper-pi/main/scripts/install_launchd.sh) uninstall
 #
 # Usage (local):
-#   ./scripts/install_launchd.sh
-#   ./scripts/install_launchd.sh uninstall
+#   ~/.paper-pi/install_launchd.sh
+#   ~/.paper-pi/install_launchd.sh uninstall
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "Error: this script only works on macOS (launchd). Current OS: $(uname -s)" >&2
@@ -116,13 +116,13 @@ install() {
 
   # Download sync script when not running from a local clone
   if [[ ! -f "$LOCAL_TEMPLATE" ]]; then
-    fetch_sync_script "$REPO_DIR/scripts"
-    fetch_plist_template "$REPO_DIR/scripts"
+    fetch_sync_script "$REPO_DIR"
+    fetch_plist_template "$REPO_DIR"
     echo ""
   fi
 
   mkdir -p "$HOME/Library/LaunchAgents"
-  render_plist "$REPO_DIR/scripts" "$PI_TARGET" "$PI_SECRETS_DIR" > "$DEST"
+  render_plist "$REPO_DIR" "$PI_TARGET" "$PI_SECRETS_DIR" > "$DEST"
 
   if launchctl list "$LABEL" &>/dev/null; then
     launchctl unload "$DEST" 2>/dev/null || true
@@ -131,7 +131,7 @@ install() {
   launchctl load "$DEST"
   echo "Installed and loaded $LABEL"
   echo "  Plist:  $DEST"
-  echo "  Script: $REPO_DIR/scripts/sync_ai_tokens_to_pi.py"
+  echo "  Script: $REPO_DIR/sync_ai_tokens_to_pi.py"
   echo ""
   echo "View logs:  tail -f /tmp/sync_ai_tokens.log"
 }
