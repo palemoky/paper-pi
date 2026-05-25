@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  macOS LaunchAgent template for sync_ai_tokens_to_pi.py daemon.
+  Do NOT install this file directly — use the install script:
+
+    ./scripts/install_launchd.sh
+
+  The script replaces __SCRIPT_DIR__ with the actual path and copies
+  the result to ~/Library/LaunchAgents/.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.paper-pi.sync-tokens</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>__SCRIPT_DIR__/sync_ai_tokens_to_pi.py</string>
+    <string>--daemon</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PI_TARGET</key>
+    <string>pi</string>
+    <key>PI_SECRETS_DIR</key>
+    <string>/home/pi/paper-pi/secrets</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/sync_ai_tokens_stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/sync_ai_tokens_stderr.log</string>
+
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+</dict>
+</plist>

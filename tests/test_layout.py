@@ -135,3 +135,37 @@ def test_layout_with_llm_usage_cross_item(monkeypatch):
     assert isinstance(img, Image.Image)
     assert img.size == (800, 480)
     assert img.mode == "1"
+
+
+def test_layout_with_llm_usage_unavailable_values(monkeypatch):
+    """Test layout renders when LLM usage falls back to '--' values."""
+    monkeypatch.setattr(Config.api, "city_name", "TestCity")
+    monkeypatch.setattr(Config.hardware, "use_grayscale", False)
+
+    layout = DashboardLayout()
+
+    data = {
+        "weather": {"temp": "20.0", "desc": "Sunny", "icon": "Clear"},
+        "github_commits": {"day": 5, "week": 23, "month": 90, "year": 860},
+        "vps_usage": 50,
+        "btc_price": {"usd": 50000, "usd_24h_change": 5.0},
+        "week_progress": 75,
+        "llm_usage": {
+            "provider_name": "ChatGPT",
+            "hourly_usage": "--",
+            "weekly_usage": "--",
+            "hourly_reset": "--",
+            "weekly_reset": "--",
+        },
+        "show_hackernews": False,
+        "todo_goals": ["Goal 1"],
+        "todo_must": ["Must 1"],
+        "todo_optional": ["Optional 1"],
+        "hackernews": {"stories": [], "page": 1, "total_pages": 1},
+    }
+
+    img = layout.create_image(800, 480, data)
+
+    assert isinstance(img, Image.Image)
+    assert img.size == (800, 480)
+    assert img.mode == "1"

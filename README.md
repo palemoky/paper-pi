@@ -214,6 +214,43 @@ flowchart LR
     class Providers,Storage,Strategies subBox
 ```
 
+## 🔑 Token Sync (macOS → Raspberry Pi)
+
+When your tokens are only available on macOS (Keychain/local auth files), use file-based secrets and sync them to Raspberry Pi:
+
+1. Configure Docker to mount host secrets directory as read-only (already included in `docker-compose.yml`):
+
+```yaml
+volumes:
+  - ${PAPER_PI_SECRETS_DIR:-./secrets}:/run/secrets:ro
+```
+
+2. Set token file environment variables in `.env`:
+
+```bash
+CLAUDE_OAUTH_TOKEN_FILE=/run/secrets/claude_oauth_token
+CHATGPT_OAUTH_TOKEN_FILE=/run/secrets/chatgpt_oauth_token
+KIMI_API_KEY_FILE=/run/secrets/kimi_api_key
+```
+
+3. From your macOS machine, install the launchd sync daemon:
+
+```bash
+# install
+./scripts/install_launchd.sh
+
+# view logs
+tail -f /tmp/sync_ai_tokens.log
+
+# uninstall
+./scripts/install_launchd.sh uninstall
+```
+
+> **Note**
+> - The app reads token files on every usage query (no restart needed after token refresh).
+> - If a usage request returns non-200 (token likely expired), that provider switches to `--` fallback and pauses further requests with the same token until a new token is synced.
+> - Secret files are mounted read-only in container and written only on Raspberry Pi host.
+
 ## 🖥️ Hardware Support
 
 - **Primary**: Waveshare 7.5inch E-Paper HAT (V2)
@@ -229,5 +266,6 @@ flowchart LR
 - [CoinGecko](https://www.coingecko.com/) for BTC price
 - [OpenWeatherMap](https://openweathermap.org/) for weather
 - [Figma](https://www.figma.com/) for UI design
+- [CodexIsland](https://github.com/ericjypark/codex-island) and [BluETag](https://github.com/yihong0618/bbtag) for AI token usage
 
 - All the open-source libraries that make this project possible

@@ -65,17 +65,17 @@ class FooterComponent:
         left_item = {"label": "Weekly", "value": week_prog, "type": "ring"}
         if isinstance(llm_usage, dict):
             provider_name = str(llm_usage.get("provider_name", "Claude"))
-            hourly_usage = max(
-                0, min(100, int(llm_usage.get("hourly_usage", llm_usage.get("hourly", 0))))
+            hourly_usage = self._safe_usage_percent(
+                llm_usage.get("hourly_usage", llm_usage.get("hourly", 0))
             )
-            weekly_usage = max(
-                0, min(100, int(llm_usage.get("weekly_usage", llm_usage.get("weekly", 0))))
+            weekly_usage = self._safe_usage_percent(
+                llm_usage.get("weekly_usage", llm_usage.get("weekly", 0))
             )
             left_item = {
                 "label": provider_name,
                 "value": self._build_cross_value(
-                    f"{hourly_usage}%",
-                    f"{weekly_usage}%",
+                    "--" if hourly_usage is None else f"{hourly_usage}%",
+                    "--" if weekly_usage is None else f"{weekly_usage}%",
                     str(llm_usage.get("hourly_reset", "--")),
                     str(llm_usage.get("weekly_reset", "--")),
                 ),
@@ -218,3 +218,10 @@ class FooterComponent:
             normalized[position_name] = str(matched_value)
 
         return normalized
+
+    def _safe_usage_percent(self, value: Any) -> int | None:
+        """Parse usage percent and return None for unavailable values."""
+        try:
+            return max(0, min(100, int(float(value))))
+        except TypeError, ValueError:
+            return None

@@ -7,7 +7,6 @@ FROM python:3.14-slim-bookworm AS builder
 
 WORKDIR /app
 
-# 1. 配置树莓派官方源 & 安装编译依赖
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
@@ -22,10 +21,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update \
     && apt-get install -y --no-install-recommends liblgpio-dev
 
-# 2. 高效安装 uv (直接从官方镜像复制二进制文件)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-# 3. 安装 Python 依赖
 ENV UV_COMPILE_BYTECODE=1
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
