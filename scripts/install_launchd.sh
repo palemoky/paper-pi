@@ -55,10 +55,18 @@ render_plist() {
   fi
 
   local python3_path
-  python3_path="$(command -v python3)" || {
-    echo "Error: python3 not found in PATH" >&2
-    return 1
-  }
+  # Prefer Homebrew python3 over macOS system python3 (which may be too old)
+  python3_path="$(
+    for p in /opt/homebrew/bin/python3 /usr/bin/python3; do
+      [[ -x "$p" ]] && echo "$p" && break
+    done
+  )"
+  if [[ -z "$python3_path" ]]; then
+    python3_path="$(command -v python3)" || {
+      echo "Error: python3 not found" >&2
+      return 1
+    }
+  fi
 
   sed \
     -e "s|__SCRIPT_DIR__|$script_dir|g" \
