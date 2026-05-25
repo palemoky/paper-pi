@@ -54,10 +54,17 @@ render_plist() {
     return 1
   fi
 
+  local python3_path
+  python3_path="$(command -v python3)" || {
+    echo "Error: python3 not found in PATH" >&2
+    return 1
+  }
+
   sed \
     -e "s|__SCRIPT_DIR__|$script_dir|g" \
     -e "s|__PI_TARGET__|$pi_target|g" \
     -e "s|__PI_SECRETS_DIR__|$pi_secrets_dir|g" \
+    -e "s|__PYTHON3__|$python3_path|g" \
     "$template_path"
 }
 

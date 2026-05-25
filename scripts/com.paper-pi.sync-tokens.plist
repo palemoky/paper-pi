@@ -17,7 +17,7 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>/usr/bin/python3</string>
+    <string>__PYTHON3__</string>
     <string>__SCRIPT_DIR__/sync_ai_tokens_to_pi.py</string>
     <string>--daemon</string>
   </array>
