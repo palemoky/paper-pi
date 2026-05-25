@@ -183,7 +183,7 @@ class FooterComponent:
             draw,
             center_x,
             self.FOOTER_CENTER_Y,
-            h_length=(offset_x + 25) * 2,
+            h_length=(offset_x + 20) * 2,
             v_length=(offset_y + 10) * 2,
         )
 

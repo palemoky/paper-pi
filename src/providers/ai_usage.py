@@ -356,9 +356,7 @@ def _format_seconds_left(seconds: int) -> str:
     minutes = rem // 60
 
     if days > 0:
-        day_part = f"{days}d"
-        hour_part = f"{hours}h" if hours > 0 else ""
-        return f"{day_part}{hour_part}"
+        return f"{days}d"
     if hours > 0:
         return f"{hours}h"
     return f"{minutes}m"
@@ -445,9 +443,7 @@ def _format_window_reset_left(window: dict[str, Any]) -> str:
     minutes = rem // 60
 
     if days > 0:
-        day_part = f"{days}d"
-        hour_part = f"{hours}h" if hours > 0 else ""
-        return f"{day_part}{hour_part}"
+        return f"{days}d"
     if hours > 0:
         return f"{hours}h"
     return f"{minutes}m"
