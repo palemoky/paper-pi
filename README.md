@@ -236,14 +236,14 @@ KIMI_API_KEY_FILE=/run/secrets/kimi_api_key
 3. From your macOS machine, install the launchd sync daemon:
 
 ```bash
-# install
-./scripts/install_launchd.sh
+# install (interactive — prompts for repo path, Pi SSH host, secrets dir)
+bash <(curl -fsSL https://raw.githubusercontent.com/palemoky/paper-pi/main/scripts/install_launchd.sh)
 
 # view logs
 tail -f /tmp/sync_ai_tokens.log
 
 # uninstall
-./scripts/install_launchd.sh uninstall
+bash <(curl -fsSL https://raw.githubusercontent.com/palemoky/paper-pi/main/scripts/install_launchd.sh) uninstall
 ```
 
 > **Note**

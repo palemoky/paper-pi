@@ -169,14 +169,13 @@ class FooterComponent:
             text_x = center_x + (x_sign * offset_x)
             text_y = self.FOOTER_CENTER_Y + (y_sign * offset_y)
             text_value = normalized_value[position_name]
-            text_font = r.font_commits if y_sign < 0 else r.font_xs
 
             r.draw_centered_text(
                 draw,
                 text_x,
                 text_y,
                 text_value,
-                font=text_font,
+                font=r.font_cross,
                 align_y_center=True,
             )
 
