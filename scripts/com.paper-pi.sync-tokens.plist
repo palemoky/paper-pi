@@ -25,9 +25,9 @@
   <key>EnvironmentVariables</key>
   <dict>
     <key>PI_TARGET</key>
-    <string>pi</string>
+    <string>__PI_TARGET__</string>
     <key>PI_SECRETS_DIR</key>
-    <string>/home/pi/paper-pi/secrets</string>
+    <string>__PI_SECRETS_DIR__</string>
     <key>PATH</key>
     <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   </dict>
