@@ -49,15 +49,21 @@ def _read_secret_token(file_path: str) -> str:
     return ""
 
 
-def _resolve_token(provider_name: str, file_path: str, env_token: str) -> str:
-    """Resolve token by preferring mounted secret file over env var."""
-    token = _read_secret_token(file_path) or (env_token or "").strip()
+def _resolve_token(provider_name: str, file_path: str, env_token: str) -> tuple[str, bool]:
+    """Resolve token by preferring mounted secret file over env var.
+
+    Returns (token, is_configured). is_configured is True when a raw token exists
+    in the file or env, even if that token is currently marked invalid.
+    """
+    raw = _read_secret_token(file_path) or (env_token or "").strip()
+    if not raw:
+        return "", False
 
     invalid_token = _INVALID_TOKEN_BY_PROVIDER.get(provider_name)
-    if token and invalid_token and token == invalid_token:
-        # Token already known as invalid/expired; wait for macOS sync to rotate it.
-        return ""
-    return token
+    if invalid_token and raw == invalid_token:
+        return "", True
+
+    return raw, True
 
 
 def _mark_invalid_token(provider_name: str, token: str) -> None:
@@ -86,13 +92,13 @@ async def get_claude_usage(client: httpx.AsyncClient) -> dict[str, int | str] | 
             "weekly_reset": str,
         } or None when token is not configured.
     """
-    token = _resolve_token(
+    token, is_configured = _resolve_token(
         "Claude",
         Config.api.claude_oauth_token_file,
         Config.api.claude_oauth_token,
     )
     if not token:
-        return None
+        return _fallback_usage("Claude") if is_configured else None
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -146,13 +152,13 @@ async def get_chatgpt_usage(client: httpx.AsyncClient) -> dict[str, int | str] |
             "weekly_reset": str,
         } or None when token is not configured.
     """
-    token = _resolve_token(
+    token, is_configured = _resolve_token(
         "ChatGPT",
         Config.api.chatgpt_oauth_token_file,
         Config.api.chatgpt_oauth_token,
     )
     if not token:
-        return None
+        return _fallback_usage("ChatGPT") if is_configured else None
 
     base_url = _normalize_chatgpt_base_url(Config.api.chatgpt_base_url)
     url = f"{base_url}{CHATGPT_USAGE_PATH}"
@@ -203,13 +209,13 @@ async def get_chatgpt_usage(client: httpx.AsyncClient) -> dict[str, int | str] |
 @cached(ttl=300)  # Cache for 5 minutes
 async def get_kimi_usage(client: httpx.AsyncClient) -> dict[str, int | str] | None:
     """Fetch Kimi Code usage from /usages endpoint."""
-    api_key = _resolve_token(
+    api_key, is_configured = _resolve_token(
         "Kimi",
         Config.api.kimi_api_key_file,
         Config.api.kimi_api_key,
     )
     if not api_key:
-        return None
+        return _fallback_usage("Kimi") if is_configured else None
 
     base_url = (Config.api.kimi_base_url or "https://api.kimi.com/coding/v1").strip().rstrip("/")
     url = f"{base_url}{KIMI_USAGE_PATH}"
