@@ -20,7 +20,7 @@ KIMI_USAGE_PATH = "/usages"
 _INVALID_TOKEN_BY_PROVIDER: dict[str, str] = {}
 
 
-def _fallback_usage(provider_name: str) -> dict[str, str]:
+def _fallback_usage(provider_name: str) -> dict[str, int | str]:
     """Return a stable fallback payload used when token is invalid/expired."""
     return {
         "provider_name": provider_name,
