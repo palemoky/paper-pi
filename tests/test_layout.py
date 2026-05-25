@@ -121,7 +121,7 @@ def test_layout_with_llm_usage_cross_item(monkeypatch):
             "hourly_usage": 42,
             "weekly_usage": 66,
             "hourly_reset": "1h",
-            "weekly_reset": "2d23h",
+            "weekly_reset": "2d",
         },
         "show_hackernews": False,
         "todo_goals": ["Goal 1"],
