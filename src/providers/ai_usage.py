@@ -92,7 +92,7 @@ async def get_claude_usage(client: httpx.AsyncClient) -> dict[str, int | str] | 
         Config.api.claude_oauth_token,
     )
     if not token:
-        return _fallback_usage("Claude")
+        return None
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -152,7 +152,7 @@ async def get_chatgpt_usage(client: httpx.AsyncClient) -> dict[str, int | str] |
         Config.api.chatgpt_oauth_token,
     )
     if not token:
-        return _fallback_usage("ChatGPT")
+        return None
 
     base_url = _normalize_chatgpt_base_url(Config.api.chatgpt_base_url)
     url = f"{base_url}{CHATGPT_USAGE_PATH}"
@@ -209,7 +209,7 @@ async def get_kimi_usage(client: httpx.AsyncClient) -> dict[str, int | str] | No
         Config.api.kimi_api_key,
     )
     if not api_key:
-        return _fallback_usage("Kimi")
+        return None
 
     base_url = (Config.api.kimi_base_url or "https://api.kimi.com/coding/v1").strip().rstrip("/")
     url = f"{base_url}{KIMI_USAGE_PATH}"
