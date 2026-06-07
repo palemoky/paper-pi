@@ -13,6 +13,7 @@ Claude token lifecycle (modeled after codex-island UsageFetcher.refresh):
 
 Token sources (macOS):
   Claude  — macOS Keychain "Claude Code-credentials"
+            (falls back to ~/.claude/.credentials.json if Keychain unavailable)
   ChatGPT — ~/.codex/auth.json → .tokens.access_token
   Kimi    — ~/.kimi/config.toml → api_key
 
@@ -46,6 +47,9 @@ CLAUDE_OAUTH_TOKEN_URL = "https://platform.claude.com/v1/oauth/token"
 # 通过命令 strings $(realpath $(which claude)) | grep -oE '.{50}CLIENT_ID:"[0-9a-f-]{36}".{100}' 从客户端提取两个ID，一个是local，另一个是prod，需要使用prod的ID
 CLAUDE_OAUTH_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
 CLAUDE_KEYCHAIN_SERVICE = "Claude Code-credentials"
+# Claude Code 默认把凭证存进 Keychain，Keychain 不可用时回退到此文件
+# （两者保存同一份 {"claudeAiOauth": {...}} JSON）
+CLAUDE_CREDENTIALS_FILE = Path.home() / ".claude" / ".credentials.json"
 
 CODEX_AUTH_FILE = Path.home() / ".codex" / "auth.json"
 KIMI_CONFIG_FILE = Path.home() / ".kimi" / "config.toml"
@@ -82,7 +86,8 @@ class ClaudeCredentials:
     access_token: str
     refresh_token: str
     expires_epoch: int  # seconds
-    raw_json: dict  # full Keychain JSON, for preserving fields on write-back
+    raw_json: dict  # full credentials JSON, for preserving fields on write-back
+    source: str = "keychain"  # "keychain" or "file" — where these were read from
 
 
 @dataclass
@@ -132,43 +137,59 @@ def _run_security(*args: str, input_data: str | None = None) -> str | None:
         return None
 
 
-def read_claude_keychain() -> ClaudeCredentials | None:
-    """Read Claude credentials from macOS Keychain."""
-    raw = _run_security("find-generic-password", "-s", CLAUDE_KEYCHAIN_SERVICE, "-w")
-    if not raw:
-        return None
-
+def _parse_claude_json(raw: str, *, source: str) -> ClaudeCredentials | None:
+    """Parse a Claude credentials JSON blob (same shape in Keychain and file)."""
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
-        log.warning("Keychain value is not valid JSON")
+        log.warning("Claude credentials (%s) are not valid JSON", source)
         return None
 
     oauth = data.get("claudeAiOauth") or {}
     access_token = oauth.get("accessToken", "")
-    refresh_token = oauth.get("refreshToken", "")
-    expires_at = oauth.get("expiresAt", 0)
-
     if not access_token:
         return None
 
-    # expiresAt is epoch milliseconds in Keychain
-    expires_epoch = _parse_expiry(expires_at)
-
     return ClaudeCredentials(
         access_token=access_token,
-        refresh_token=refresh_token,
-        expires_epoch=expires_epoch,
+        refresh_token=oauth.get("refreshToken", ""),
+        # expiresAt is epoch milliseconds
+        expires_epoch=_parse_expiry(oauth.get("expiresAt", 0)),
         raw_json=data,
+        source=source,
     )
 
 
-def write_claude_keychain(creds: ClaudeCredentials) -> bool:
-    """Write updated credentials back to macOS Keychain.
+def _read_claude_file() -> ClaudeCredentials | None:
+    """Read Claude credentials from ~/.claude/.credentials.json."""
+    if not CLAUDE_CREDENTIALS_FILE.is_file():
+        return None
+    try:
+        raw = CLAUDE_CREDENTIALS_FILE.read_text(encoding="utf-8")
+    except OSError as e:
+        log.warning("Failed to read %s: %s", CLAUDE_CREDENTIALS_FILE, e)
+        return None
+    return _parse_claude_json(raw, source="file")
 
-    Anthropic rotates the refresh_token on every call, so we MUST persist
-    the new pair — otherwise the next refresh attempt will 401.
+
+def read_claude_credentials() -> ClaudeCredentials | None:
+    """Read Claude credentials, preferring the Keychain and falling back to file.
+
+    Claude Code stores credentials in the macOS Keychain by default, but falls
+    back to ~/.claude/.credentials.json when the Keychain is unavailable.
     """
+    raw = _run_security("find-generic-password", "-s", CLAUDE_KEYCHAIN_SERVICE, "-w")
+    if raw:
+        creds = _parse_claude_json(raw, source="keychain")
+        if creds:
+            return creds
+        log.warning("Keychain entry unusable, falling back to %s", CLAUDE_CREDENTIALS_FILE)
+
+    return _read_claude_file()
+
+
+def _write_claude_keychain(json_str: str) -> bool:
+    """Write the credentials JSON into the macOS Keychain."""
     # Get the account name from existing entry
     acct_output = _run_security("find-generic-password", "-s", CLAUDE_KEYCHAIN_SERVICE)
     account = os.getenv("USER", "")
@@ -179,15 +200,6 @@ def write_claude_keychain(creds: ClaudeCredentials) -> bool:
                 if len(parts) >= 2:
                     account = parts[-1].rstrip('"')
                 break
-
-    # Update the raw JSON with new tokens, preserving all other fields
-    updated = creds.raw_json.copy()
-    oauth = updated.setdefault("claudeAiOauth", {})
-    oauth["accessToken"] = creds.access_token
-    oauth["refreshToken"] = creds.refresh_token
-    oauth["expiresAt"] = creds.expires_epoch * 1000  # back to epoch ms
-
-    json_str = json.dumps(updated, separators=(",", ":"))
 
     try:
         result = subprocess.run(
@@ -207,14 +219,55 @@ def write_claude_keychain(creds: ClaudeCredentials) -> bool:
             timeout=10,
         )
         if result.returncode != 0:
-            log.error("Failed to write credentials to Keychain: %s", result.stderr)
+            log.warning("Failed to write credentials to Keychain: %s", result.stderr.strip())
             return False
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-        log.error("Failed to write credentials to Keychain: %s", e)
+        log.warning("Failed to write credentials to Keychain: %s", e)
         return False
 
-    log.info("Updated Claude credentials in macOS Keychain")
     return True
+
+
+def _write_claude_file(json_str: str) -> bool:
+    """Write the credentials JSON to ~/.claude/.credentials.json (mode 0600)."""
+    try:
+        CLAUDE_CREDENTIALS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        tmp = CLAUDE_CREDENTIALS_FILE.with_name(CLAUDE_CREDENTIALS_FILE.name + ".tmp")
+        tmp.write_text(json_str, encoding="utf-8")
+        tmp.chmod(0o600)
+        tmp.replace(CLAUDE_CREDENTIALS_FILE)
+    except OSError as e:
+        log.error("Failed to write %s: %s", CLAUDE_CREDENTIALS_FILE, e)
+        return False
+    return True
+
+
+def write_claude_credentials(creds: ClaudeCredentials) -> bool:
+    """Write updated credentials back, preferring Keychain and falling back to file.
+
+    Anthropic rotates the refresh_token on every call, so we MUST persist the new
+    pair — otherwise the next refresh attempt will 401. If the credentials were
+    read from the file (Keychain unavailable), or the Keychain write fails, we
+    persist to ~/.claude/.credentials.json — mirroring Claude Code's own fallback.
+    """
+    # Update the raw JSON with new tokens, preserving all other fields
+    updated = creds.raw_json.copy()
+    oauth = updated.setdefault("claudeAiOauth", {})
+    oauth["accessToken"] = creds.access_token
+    oauth["refreshToken"] = creds.refresh_token
+    oauth["expiresAt"] = creds.expires_epoch * 1000  # back to epoch ms
+
+    json_str = json.dumps(updated, separators=(",", ":"))
+
+    if creds.source != "file" and _write_claude_keychain(json_str):
+        log.info("Updated Claude credentials in macOS Keychain")
+        return True
+
+    if _write_claude_file(json_str):
+        log.info("Updated Claude credentials in %s", CLAUDE_CREDENTIALS_FILE)
+        return True
+
+    return False
 
 
 def _parse_expiry(value: int | float | str) -> int:
@@ -292,9 +345,10 @@ def refresh_claude_token(creds: ClaudeCredentials) -> ClaudeCredentials | None:
         refresh_token=new_refresh,
         expires_epoch=new_expires_epoch,
         raw_json=creds.raw_json,
+        source=creds.source,
     )
 
-    if not write_claude_keychain(updated):
+    if not write_claude_credentials(updated):
         return None
 
     remaining_min = (new_expires_epoch - int(time.time())) // 60
@@ -310,9 +364,9 @@ def extract_claude_token(cfg: Config) -> tuple[str, int]:
 
     Returns (access_token, expires_epoch) or ("", 0) on failure.
     """
-    creds = read_claude_keychain()
+    creds = read_claude_credentials()
     if not creds:
-        log.warning("No Claude credentials found in Keychain")
+        log.warning("No Claude credentials found in Keychain or %s", CLAUDE_CREDENTIALS_FILE)
         return "", 0
 
     now = int(time.time())
