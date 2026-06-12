@@ -96,10 +96,6 @@ class DisplayConfig(BaseModel):
     hackernews_stories_per_page: int = Field(
         default=5, description="Number of stories per page", ge=1, le=50
     )
-    # HackerNews Gist integration (optional)
-    hackernews_gist_id: str = Field(
-        default="", description="GitHub Gist ID for saving HackerNews stories (optional)"
-    )
     # Time slots for TODO display (format: "0-12,18-24" means show during these hours)
     # HackerNews will automatically show during non-TODO hours
     todo_time_slots: str = Field(
@@ -135,7 +131,6 @@ class DisplayConfig(BaseModel):
             hackernews_refresh_minutes=int(os.getenv("HACKERNEWS_REFRESH_MINUTES", "60")),
             hackernews_page_seconds=int(os.getenv("HACKERNEWS_PAGE_SECONDS", "30")),
             hackernews_stories_per_page=int(os.getenv("HACKERNEWS_STORIES_PER_PAGE", "5")),
-            hackernews_gist_id=os.getenv("HACKERNEWS_GIST_ID", ""),
             todo_time_slots=os.getenv("TODO_TIME_SLOTS", "0-12,18-24"),
             poetry_api_url=os.getenv("POETRY_API_URL", DEFAULT_POETRY_API_URL),
         )

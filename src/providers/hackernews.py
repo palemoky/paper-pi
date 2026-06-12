@@ -92,14 +92,6 @@ async def _fetch_all_stories(client: httpx.AsyncClient) -> list[HackerNewsStory]
 
         logger.info(f"Fetched {len(stories)} HN stories")
 
-        # Save to Gist if configured (non-blocking)
-        try:
-            from src.services.hackernews_gist import save_stories_to_gist
-
-            await save_stories_to_gist(stories, client)
-        except Exception as e:
-            logger.warning(f"Failed to save stories to Gist (non-critical): {e}")
-
         return stories
 
     except httpx.HTTPError as e:
