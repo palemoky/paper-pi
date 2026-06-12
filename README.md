@@ -75,7 +75,7 @@ docker-compose up -d
 ### 📊 Dashboard Widgets
 
 - **Custom To-Do Lists** - Three customizable lists (Goals/Must/Optional) with strikethrough for completed items
-- **HackerNews** - Auto-rotating top stories with pagination and configurable display time ([Live Mirror](https://gist.github.com/palemoky/b04f3dcfb8431784cddc648d1af6dd4c))
+- **HackerNews** - Auto-rotating top stories with pagination and configurable display time ([HN Top Links](https://hntoplinks.com/) & [HN Best](https://news.ycombinator.com/best))
 - **Real-time Weather** - OpenWeatherMap integration with icon support
 - **GitHub Contributions** - Daily/Weekly/Monthly/Yearly stats with grid layout
 - **Bitcoin Price** - Live BTC price with 24h change percentage
@@ -247,6 +247,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/palemoky/paper-pi/main/scrip
 ```
 
 > **Note**
+>
 > - The app reads token files on every usage query (no restart needed after token refresh).
 > - If a usage request returns non-200 (token likely expired), that provider switches to `--` fallback and pauses further requests with the same token until a new token is synced.
 > - Secret files are mounted read-only in container and written only on Raspberry Pi host.
