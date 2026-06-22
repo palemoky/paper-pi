@@ -64,12 +64,7 @@ cp .env.example .env
 
 # For dashboard/quote/wallpaper modes (default)
 docker-compose up -d
-
-# For poetry mode (includes poetry-api service)
-docker-compose --profile poetry up -d
 ```
-
-> **Note**: The `poetry-api` service is optional and only needed when using `DISPLAY_MODE=poetry`. For other modes (dashboard, quote, wallpaper), you can run without the poetry profile to save resources.
 
 ### Supported Platforms
 
@@ -80,7 +75,7 @@ docker-compose --profile poetry up -d
 ### 📊 Dashboard Widgets
 
 - **Custom To-Do Lists** - Three customizable lists (Goals/Must/Optional) with strikethrough for completed items
-- **HackerNews** - Auto-rotating top stories with pagination and configurable display time ([Live Mirror](https://gist.github.com/palemoky/b04f3dcfb8431784cddc648d1af6dd4c))
+- **HackerNews** - Auto-rotating top stories with pagination and configurable display time ([HN Top Links](https://hntoplinks.com/) & [HN Best](https://news.ycombinator.com/best))
 - **Real-time Weather** - OpenWeatherMap integration with icon support
 - **GitHub Contributions** - Daily/Weekly/Monthly/Yearly stats with grid layout
 - **Bitcoin Price** - Live BTC price with 24h change percentage
@@ -219,6 +214,44 @@ flowchart LR
     class Providers,Storage,Strategies subBox
 ```
 
+## 🔑 Token Sync (macOS → Raspberry Pi)
+
+When your tokens are only available on macOS (Keychain/local auth files), use file-based secrets and sync them to Raspberry Pi:
+
+1. Configure Docker to mount host secrets directory as read-only (already included in `docker-compose.yml`):
+
+```yaml
+volumes:
+  - ${PAPER_PI_SECRETS_DIR:-./secrets}:/run/secrets:ro
+```
+
+2. Set token file environment variables in `.env`:
+
+```bash
+CLAUDE_OAUTH_TOKEN_FILE=/run/secrets/claude_oauth_token
+CHATGPT_OAUTH_TOKEN_FILE=/run/secrets/chatgpt_oauth_token
+KIMI_API_KEY_FILE=/run/secrets/kimi_api_key
+```
+
+3. From your macOS machine, install the launchd sync daemon:
+
+```bash
+# install (interactive — prompts for repo path, Pi SSH host, secrets dir)
+bash <(curl -fsSL https://raw.githubusercontent.com/palemoky/paper-pi/main/scripts/install_launchd.sh)
+
+# view logs
+tail -f /tmp/sync_ai_tokens.log
+
+# uninstall
+bash <(curl -fsSL https://raw.githubusercontent.com/palemoky/paper-pi/main/scripts/install_launchd.sh) uninstall
+```
+
+> **Note**
+>
+> - The app reads token files on every usage query (no restart needed after token refresh).
+> - If a usage request returns non-200 (token likely expired), that provider switches to `--` fallback and pauses further requests with the same token until a new token is synced.
+> - Secret files are mounted read-only in container and written only on Raspberry Pi host.
+
 ## 🖥️ Hardware Support
 
 - **Primary**: Waveshare 7.5inch E-Paper HAT (V2)
@@ -234,5 +267,6 @@ flowchart LR
 - [CoinGecko](https://www.coingecko.com/) for BTC price
 - [OpenWeatherMap](https://openweathermap.org/) for weather
 - [Figma](https://www.figma.com/) for UI design
+- [CodexIsland](https://github.com/ericjypark/codex-island) and [BluETag](https://github.com/yihong0618/bbtag) for AI token usage
 
 - All the open-source libraries that make this project possible

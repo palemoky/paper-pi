@@ -109,6 +109,24 @@ module = [
 ]
 ignore_missing_imports = true
 
+# Hardware-specific modules are unavailable or untyped on non-target platforms
+# (e.g. local macOS dev/CI), so treat them as Any for type checking.
+[[tool.mypy.overrides]]
+module = [
+    "gpiozero",
+    "gpiozero.*",
+    "spidev",
+    "Jetson",
+    "Jetson.*",
+    "Hobot",
+    "Hobot.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["src.lib.waveshare_epd.epdconfig"]
+disable_error_code = ["import-not-found", "import-untyped"]
+
 # Pytest configuration - Testing framework
 [tool.pytest.ini_options]
 minversion = "6.0"

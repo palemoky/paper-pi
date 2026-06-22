@@ -11,9 +11,10 @@ import logging
 import httpx
 import pendulum
 
-from ..config import Config
+from ..config import HTTP_LIMITS, HTTP_TIMEOUT, Config
 from ..core.cache import cached
 from ..exceptions import ProviderError
+from .ai_usage import get_chatgpt_usage, get_claude_usage, get_kimi_usage
 from .btc import get_btc_data
 from .vps import get_vps_info
 
@@ -22,12 +23,8 @@ from .weather import get_weather
 
 logger = logging.getLogger(__name__)
 
-# Limit connections to avoid exhausting file descriptors during network failures.
-# connect=10s prevents hanging sockets when proxy/network is misconfigured.
-_HTTP_LIMITS = httpx.Limits(max_connections=5, max_keepalive_connections=2)
-_HTTP_TIMEOUT = httpx.Timeout(timeout=15.0, connect=10.0)
-
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
+AI_USAGE_ROTATION_ORDER = ("Claude", "ChatGPT", "Kimi")
 
 
 # ===== GitHub Provider (kept here due to complexity) =====
@@ -289,7 +286,7 @@ class Dashboard:
 
     async def __aenter__(self):
         """Async context manager entry."""
-        self.client = httpx.AsyncClient(limits=_HTTP_LIMITS, timeout=_HTTP_TIMEOUT)
+        self.client = httpx.AsyncClient(limits=HTTP_LIMITS, timeout=HTTP_TIMEOUT)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -329,7 +326,7 @@ class Dashboard:
             data["is_year_end"] = is_year_end
             data["github_year_summary"] = github_year_summary
         else:
-            async with httpx.AsyncClient(limits=_HTTP_LIMITS, timeout=_HTTP_TIMEOUT) as client:
+            async with httpx.AsyncClient(limits=HTTP_LIMITS, timeout=HTTP_TIMEOUT) as client:
                 is_year_end, github_year_summary = await check_year_end_summary(client)
                 data["is_year_end"] = is_year_end
                 data["github_year_summary"] = github_year_summary
@@ -356,6 +353,10 @@ class Dashboard:
             "vps_usage": 0,
             "btc_price": {},
             "week_progress": 0,
+            "llm_usage": None,
+            "claude_usage": None,
+            "chatgpt_usage": None,
+            "kimi_usage": None,
             "todo_goals": [],
             "todo_must": [],
             "todo_optional": [],
@@ -371,20 +372,46 @@ class Dashboard:
                 tasks["github"] = tg.create_task(get_github_commits(self.client))
                 tasks["vps"] = tg.create_task(get_vps_info(self.client))
                 tasks["btc"] = tg.create_task(get_btc_data(self.client))
+                tasks["claude_usage"] = tg.create_task(get_claude_usage(self.client))
+                tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(self.client))
+                tasks["kimi_usage"] = tg.create_task(get_kimi_usage(self.client))
         else:
-            async with httpx.AsyncClient(limits=_HTTP_LIMITS, timeout=_HTTP_TIMEOUT) as client:
+            async with httpx.AsyncClient(limits=HTTP_LIMITS, timeout=HTTP_TIMEOUT) as client:
                 async with asyncio.TaskGroup() as tg:
                     tasks = {}
                     tasks["weather"] = tg.create_task(get_weather(client))
                     tasks["github"] = tg.create_task(get_github_commits(client))
                     tasks["vps"] = tg.create_task(get_vps_info(client))
                     tasks["btc"] = tg.create_task(get_btc_data(client))
+                    tasks["claude_usage"] = tg.create_task(get_claude_usage(client))
+                    tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(client))
+                    tasks["kimi_usage"] = tg.create_task(get_kimi_usage(client))
 
         # Get results with cache fallback
         data["weather"] = self._get_with_cache_fallback(tasks["weather"], "weather", {})
         data["github_commits"] = self._get_with_cache_fallback(tasks["github"], "github_commits", 0)
         data["vps_usage"] = self._get_with_cache_fallback(tasks["vps"], "vps_usage", 0)
         data["btc_price"] = self._get_with_cache_fallback(tasks["btc"], "btc_price", {})
+        data["claude_usage"] = self._get_with_cache_fallback(
+            tasks["claude_usage"], "claude_usage", None
+        )
+        data["chatgpt_usage"] = self._get_with_cache_fallback(
+            tasks["chatgpt_usage"], "chatgpt_usage", None
+        )
+        data["kimi_usage"] = self._get_with_cache_fallback(tasks["kimi_usage"], "kimi_usage", None)
+
+        # Rotate table display across configured providers on each refresh.
+        selected_usage = self._select_rotating_ai_usage(
+            data.get("claude_usage"),
+            data.get("chatgpt_usage"),
+            data.get("kimi_usage"),
+        )
+        data["llm_usage"] = selected_usage
+        # Backward-compatibility for existing consumers/cache expecting this key.
+        data["claude_usage"] = selected_usage
+        data["ai_usage_last_provider"] = (
+            str(selected_usage.get("provider_name", "")) if isinstance(selected_usage, dict) else ""
+        )
 
         # Calculate week progress
         data["week_progress"] = get_week_progress()
@@ -408,7 +435,7 @@ class Dashboard:
             if self.client:
                 hn_data = await get_hackernews(self.client, reset_to_first=False)
             else:
-                async with httpx.AsyncClient(limits=_HTTP_LIMITS, timeout=_HTTP_TIMEOUT) as client:
+                async with httpx.AsyncClient(limits=HTTP_LIMITS, timeout=HTTP_TIMEOUT) as client:
                     hn_data = await get_hackernews(client, reset_to_first=False)
 
             data["hackernews"] = hn_data
@@ -423,6 +450,33 @@ class Dashboard:
 
         self.save_cache(data)
         return data
+
+    def _select_rotating_ai_usage(self, claude_usage, chatgpt_usage, kimi_usage):
+        """Select one AI usage payload in round-robin order per refresh."""
+        candidates = {}
+        for usage in (claude_usage, chatgpt_usage, kimi_usage):
+            if not isinstance(usage, dict):
+                continue
+            provider_name = str(usage.get("provider_name", "")).strip()
+            if provider_name:
+                candidates[provider_name] = usage
+
+        ordered_providers = [name for name in AI_USAGE_ROTATION_ORDER if name in candidates]
+        if not ordered_providers:
+            return None
+
+        cache = self.load_cache()
+        last_provider = str(cache.get("ai_usage_last_provider", "")).strip()
+
+        if last_provider in ordered_providers:
+            next_index = (ordered_providers.index(last_provider) + 1) % len(ordered_providers)
+        else:
+            next_index = 0
+
+        selected_provider = ordered_providers[next_index]
+        cache["ai_usage_last_provider"] = selected_provider
+        self.save_cache(cache)
+        return candidates[selected_provider]
 
     def _get_with_cache_fallback(self, task, key, default):
         """Get result from task, use cache on failure."""

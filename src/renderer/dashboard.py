@@ -55,13 +55,14 @@ class DashboardRenderer:
             font_path = Config.paths.font_path
 
         try:
+            self.font_xxs = ImageFont.truetype(font_path, 10)
             self.font_xs = ImageFont.truetype(font_path, 18)
             self.font_s = ImageFont.truetype(font_path, 24)
             self.font_m = ImageFont.truetype(font_path, 28)
             self.font_value = ImageFont.truetype(font_path, 32)
             self.font_date_big = ImageFont.truetype(font_path, 34)
             self.font_date_small = ImageFont.truetype(font_path, 24)
-            self.font_commits = ImageFont.truetype(font_path, 20)
+            self.font_cross = ImageFont.truetype(font_path, 20)
             self.font_l = ImageFont.truetype(font_path, 48)
             self.font_xl = ImageFont.truetype(font_path, 60)
             logger.debug(f"Loaded fonts from {font_path}")
@@ -73,7 +74,7 @@ class DashboardRenderer:
             self.font_xs = self.font_value = self.font_date_big = self.font_date_small = (
                 default_font
             )
-            self.font_commits = default_font
+            self.font_cross = default_font
 
     # Convenience methods that delegate to component renderers
 

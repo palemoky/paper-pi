@@ -23,6 +23,12 @@ def get_mock_dashboard_data() -> dict:
             "usd_24h_change": 2.5,
         },
         "week_progress": 65,
+        "llm_usage": {
+            "hourly_usage": 42,
+            "weekly_usage": 66,
+            "hourly_reset": "--",
+            "weekly_reset": "2d",
+        },
         "todo_goals": ["Finish project ABCDEF", "Read a book", "Exercise"],
         "todo_must": ["Pay bills and reply to emails", "Reply to emails"],
         "todo_optional": ["Watch a movie and read a book", "Clean desk"],

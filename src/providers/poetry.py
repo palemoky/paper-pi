@@ -1,6 +1,6 @@
 """Poetry provider for fetching and displaying Chinese poetry.
 
-Fetches poetry from 今日诗词 API with hourly caching and local fallback.
+Fetches poetry from configured hosted API with hourly caching and local fallback.
 """
 
 import logging
@@ -86,15 +86,9 @@ class PoetryProvider(BaseContentProvider):
 
         Raises:
             httpx.HTTPError: If HTTP request fails
-            ValueError: If API response is invalid or URL not configured
+            ValueError: If API response is invalid
         """
         api_url = Config.display.poetry_api_url
-
-        if not api_url:
-            raise ValueError(
-                "POETRY_API_URL not configured. Please set it in .env file to use poetry mode."
-            )
-
         return await self._fetch_from_poetry_api(api_url, client)
 
     async def _fetch_from_poetry_api(
@@ -131,6 +125,11 @@ class PoetryProvider(BaseContentProvider):
         response.raise_for_status()
         data = response.json()
 
+        if not isinstance(data, dict):
+            raise ValueError("Invalid poetry response: payload must be an object")
+        if str(data.get("status", "")).lower() in {"error", "failed"}:
+            raise ValueError("Poetry API returned error status")
+
         # Extract author name (handle both dict and string)
         author = data.get("author", {})
         if isinstance(author, dict):
@@ -144,9 +143,14 @@ class PoetryProvider(BaseContentProvider):
             content_str = "\\n".join(content)
         else:
             content_str = str(content)
+        content_str = content_str.strip()
+        if not content_str:
+            raise ValueError("Invalid poetry response: content is empty")
 
         # Build title
-        poem_title = data.get("title", "")
+        poem_title = str(data.get("title", "")).strip()
+        if not poem_title:
+            raise ValueError("Invalid poetry response: title is empty")
 
         return {
             "content": content_str,
