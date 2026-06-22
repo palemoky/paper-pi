@@ -96,10 +96,6 @@ class DisplayConfig(BaseModel):
     hackernews_stories_per_page: int = Field(
         default=5, description="Number of stories per page", ge=1, le=50
     )
-    # HackerNews Gist integration (optional)
-    hackernews_gist_id: str = Field(
-        default="", description="GitHub Gist ID for saving HackerNews stories (optional)"
-    )
     # Time slots for TODO display (format: "0-12,18-24" means show during these hours)
     # HackerNews will automatically show during non-TODO hours
     todo_time_slots: str = Field(
@@ -135,7 +131,6 @@ class DisplayConfig(BaseModel):
             hackernews_refresh_minutes=int(os.getenv("HACKERNEWS_REFRESH_MINUTES", "60")),
             hackernews_page_seconds=int(os.getenv("HACKERNEWS_PAGE_SECONDS", "30")),
             hackernews_stories_per_page=int(os.getenv("HACKERNEWS_STORIES_PER_PAGE", "5")),
-            hackernews_gist_id=os.getenv("HACKERNEWS_GIST_ID", ""),
             todo_time_slots=os.getenv("TODO_TIME_SLOTS", "0-12,18-24"),
             poetry_api_url=os.getenv("POETRY_API_URL", DEFAULT_POETRY_API_URL),
         )
@@ -210,6 +205,26 @@ class APIConfig(BaseModel):
     city_name: str = Field(default="Beijing", description="City name for weather")
     vps_api_key: str = Field(default="", description="VPS API key (64clouds)")
     claude_oauth_token: str = Field(default="", description="Claude Code OAuth token")
+    claude_oauth_token_file: str = Field(
+        default="", description="Claude OAuth token file path (preferred in Docker)"
+    )
+    chatgpt_oauth_token: str = Field(default="", description="ChatGPT/Codex OAuth token")
+    chatgpt_oauth_token_file: str = Field(
+        default="", description="ChatGPT OAuth token file path (preferred in Docker)"
+    )
+    chatgpt_account_id: str = Field(default="", description="Optional ChatGPT account ID")
+    chatgpt_base_url: str = Field(
+        default="https://chatgpt.com/backend-api",
+        description="ChatGPT backend API base URL",
+    )
+    kimi_api_key: str = Field(default="", description="Kimi Code API key")
+    kimi_api_key_file: str = Field(
+        default="", description="Kimi API key file path (preferred in Docker)"
+    )
+    kimi_base_url: str = Field(
+        default="https://api.kimi.com/coding/v1",
+        description="Kimi Code API base URL",
+    )
 
     @classmethod
     def from_env(cls) -> "APIConfig":
@@ -219,6 +234,17 @@ class APIConfig(BaseModel):
             city_name=os.getenv("CITY_NAME", "Beijing"),
             vps_api_key=os.getenv("VPS_API_KEY", ""),
             claude_oauth_token=os.getenv("CLAUDE_OAUTH_TOKEN", ""),
+            claude_oauth_token_file=os.getenv("CLAUDE_OAUTH_TOKEN_FILE", ""),
+            chatgpt_oauth_token=os.getenv("CHATGPT_OAUTH_TOKEN", ""),
+            chatgpt_oauth_token_file=os.getenv("CHATGPT_OAUTH_TOKEN_FILE", ""),
+            chatgpt_account_id=os.getenv("CHATGPT_ACCOUNT_ID", ""),
+            chatgpt_base_url=os.getenv("CHATGPT_BASE_URL", "https://chatgpt.com/backend-api"),
+            kimi_api_key=os.getenv("KIMI_API_KEY", ""),
+            kimi_api_key_file=os.getenv("KIMI_API_KEY_FILE", ""),
+            kimi_base_url=os.getenv(
+                "KIMI_BASE_URL",
+                os.getenv("KIMI_CODE_BASE_URL", "https://api.kimi.com/coding/v1"),
+            ),
         )
 
 

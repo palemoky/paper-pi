@@ -35,12 +35,19 @@ class TextRenderer:
         """Draw centered text at specified coordinates."""
         try:
             bbox = draw.textbbox((0, 0), text, font=font)
-            w = bbox[2] - bbox[0]
-            h = bbox[3] - bbox[1]
+            x_offset = (bbox[0] + bbox[2]) // 2
+            y_offset = (bbox[1] + bbox[3]) // 2
+
+            if align_y_center:
+                draw.text((x - x_offset, y - y_offset), text, font=font, fill=fill)
+            else:
+                draw.text((x - x_offset, y), text, font=font, fill=fill)
+
+            return
         except AttributeError:
             w, h = draw.textsize(text, font=font)
 
-        y_offset = (h // 2 + 3) if align_y_center else 0
+        y_offset = (h // 2) if align_y_center else 0
         draw.text((x - w // 2, y - y_offset), text, font=font, fill=fill)
 
     def draw_truncated_text(

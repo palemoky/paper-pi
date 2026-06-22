@@ -14,6 +14,19 @@ logger = logging.getLogger(__name__)
 class FooterComponent:
     """Handles rendering of the dashboard footer section."""
 
+    _CROSS_POSITIONS = (
+        ("top_left", -1, -1),
+        ("top_right", 1, -1),
+        ("bottom_left", -1, 1),
+        ("bottom_right", 1, 1),
+    )
+    _CROSS_KEY_ALIASES = {
+        "top_left": ("top_left", "day"),
+        "top_right": ("top_right", "week"),
+        "bottom_left": ("bottom_left", "month"),
+        "bottom_right": ("bottom_right", "year"),
+    }
+
     def __init__(self, renderer: DashboardRenderer):
         self.renderer = renderer
         self.layout = LayoutHelper(use_grayscale=False)  # Will be updated based on Config if needed
@@ -28,7 +41,7 @@ class FooterComponent:
         vps_data: int,
         btc_data: dict[str, Any],
         week_prog: int,
-        claude_usage: dict[str, int] | None = None,
+        llm_usage: dict[str, int | str] | None = None,
     ) -> None:
         """Draw the footer section: supports dynamic slot distribution.
 
@@ -39,7 +52,7 @@ class FooterComponent:
             vps_data: VPS usage data
             btc_data: Bitcoin price data
             week_prog: Week progress percentage
-            claude_usage: Claude usage percentages with keys five_hour/weekly
+            llm_usage: LLM usage values with keys hourly_usage/weekly_usage and reset strings
         """
         r = self.renderer
 
@@ -50,14 +63,23 @@ class FooterComponent:
 
         # Define footer components
         left_item = {"label": "Weekly", "value": week_prog, "type": "ring"}
-        if isinstance(claude_usage, dict):
+        if isinstance(llm_usage, dict):
+            provider_name = str(llm_usage.get("provider_name", "Claude"))
+            hourly_usage = self._safe_usage_percent(
+                llm_usage.get("hourly_usage", llm_usage.get("hourly", 0))
+            )
+            weekly_usage = self._safe_usage_percent(
+                llm_usage.get("weekly_usage", llm_usage.get("weekly", 0))
+            )
             left_item = {
-                "label": "Claude 5h/W",
-                "value": {
-                    "five_hour": int(claude_usage.get("five_hour", 0)),
-                    "weekly": int(claude_usage.get("weekly", 0)),
-                },
-                "type": "double_ring",
+                "label": provider_name,
+                "value": self._build_cross_value(
+                    "--" if hourly_usage is None else f"{hourly_usage}%",
+                    "--" if weekly_usage is None else f"{weekly_usage}%",
+                    str(llm_usage.get("hourly_reset", "--")),
+                    str(llm_usage.get("weekly_reset", "--")),
+                ),
+                "type": "cross",
             }
 
         footer_items = [
@@ -77,20 +99,19 @@ class FooterComponent:
             center_x = col_layout.get_column_center(i)
 
             # Draw label
-            r.draw_centered_text(
-                draw,
-                center_x,
-                self.FOOTER_LABEL_Y,
-                item["label"],
-                font=r.font_s,
-                align_y_center=False,
-            )
+            if item["label"]:
+                r.draw_centered_text(
+                    draw,
+                    center_x,
+                    self.FOOTER_LABEL_Y,
+                    item["label"],
+                    font=r.font_s,
+                    align_y_center=False,
+                )
 
             # Draw value based on type
             if item["type"] == "ring":
                 self._draw_ring_item(draw, center_x, item["value"])
-            elif item["type"] == "double_ring":
-                self._draw_double_ring_item(draw, center_x, item["value"])
             elif item["type"] == "cross":
                 self._draw_cross_item(draw, center_x, item["value"])
             elif item["type"] == "text":
@@ -120,51 +141,6 @@ class FooterComponent:
             align_y_center=True,
         )
 
-    def _draw_double_ring_item(
-        self, draw: ImageDraw.ImageDraw, center_x: int, value: dict[str, int]
-    ) -> None:
-        """Draw nested rings for Claude 5h (inner) and weekly (outer) usage."""
-        r = self.renderer
-        five_hour = max(0, min(100, int(value.get("five_hour", 0))))
-        weekly = max(0, min(100, int(value.get("weekly", 0))))
-
-        # Outer ring: weekly usage
-        r.draw_progress_ring(
-            draw,
-            center_x,
-            self.FOOTER_CENTER_Y,
-            radius=32,
-            percent=weekly,
-            thickness=5,
-        )
-
-        # Inner ring: 5h usage
-        r.draw_progress_ring(
-            draw,
-            center_x,
-            self.FOOTER_CENTER_Y,
-            radius=22,
-            percent=five_hour,
-            thickness=4,
-        )
-
-        r.draw_centered_text(
-            draw,
-            center_x,
-            self.FOOTER_CENTER_Y - 5,
-            f"{five_hour}%",
-            font=r.font_xxs,
-            align_y_center=True,
-        )
-        r.draw_centered_text(
-            draw,
-            center_x,
-            self.FOOTER_CENTER_Y + 5,
-            f"{weekly}%",
-            font=r.font_xxs,
-            align_y_center=True,
-        )
-
     def _draw_text_item(self, draw: ImageDraw.ImageDraw, center_x: int, value: str) -> None:
         """Draw a simple text item."""
         r = self.renderer
@@ -181,44 +157,70 @@ class FooterComponent:
         """Draw a cross layout item (typically for GitHub stats)."""
         r = self.renderer
 
-        # Special handling for GitHub stats (dictionary)
-        if (
-            isinstance(value, dict)
-            and "day" in value
-            and "week" in value
-            and "month" in value
-            and "year" in value
-        ):
-            offset_x = 25
-            offset_y = 15
-
-            # Define 2x2 grid positions: (key, x_offset, y_offset)
-            positions = [
-                ("day", -offset_x, -offset_y),  # Top-left
-                ("week", +offset_x, -offset_y),  # Top-right
-                ("month", -offset_x, +offset_y),  # Bottom-left
-                ("year", +offset_x, +offset_y),  # Bottom-right
-            ]
-
-            # Draw all four values in a loop
-            for key, x_offset, y_offset in positions:
-                r.draw_centered_text(
-                    draw,
-                    center_x + x_offset,
-                    self.FOOTER_CENTER_Y + y_offset,
-                    str(value[key]),
-                    font=r.font_commits,
-                    align_y_center=True,
-                )
-
-            # Draw cross lines using LayoutHelper
-            self.layout.draw_cross_divider(
-                draw,
-                center_x,
-                self.FOOTER_CENTER_Y,
-                h_length=(offset_x + 15) * 2,
-                v_length=(offset_y + 10) * 2,
-            )
-        else:
-            # Fallback to text if not a valid dict
+        normalized_value = self._normalize_cross_value(value)
+        if normalized_value is None:
             self._draw_text_item(draw, center_x, str(value))
+            return
+
+        offset_x = 30
+        offset_y = 18
+
+        for position_name, x_sign, y_sign in self._CROSS_POSITIONS:
+            text_x = center_x + (x_sign * offset_x)
+            text_y = self.FOOTER_CENTER_Y + (y_sign * offset_y)
+            text_value = normalized_value[position_name]
+
+            r.draw_centered_text(
+                draw,
+                text_x,
+                text_y,
+                text_value,
+                font=r.font_cross,
+                align_y_center=True,
+            )
+
+        self.layout.draw_cross_divider(
+            draw,
+            center_x,
+            self.FOOTER_CENTER_Y,
+            h_length=(offset_x + 20) * 2,
+            v_length=(offset_y + 10) * 2,
+        )
+
+    def _build_cross_value(
+        self, top_left: Any, top_right: Any, bottom_left: Any, bottom_right: Any
+    ) -> dict[str, str]:
+        """Build a normalized cross value dictionary."""
+        return {
+            "top_left": str(top_left),
+            "top_right": str(top_right),
+            "bottom_left": str(bottom_left),
+            "bottom_right": str(bottom_right),
+        }
+
+    def _normalize_cross_value(self, value: Any) -> dict[str, str] | None:
+        """Normalize legacy/new cross payloads to directional keys."""
+        if not isinstance(value, dict):
+            return None
+
+        normalized: dict[str, str] = {}
+        for position_name, aliases in self._CROSS_KEY_ALIASES.items():
+            matched_value = None
+            for key in aliases:
+                if key in value:
+                    matched_value = value[key]
+                    break
+
+            if matched_value is None:
+                return None
+
+            normalized[position_name] = str(matched_value)
+
+        return normalized
+
+    def _safe_usage_percent(self, value: Any) -> int | None:
+        """Parse usage percent and return None for unavailable values."""
+        try:
+            return max(0, min(100, int(float(value))))
+        except TypeError, ValueError:
+            return None

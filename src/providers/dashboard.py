@@ -7,7 +7,6 @@ Individual providers are in separate modules for better organization.
 import asyncio
 import json
 import logging
-from typing import Any
 
 import httpx
 import pendulum
@@ -15,6 +14,7 @@ import pendulum
 from ..config import HTTP_LIMITS, HTTP_TIMEOUT, Config
 from ..core.cache import cached
 from ..exceptions import ProviderError
+from .ai_usage import get_chatgpt_usage, get_claude_usage, get_kimi_usage
 from .btc import get_btc_data
 from .vps import get_vps_info
 
@@ -24,7 +24,7 @@ from .weather import get_weather
 logger = logging.getLogger(__name__)
 
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
-CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
+AI_USAGE_ROTATION_ORDER = ("Claude", "ChatGPT", "Kimi")
 
 
 # ===== GitHub Provider (kept here due to complexity) =====
@@ -273,39 +273,6 @@ def get_week_progress():
     return int((passed_seconds / total_seconds) * 100)
 
 
-@cached(ttl=300)  # Cache for 5 minutes
-async def get_claude_usage(client: httpx.AsyncClient) -> dict[str, int] | None:
-    """Fetch Claude Code usage percentages for 5h and weekly windows.
-
-    Returns:
-        dict with keys {"five_hour": int, "weekly": int} or None when token is not configured.
-    """
-    token = Config.api.claude_oauth_token.strip()
-    if not token:
-        return None
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "anthropic-beta": "oauth-2025-04-20",
-        "Accept": "application/json",
-    }
-
-    try:
-        res = await client.get(CLAUDE_USAGE_URL, headers=headers, timeout=10.0)
-        res.raise_for_status()
-        payload: dict[str, Any] = res.json()
-
-        five_hour_raw = (payload.get("five_hour") or {}).get("utilization", 0)
-        weekly_raw = (payload.get("seven_day") or {}).get("utilization", 0)
-
-        five_hour = max(0, min(100, int(float(five_hour_raw))))
-        weekly = max(0, min(100, int(float(weekly_raw))))
-        return {"five_hour": five_hour, "weekly": weekly}
-    except Exception as e:
-        logger.warning(f"Claude usage API unavailable, fallback to 0% usage rings: {e}")
-        return {"five_hour": 0, "weekly": 0}
-
-
 class Dashboard:
     """Manages data fetching from multiple API providers.
 
@@ -386,7 +353,10 @@ class Dashboard:
             "vps_usage": 0,
             "btc_price": {},
             "week_progress": 0,
+            "llm_usage": None,
             "claude_usage": None,
+            "chatgpt_usage": None,
+            "kimi_usage": None,
             "todo_goals": [],
             "todo_must": [],
             "todo_optional": [],
@@ -403,6 +373,8 @@ class Dashboard:
                 tasks["vps"] = tg.create_task(get_vps_info(self.client))
                 tasks["btc"] = tg.create_task(get_btc_data(self.client))
                 tasks["claude_usage"] = tg.create_task(get_claude_usage(self.client))
+                tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(self.client))
+                tasks["kimi_usage"] = tg.create_task(get_kimi_usage(self.client))
         else:
             async with httpx.AsyncClient(limits=HTTP_LIMITS, timeout=HTTP_TIMEOUT) as client:
                 async with asyncio.TaskGroup() as tg:
@@ -412,6 +384,8 @@ class Dashboard:
                     tasks["vps"] = tg.create_task(get_vps_info(client))
                     tasks["btc"] = tg.create_task(get_btc_data(client))
                     tasks["claude_usage"] = tg.create_task(get_claude_usage(client))
+                    tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(client))
+                    tasks["kimi_usage"] = tg.create_task(get_kimi_usage(client))
 
         # Get results with cache fallback
         data["weather"] = self._get_with_cache_fallback(tasks["weather"], "weather", {})
@@ -420,6 +394,23 @@ class Dashboard:
         data["btc_price"] = self._get_with_cache_fallback(tasks["btc"], "btc_price", {})
         data["claude_usage"] = self._get_with_cache_fallback(
             tasks["claude_usage"], "claude_usage", None
+        )
+        data["chatgpt_usage"] = self._get_with_cache_fallback(
+            tasks["chatgpt_usage"], "chatgpt_usage", None
+        )
+        data["kimi_usage"] = self._get_with_cache_fallback(tasks["kimi_usage"], "kimi_usage", None)
+
+        # Rotate table display across configured providers on each refresh.
+        selected_usage = self._select_rotating_ai_usage(
+            data.get("claude_usage"),
+            data.get("chatgpt_usage"),
+            data.get("kimi_usage"),
+        )
+        data["llm_usage"] = selected_usage
+        # Backward-compatibility for existing consumers/cache expecting this key.
+        data["claude_usage"] = selected_usage
+        data["ai_usage_last_provider"] = (
+            str(selected_usage.get("provider_name", "")) if isinstance(selected_usage, dict) else ""
         )
 
         # Calculate week progress
@@ -459,6 +450,33 @@ class Dashboard:
 
         self.save_cache(data)
         return data
+
+    def _select_rotating_ai_usage(self, claude_usage, chatgpt_usage, kimi_usage):
+        """Select one AI usage payload in round-robin order per refresh."""
+        candidates = {}
+        for usage in (claude_usage, chatgpt_usage, kimi_usage):
+            if not isinstance(usage, dict):
+                continue
+            provider_name = str(usage.get("provider_name", "")).strip()
+            if provider_name:
+                candidates[provider_name] = usage
+
+        ordered_providers = [name for name in AI_USAGE_ROTATION_ORDER if name in candidates]
+        if not ordered_providers:
+            return None
+
+        cache = self.load_cache()
+        last_provider = str(cache.get("ai_usage_last_provider", "")).strip()
+
+        if last_provider in ordered_providers:
+            next_index = (ordered_providers.index(last_provider) + 1) % len(ordered_providers)
+        else:
+            next_index = 0
+
+        selected_provider = ordered_providers[next_index]
+        cache["ai_usage_last_provider"] = selected_provider
+        self.save_cache(cache)
+        return candidates[selected_provider]
 
     def _get_with_cache_fallback(self, task, key, default):
         """Get result from task, use cache on failure."""
