@@ -116,3 +116,56 @@ class TestHackerNewsTask:
 
                         # Verify partial refresh NOT called
                         mock_epd.init_part.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_panel_sleeps_after_partial_refresh(self, mock_epd, mock_layout):
+        """Panel must be put to sleep once the partial refresh is done.
+
+        Leaving it awake keeps the DC-DC bias energised between refreshes,
+        which damages the e-paper over time.
+        """
+        stop_event = asyncio.Event()
+
+        async def side_effect(*args, **kwargs):
+            stop_event.set()
+            raise asyncio.TimeoutError()
+
+        with patch("asyncio.wait_for", side_effect=side_effect):
+            with patch("src.tasks.hackernews.Config"):
+                with patch("src.core.time_utils.QuietHours") as MockQuiet:
+                    MockQuiet.return_value.check.return_value = (False, 0)
+
+                    with patch(
+                        "src.providers.hackernews.get_hackernews", new_callable=AsyncMock
+                    ) as mock_get_hn:
+                        mock_get_hn.return_value = {"page": 2, "total_pages": 5}
+
+                        await hackernews_pagination_task(stop_event, mock_epd, mock_layout)
+
+                        mock_epd.display_partial_buffer.assert_called_once()
+                        mock_epd.sleep.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_panel_sleeps_even_when_partial_refresh_fails(self, mock_epd, mock_layout):
+        """A failed partial refresh must still leave the panel asleep."""
+        stop_event = asyncio.Event()
+        mock_epd.display_partial_buffer.side_effect = RuntimeError("SPI write failed")
+
+        async def side_effect(*args, **kwargs):
+            stop_event.set()
+            raise asyncio.TimeoutError()
+
+        with patch("asyncio.wait_for", side_effect=side_effect):
+            with patch("src.tasks.hackernews.Config"):
+                with patch("src.core.time_utils.QuietHours") as MockQuiet:
+                    MockQuiet.return_value.check.return_value = (False, 0)
+
+                    with patch(
+                        "src.providers.hackernews.get_hackernews", new_callable=AsyncMock
+                    ) as mock_get_hn:
+                        mock_get_hn.return_value = {"page": 2, "total_pages": 5}
+
+                        # The task swallows refresh errors, so this must not raise
+                        await hackernews_pagination_task(stop_event, mock_epd, mock_layout)
+
+                        mock_epd.sleep.assert_called_once()
