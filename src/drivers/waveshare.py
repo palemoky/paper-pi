@@ -191,9 +191,12 @@ class WaveshareEPDDriver:
             h: Height of the region to update
         """
         if hasattr(self.epd, "display_Partial"):
-            # EPD expects full-size image buffer and end coordinates
+            # display_Partial indexes its input with the *region* row stride, so the
+            # full-size buffer has to be cropped first - handing it the whole frame
+            # would read each row at the wrong offset. display_partial_buffer does
+            # that cropping (and the 8-pixel X alignment the hardware requires).
             buffer = self.epd.getbuffer(image)
-            self.epd.display_Partial(buffer, x, y, x + w, y + h)
+            self.display_partial_buffer(buffer, x, y, x + w, y + h)
         else:
             # Fallback to full display if partial not supported
             logger.warning(

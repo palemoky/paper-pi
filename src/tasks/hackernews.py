@@ -141,6 +141,15 @@ async def hackernews_pagination_task(
                         logger.debug("✅ HN partial refresh complete")
                     except Exception as e:
                         logger.error(f"Failed to perform partial refresh: {e}")
+                    finally:
+                        # Always put the panel back to sleep, mirroring update_display's
+                        # init/display/sleep cycle. Leaving the panel awake keeps its
+                        # DC-DC bias energised between refreshes, which permanently
+                        # damages the e-paper over time.
+                        try:
+                            epd.sleep()
+                        except Exception as e:
+                            logger.error(f"Failed to put display to sleep: {e}")
 
     except asyncio.CancelledError:
         logger.info("🛑 HackerNews pagination task cancelled")

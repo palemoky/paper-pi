@@ -364,28 +364,32 @@ class Dashboard:
             "show_hackernews": show_hackernews,
         }
 
-        # Fetch all data concurrently
+        # Fetch all data concurrently.
+        #
+        # These providers are deliberately isolated from each other: a single
+        # expired credential must not blank the whole panel. asyncio.TaskGroup
+        # is fail-fast — one failing child cancels its siblings and re-raises —
+        # which would bypass the _get_with_cache_fallback recovery below and
+        # abort the refresh entirely. gather(return_exceptions=True) instead
+        # lets every provider settle, so each result is judged on its own.
+        async def _spawn(client: httpx.AsyncClient) -> dict[str, asyncio.Task]:
+            spawned = {
+                "weather": asyncio.create_task(get_weather(client)),
+                "github": asyncio.create_task(get_github_commits(client)),
+                "vps": asyncio.create_task(get_vps_info(client)),
+                "btc": asyncio.create_task(get_btc_data(client)),
+                "claude_usage": asyncio.create_task(get_claude_usage(client)),
+                "chatgpt_usage": asyncio.create_task(get_chatgpt_usage(client)),
+                "kimi_usage": asyncio.create_task(get_kimi_usage(client)),
+            }
+            await asyncio.gather(*spawned.values(), return_exceptions=True)
+            return spawned
+
         if self.client:
-            async with asyncio.TaskGroup() as tg:
-                tasks = {}
-                tasks["weather"] = tg.create_task(get_weather(self.client))
-                tasks["github"] = tg.create_task(get_github_commits(self.client))
-                tasks["vps"] = tg.create_task(get_vps_info(self.client))
-                tasks["btc"] = tg.create_task(get_btc_data(self.client))
-                tasks["claude_usage"] = tg.create_task(get_claude_usage(self.client))
-                tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(self.client))
-                tasks["kimi_usage"] = tg.create_task(get_kimi_usage(self.client))
+            tasks = await _spawn(self.client)
         else:
             async with httpx.AsyncClient(limits=HTTP_LIMITS, timeout=HTTP_TIMEOUT) as client:
-                async with asyncio.TaskGroup() as tg:
-                    tasks = {}
-                    tasks["weather"] = tg.create_task(get_weather(client))
-                    tasks["github"] = tg.create_task(get_github_commits(client))
-                    tasks["vps"] = tg.create_task(get_vps_info(client))
-                    tasks["btc"] = tg.create_task(get_btc_data(client))
-                    tasks["claude_usage"] = tg.create_task(get_claude_usage(client))
-                    tasks["chatgpt_usage"] = tg.create_task(get_chatgpt_usage(client))
-                    tasks["kimi_usage"] = tg.create_task(get_kimi_usage(client))
+                tasks = await _spawn(client)
 
         # Get results with cache fallback
         data["weather"] = self._get_with_cache_fallback(tasks["weather"], "weather", {})
