@@ -169,3 +169,29 @@ def test_layout_with_llm_usage_unavailable_values(monkeypatch):
     assert isinstance(img, Image.Image)
     assert img.size == (800, 480)
     assert img.mode == "1"
+
+
+def test_layout_with_btc_placeholder(monkeypatch):
+    """Test layout renders when BTC provider returns placeholder (API failure)."""
+    monkeypatch.setattr(Config.api, "city_name", "TestCity")
+    monkeypatch.setattr(Config.hardware, "use_grayscale", False)
+
+    layout = DashboardLayout()
+
+    data = {
+        "weather": {"temp": "20.0", "desc": "Sunny", "icon": "Clear"},
+        "github_commits": {"day": 5, "week": 23, "month": 90, "year": 860},
+        "vps_usage": 50,
+        "btc_price": {"usd": "---", "usd_24h_change": 0},
+        "week_progress": 75,
+        "show_hackernews": False,
+        "todo_goals": ["Goal 1"],
+        "todo_must": ["Must 1"],
+        "todo_optional": ["Optional 1"],
+        "hackernews": {"stories": [], "page": 1, "total_pages": 1},
+    }
+
+    img = layout.create_image(800, 480, data)
+
+    assert isinstance(img, Image.Image)
+    assert img.size == (800, 480)
