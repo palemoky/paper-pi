@@ -57,9 +57,11 @@ class FooterComponent:
         r = self.renderer
 
         # Construct BTC string
-        btc_val = f"${btc_data.get('usd', 0):,}"
+        # Provider returns placeholder strings (e.g. "---") on API failure
+        usd = btc_data.get("usd", 0)
+        btc_val = f"${usd:,}" if isinstance(usd, (int, float)) else "$---"
         change = btc_data.get("usd_24h_change", 0.0)
-        btc_label = f"BTC ({change:+.1f}%)"
+        btc_label = f"BTC ({change:+.1f}%)" if isinstance(change, (int, float)) else "BTC"
 
         # Define footer components
         left_item = {"label": "Weekly", "value": week_prog, "type": "ring"}
