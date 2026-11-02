@@ -3,7 +3,7 @@
 # ==========================================
 # Stage 1: Builder
 # ==========================================
-FROM python:3.14-slim-bookworm AS builder
+FROM python:3.15-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # ==========================================
 # Stage 2: Runtime
 # ==========================================
-FROM python:3.14-slim-bookworm
+FROM python:3.15-slim-bookworm
 
 WORKDIR /app
 
